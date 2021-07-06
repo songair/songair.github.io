@@ -1,0 +1,2325 @@
+<!DOCTYPE html><html lang="en">
+  <head><!-- Global site tag (gtag.js) - Google Analytics -->
+	<script async src="https://www.googletagmanager.com/gtag/js?id=UA-87129300-1"></script>
+	<script>
+		window.dataLayer = window.dataLayer || [];
+		function gtag(){dataLayer.push(arguments);}
+		gtag('js', new Date());
+
+		gtag('config', 'UA-87129300-1');
+		
+	</script><meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no"><title>OCP Java 8 Review Notes - Mincong Huang</title>
+
+<meta name="description" content="Here're some review notes before my Oracle Certified Professional Java SE 8 exam. They're highly inspired by the following books: OCP Java SE 7 Certification...">
+
+<!-- Begin Jekyll SEO tag v2.7.1 -->
+<title>OCP Java 8 Review Notes | Mincong Huang</title>
+<meta name="generator" content="Jekyll v4.2.0" />
+<meta property="og:title" content="OCP Java 8 Review Notes" />
+<meta name="author" content="Mincong Huang" />
+<meta property="og:locale" content="en" />
+<meta name="description" content="Here’re some review notes before my Oracle Certified Professional Java SE 8 exam. They’re highly inspired by the following books: OCP Java SE 7 Certification Guide and Java 8 in Action. They are excellent resources for learning Java, which I highly recommend." />
+<meta property="og:description" content="Here’re some review notes before my Oracle Certified Professional Java SE 8 exam. They’re highly inspired by the following books: OCP Java SE 7 Certification Guide and Java 8 in Action. They are excellent resources for learning Java, which I highly recommend." />
+<link rel="canonical" href="https://mincong.io/2018/01/03/ocp-java-8-review-notes/" />
+<meta property="og:url" content="https://mincong.io/2018/01/03/ocp-java-8-review-notes/" />
+<meta property="og:site_name" content="Mincong Huang" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2018-01-03T19:37:53+01:00" />
+<meta name="twitter:card" content="summary" />
+<meta property="twitter:title" content="OCP Java 8 Review Notes" />
+<meta name="twitter:site" content="@mincong_h" />
+<meta name="twitter:creator" content="@mincong_h" />
+<script type="application/ld+json">
+{"author":{"@type":"Person","name":"Mincong Huang"},"description":"Here’re some review notes before my Oracle Certified Professional Java SE 8 exam. They’re highly inspired by the following books: OCP Java SE 7 Certification Guide and Java 8 in Action. They are excellent resources for learning Java, which I highly recommend.","@type":"BlogPosting","url":"https://mincong.io/2018/01/03/ocp-java-8-review-notes/","dateModified":"2018-01-03T19:37:53+01:00","datePublished":"2018-01-03T19:37:53+01:00","headline":"OCP Java 8 Review Notes","mainEntityOfPage":{"@type":"WebPage","@id":"https://mincong.io/2018/01/03/ocp-java-8-review-notes/"},"@context":"https://schema.org"}</script>
+<!-- End Jekyll SEO tag -->
+
+
+<!-- Extra Open Graph :: Start -->
+
+<!-- Extra Open Graph :: End -->
+
+<link rel="canonical" href="https://mincong.io/2018/01/03/ocp-java-8-review-notes/"><link rel="alternate" type="application/rss+xml" title="Mincong Huang" href="/feed.xml"><!-- start favicons snippet, use https://realfavicongenerator.net/ --><link rel="apple-touch-icon" sizes="180x180" href="/assets/apple-touch-icon.png"><link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon-32x32.png"><link rel="icon" type="image/png" sizes="16x16" href="/assets/favicon-16x16.png"><link rel="manifest" href="/assets/site.webmanifest"><link rel="mask-icon" href="/assets/safari-pinned-tab.svg" color="#fc4d50"><link rel="shortcut icon" href="/assets/favicon.ico">
+
+<meta name="msapplication-TileColor" content="#ffc40d"><meta name="msapplication-config" content="/assets/browserconfig.xml">
+
+<meta name="theme-color" content="#ffffff">
+<!-- end favicons snippet --><link rel="stylesheet" href="/assets/css/main.css"><link rel="stylesheet" href="https://cdn.bootcdn.net/ajax/libs/font-awesome/5.15.1/css/all.css" ><!-- start custom head snippets -->
+
+<!-- end custom head snippets -->
+<script>(function() {
+  window.isArray = function(val) {
+    return Object.prototype.toString.call(val) === '[object Array]';
+  };
+  window.isString = function(val) {
+    return typeof val === 'string';
+  };
+
+  window.hasEvent = function(event) {
+    return 'on'.concat(event) in window.document;
+  };
+
+  window.isOverallScroller = function(node) {
+    return node === document.documentElement || node === document.body || node === window;
+  };
+
+  window.isFormElement = function(node) {
+    var tagName = node.tagName;
+    return tagName === 'INPUT' || tagName === 'SELECT' || tagName === 'TEXTAREA';
+  };
+
+  window.pageLoad = (function () {
+    var loaded = false, cbs = [];
+    window.addEventListener('load', function () {
+      var i;
+      loaded = true;
+      if (cbs.length > 0) {
+        for (i = 0; i < cbs.length; i++) {
+          cbs[i]();
+        }
+      }
+    });
+    return {
+      then: function(cb) {
+        cb && (loaded ? cb() : (cbs.push(cb)));
+      }
+    };
+  })();
+})();
+(function() {
+  window.throttle = function(func, wait) {
+    var args, result, thisArg, timeoutId, lastCalled = 0;
+
+    function trailingCall() {
+      lastCalled = new Date;
+      timeoutId = null;
+      result = func.apply(thisArg, args);
+    }
+    return function() {
+      var now = new Date,
+        remaining = wait - (now - lastCalled);
+
+      args = arguments;
+      thisArg = this;
+
+      if (remaining <= 0) {
+        clearTimeout(timeoutId);
+        timeoutId = null;
+        lastCalled = now;
+        result = func.apply(thisArg, args);
+      } else if (!timeoutId) {
+        timeoutId = setTimeout(trailingCall, remaining);
+      }
+      return result;
+    };
+  };
+})();
+(function() {
+  var Set = (function() {
+    var add = function(item) {
+      var i, data = this._data;
+      for (i = 0; i < data.length; i++) {
+        if (data[i] === item) {
+          return;
+        }
+      }
+      this.size ++;
+      data.push(item);
+      return data;
+    };
+
+    var Set = function(data) {
+      this.size = 0;
+      this._data = [];
+      var i;
+      if (data.length > 0) {
+        for (i = 0; i < data.length; i++) {
+          add.call(this, data[i]);
+        }
+      }
+    };
+    Set.prototype.add = add;
+    Set.prototype.get = function(index) { return this._data[index]; };
+    Set.prototype.has = function(item) {
+      var i, data = this._data;
+      for (i = 0; i < data.length; i++) {
+        if (this.get(i) === item) {
+          return true;
+        }
+      }
+      return false;
+    };
+    Set.prototype.is = function(map) {
+      if (map._data.length !== this._data.length) { return false; }
+      var i, j, flag, tData = this._data, mData = map._data;
+      for (i = 0; i < tData.length; i++) {
+        for (flag = false, j = 0; j < mData.length; j++) {
+          if (tData[i] === mData[j]) {
+            flag = true;
+            break;
+          }
+        }
+        if (!flag) { return false; }
+      }
+      return true;
+    };
+    Set.prototype.values = function() {
+      return this._data;
+    };
+    return Set;
+  })();
+
+  window.Lazyload = (function(doc) {
+    var queue = {js: [], css: []}, sources = {js: {}, css: {}}, context = this;
+    var createNode = function(name, attrs) {
+      var node = doc.createElement(name), attr;
+      for (attr in attrs) {
+        if (attrs.hasOwnProperty(attr)) {
+          node.setAttribute(attr, attrs[attr]);
+        }
+      }
+      return node;
+    };
+    var end = function(type, url) {
+      var s, q, qi, cbs, i, j, cur, val, flag;
+      if (type === 'js' || type ==='css') {
+        s = sources[type], q = queue[type];
+        s[url] = true;
+        for (i = 0; i < q.length; i++) {
+          cur = q[i];
+          if (cur.urls.has(url)) {
+            qi = cur, val = qi.urls.values();
+            qi && (cbs = qi.callbacks);
+            for (flag = true, j = 0; j < val.length; j++) {
+              cur = val[j];
+              if (!s[cur]) {
+                flag = false;
+              }
+            }
+            if (flag && cbs && cbs.length > 0) {
+              for (j = 0; j < cbs.length; j++) {
+                cbs[j].call(context);
+              }
+              qi.load = true;
+            }
+          }
+        }
+      }
+    };
+    var load = function(type, urls, callback) {
+      var s, q, qi, node, i, cur,
+        _urls = typeof urls === 'string' ? new Set([urls]) : new Set(urls), val, url;
+      if (type === 'js' || type ==='css') {
+        s = sources[type], q = queue[type];
+        for (i = 0; i < q.length; i++) {
+          cur = q[i];
+          if (_urls.is(cur.urls)) {
+            qi = cur;
+            break;
+          }
+        }
+        val = _urls.values();
+        if (qi) {
+          callback && (qi.load || qi.callbacks.push(callback));
+          callback && (qi.load && callback());
+        } else {
+          q.push({
+            urls: _urls,
+            callbacks: callback ? [callback] : [],
+            load: false
+          });
+          for (i = 0; i < val.length; i++) {
+            node = null, url = val[i];
+            if (s[url] === undefined) {
+              (type === 'js' ) && (node = createNode('script', { src: url }));
+              (type === 'css') && (node = createNode('link', { rel: 'stylesheet', href: url }));
+              if (node) {
+                node.onload = (function(type, url) {
+                  return function() {
+                    end(type, url);
+                  };
+                })(type, url);
+                (doc.head || doc.body).appendChild(node);
+                s[url] = false;
+              }
+            }
+          }
+        }
+      }
+    };
+    return {
+      js: function(url, callback) {
+        load('js', url, callback);
+      },
+      css: function(url, callback) {
+        load('css', url, callback);
+      }
+    };
+  })(this.document);
+})();
+</script><script>
+  (function() {
+    var TEXT_VARIABLES = {
+      version: '2.2.6',
+      sources: {
+        font_awesome: 'https://cdn.bootcdn.net/ajax/libs/font-awesome/5.15.1/css/all.css',
+        jquery: 'https://cdn.bootcss.com/jquery/3.1.1/jquery.min.js',
+        leancloud_js_sdk: '//cdn.jsdelivr.net/npm/leancloud-storage@3.13.2/dist/av-min.js',
+        chart: 'https://cdn.bootcss.com/Chart.js/2.7.2/Chart.bundle.min.js',
+        gitalk: {
+          js: 'https://cdn.bootcss.com/gitalk/1.2.2/gitalk.min.js',
+          css: 'https://cdn.bootcss.com/gitalk/1.2.2/gitalk.min.css'
+        },
+        valine: 'https://unpkg.com/valine/dist/Valine.min.js',
+        mathjax: 'https://cdn.bootcss.com/mathjax/2.7.4/MathJax.js?config=TeX-MML-AM_CHTML',
+        mermaid: 'https://cdn.bootcss.com/mermaid/8.0.0-rc.8/mermaid.min.js'
+      },
+      site: {
+        toc: {
+          selectors: 'h1,h2,h3'
+        }
+      },
+      paths: {
+        search_js: '/assets/search.js'
+      }
+    };
+    window.TEXT_VARIABLES = TEXT_VARIABLES;
+  })();
+</script>
+</head>
+  <body>
+    <div class="root" data-is-touch="false">
+      <div class="layout--page js-page-root"><div class="page__main js-page-main page__viewport has-aside cell cell--auto">
+
+      <div class="page__main-inner"><div class="page__header d-print-none"><header class="header"><div class="main">
+      <div class="header__title">
+        <div class="header__brand"><svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
+	 width="24px" height="24px" viewBox="0 0 24 24">
+<style type="text/css">
+	.st0{fill:#515151;}
+</style>
+<path class="st0" d="M1.7,22.3c5.7-5.7,11.3-5.7,17,0c3.3-3.3,3.5-5.3,0.8-6c2.7,0.7,3.5-1.1,2.3-5.6s-3.3-5.2-6.3-2.1
+	c3-3,2.3-5.2-2.1-6.3S7,1.8,7.7,4.6C7,1.8,5,2.1,1.7,5.3C7.3,11,7.3,16.7,1.7,22.3"/>
+</svg>
+<a title="Hi, welcome to my blog! I'm a software engineer at Datadog. I write blog posts in my free time. My blogs are bits and pieces of my tech journey. Most of them are related to Java. Hope you enjoy them! My opinions are my own, not Datadog's. This blog is powered by Jekyll, a simple, blog-aware, static sites solution.
+" href="/">Mincong Huang</a></div><button class="button button--secondary button--circle search-button js-search-toggle"><i class="fas fa-search"></i></button></div><nav class="navigation">
+        <ul><li class="navigation__item"><a href="/categories">Categories</a></li><li class="navigation__item"><a href="/series">Series</a></li><li class="navigation__item"><a href="/archive">Archive</a></li><li class="navigation__item"><a href="/about">About</a></li><li><button class="button button--secondary button--circle search-button js-search-toggle"><i class="fas fa-search"></i></button></li></ul>
+      </nav></div>
+  </header>
+</div><div class="page__content"><div class="article__header--overlay"><div class="hero hero--dark overlay" style="background-image:linear-gradient(135deg, rgba(0, 0, 0, .6), rgba(0, 0, 0, .4));background-color:#203028;"><div class="hero__content"><div class ="main"><div class="article__info clearfix"><ul class="left-col menu"><li>
+              <a class="button button--secondary button--pill button--sm"
+                href="/archive?tag=java">java</a>
+            </li><li>
+              <a class="button button--secondary button--pill button--sm"
+                href="/archive?tag=java8">java8</a>
+            </li><li>
+              <a class="button button--secondary button--pill button--sm"
+                href="/archive?tag=ocp">ocp</a>
+            </li><li>
+              <a class="button button--secondary button--pill button--sm"
+                href="/archive?tag=study-note">study-note</a>
+            </li></ul><ul class="right-col menu"><li><i class="far fa-calendar-alt"></i> <span>Jan 03, 2018</span>
+            </li></ul></div><div class="article__header"><header><h1>OCP Java 8 Review Notes</h1></header></div><div class="article__header">
+                        <p class="overlay__excerpt">Here're some review notes before my Oracle Certified Professional Java SE 8 exam. They're highly inspired by the following books: OCP Java SE 7 Certification Guide and Java 8 in Action. They are ex...</p>
+                      </div><div class="article__info clearfix">
+  <ul class="left-col menu">
+    <li>
+      <i class="fas fa-camera"></i>
+      Photo by
+      <a href="" target="_blank">
+        
+      </a>
+      on
+      <a href="" target="_blank">
+        
+      </a>
+    </li>
+  </ul>
+</div>
+</div></div>
+              </div>
+            </div><div class ="main"><div class="grid grid--reverse">
+
+              <div class="col-aside d-print-none js-col-aside"><aside class="page__aside js-page-aside"><div class="toc-aside js-toc-root"></div>
+</aside></div>
+
+              <div class="col-main cell cell--auto"><!-- start custom main top snippet -->
+
+<!-- end custom main top snippet -->
+<article itemscope itemtype="http://schema.org/Article"><meta itemprop="headline" content="OCP Java 8 Review Notes"><meta itemprop="author" content="Mincong Huang"/><meta itemprop="datePublished" content="2018-01-03T19:37:53+01:00">
+    <meta itemprop="keywords" content="java,java8,ocp,study-note"><div class="js-article-content"><div class="layout--article"><!-- start custom article top snippet -->
+
+
+<!-- end custom article top snippet -->
+<div class="article__content" itemprop="articleBody"><p>Here’re some review notes before my Oracle Certified Professional Java SE 8
+exam. They’re highly inspired by the following books:</p>
+
+<ul>
+  <li><a href="https://www.manning.com/books/ocp-java-se-7-programmer-ii-certification-guide">OCP Java SE 7 Certification Guide</a></li>
+  <li><a href="https://www.manning.com/books/java-8-in-action">Java 8 in Action</a></li>
+</ul>
+
+<p>They are excellent resources for learning Java, which I highly recommend. In
+particular, the OCP Java SE 7 Programmer II Certification Guide is really the
+best resource that you can have for learning Java and pass the certification!</p>
+
+<p align="center">
+  <img src="https://mincong.io/assets/20180106-manning.jpg" alt="OCP Java SE 7" style="max-height:400px; border-radius: 0; box-shadow: 2px 2px 10px #BBB;" />
+</p>
+
+<h2 id="java-class-design">Java Class Design</h2>
+
+<p><strong>Java access modifiers:</strong></p>
+
+<ul>
+  <li>Access modifiers defined by Java are <code class="language-plaintext highlighter-rouge">public</code>, <code class="language-plaintext highlighter-rouge">protected</code>, and <code class="language-plaintext highlighter-rouge">private</code>.
+In the absence of an explicit access modifier, a member is defined with the
+<em>default</em> access level.</li>
+  <li>The members of a class defined using the <code class="language-plaintext highlighter-rouge">protected</code> access modifier are
+accessible to classes and interfaces defined in the same package and to all
+derived classes, even if they’re defined in separate packages.</li>
+  <li>A top-level class, interface, or enum can only be defined using the <code class="language-plaintext highlighter-rouge">public</code>
+or default access. They cannot be defined using <code class="language-plaintext highlighter-rouge">protected</code> or <code class="language-plaintext highlighter-rouge">private</code>
+access.</li>
+  <li>There are two kinds of class declarations: normal class declarations and enum
+declarations.</li>
+  <li>
+    <p>A class declaration may include class modifiers.</p>
+
+    <div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>ClassModifiers:
+  ClassModifier
+  ClassModifiers ClassModifier
+
+ClassModifier: one of
+  Annotation public protected private
+  abstract static final strictfp
+</code></pre></div>    </div>
+
+    <p>The access modifiers <code class="language-plaintext highlighter-rouge">protected</code> and <code class="language-plaintext highlighter-rouge">private</code> (§6.6) pertain only to member
+classes within a directly enclosing class or enum declaration (§8.5). The
+modifier <code class="language-plaintext highlighter-rouge">static</code> pertains only to member classes (§8.5.1), not to top level
+or local or anonymous classes.</p>
+  </li>
+  <li>If two or more (distinct) class modifiers appear in a class declaration, then
+it is customary, though not required, that they appear in the order consistent
+with that shown above in the production for ClassModifier.</li>
+</ul>
+
+<p><strong>Overloaded methods and constructors:</strong></p>
+
+<ul>
+  <li>Overloaded methods are methods with the same name but different method
+parameter lists.</li>
+  <li>Overloaded methods are bound at compile time. Unlike overridden methods
+they’re not bound at runtime.</li>
+  <li>A call to correctly overloaded methods can also fail compilation if the
+compiler is unable to resolve the call to an overloaded method.</li>
+  <li>Overloaded methods might define a different return type or access or
+non-access modifier, but they cannot be defined with <em>only</em> a change in
+their return types or access or non-access modifiers.<sup>[1.1]</sup></li>
+  <li>Overloaded constructors must be defined using different argument lists.</li>
+  <li>Overloaded constructors cannot be defined by <em>just</em> a change in the access
+modifiers.</li>
+  <li>A constructor can call another overloaded constructor by using the keyword
+<code class="language-plaintext highlighter-rouge">this</code>.</li>
+  <li>A constructor cannot invoke another constructor by using its class’s name.</li>
+  <li>If present, the call to another constructor must be <em>the first statement</em>
+in a constructor.</li>
+</ul>
+
+<p><strong>Method overriding and virtual method invocation:</strong></p>
+
+<ul>
+  <li>Whenever you intend to override methods in a derived class, use the
+annotation <code class="language-plaintext highlighter-rouge">@Override</code>. It will warn you if a method cannot be overridden or
+if you’re actually overloading a method rather than overriding it.</li>
+  <li>Overridden methods can define the same or covariant return types.
+<sup>[1.2]</sup></li>
+  <li>A derived class cannot override a base class method to make it <em>less
+accessible</em>.</li>
+  <li>Static methods cannot be overridden. They’re not polymorphic and they are
+bound at compile time.</li>
+  <li>The <code class="language-plaintext highlighter-rouge">instanceof</code> operator must be followed by the name of an interface,
+class, or enum.</li>
+  <li>In a derived class, a static method with the same signature as that of a
+static method in its base class hides the base class method.</li>
+  <li><em>Constructor cannot be overridden</em> because a base class constructor is not
+inherited by a derived class.</li>
+  <li>A method that can be overridden by a derived class is call a <em>virtual method</em>.</li>
+</ul>
+
+<p><sup>[1.1]</sup> Example:</p>
+
+<figure class="highlight"><pre><code class="language-java" data-lang="java"><span class="kd">class</span> <span class="nc">A</span> <span class="o">{</span>
+  <span class="kd">static</span> <span class="kt">int</span> <span class="nf">age</span><span class="o">()</span> <span class="o">{</span> <span class="k">return</span> <span class="mi">0</span><span class="o">;</span> <span class="o">}</span>
+<span class="o">}</span>
+<span class="kd">interface</span> <span class="nc">B</span> <span class="o">{</span>
+  <span class="kt">int</span> <span class="nf">age</span><span class="o">();</span>
+<span class="o">}</span>
+<span class="kd">class</span> <span class="nc">C</span> <span class="kd">extends</span> <span class="no">A</span> <span class="kd">implements</span> <span class="no">B</span> <span class="o">{</span>
+  <span class="c1">// ...</span>
+<span class="o">}</span></code></pre></figure>
+
+<p>Compile failure:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>$ javac A.java
+A.java:7: error: age() in A cannot implement age() in B
+class C extends A implements B {
+^
+  overriding method is static
+1 error
+</code></pre></div></div>
+
+<p><sup>[1.2]</sup> Example: Dog extends animal, and the return type of method
+<code class="language-plaintext highlighter-rouge">getChild()</code> is covariant.</p>
+
+<figure class="highlight"><pre><code class="language-java" data-lang="java"><span class="kd">public</span> <span class="kd">abstract</span> <span class="kd">class</span> <span class="nc">Animal</span> <span class="o">{</span>
+  <span class="kd">protected</span> <span class="kd">abstract</span> <span class="nc">Animal</span> <span class="nf">getChild</span><span class="o">();</span>
+<span class="o">}</span></code></pre></figure>
+
+<figure class="highlight"><pre><code class="language-java" data-lang="java"><span class="kd">public</span> <span class="kd">class</span> <span class="nc">Dog</span> <span class="kd">extends</span> <span class="nc">Animal</span> <span class="o">{</span>
+  <span class="nd">@Override</span>
+  <span class="kd">public</span> <span class="nc">Dog</span> <span class="nf">getChild</span><span class="o">()</span> <span class="o">{</span>
+    <span class="k">return</span> <span class="k">new</span> <span class="nf">Dog</span><span class="o">();</span>
+  <span class="o">}</span>
+<span class="o">}</span></code></pre></figure>
+
+<p>Compilation is successful:</p>
+
+<figure class="highlight"><pre><code class="language-bash" data-lang="bash"><span class="nv">$ </span>javac Animal.java Dog.java <span class="nt">-verbose</span>
+...
+<span class="o">[</span>wrote RegularFileObject[Animal.class]]
+<span class="o">[</span>checking Dog]
+<span class="o">[</span>wrote RegularFileObject[Dog.class]]
+<span class="o">[</span>total 282ms]</code></pre></figure>
+
+<p><strong>Java packages:</strong></p>
+
+<ul>
+  <li>The package and subpackages names are separated using a period.</li>
+  <li>You cannot import classes from a subpackage by using the wildcard character,
+an asterisk (<code class="language-plaintext highlighter-rouge">*</code>), in the <code class="language-plaintext highlighter-rouge">import</code> statement.</li>
+  <li>A class from the default package cannot be used in any named package,
+regardless of whether it’s defined within the same directory or not.</li>
+  <li>An <code class="language-plaintext highlighter-rouge">import</code> statement cannot be placed before a package statement in a class.
+Any attempt to do so will cause the compilation of the class to fail.</li>
+</ul>
+
+<p><strong>Sample questions correction:</strong></p>
+
+<p>Question 1-4: Given that classes <code class="language-plaintext highlighter-rouge">Class1</code> and <code class="language-plaintext highlighter-rouge">Class2</code> exist in separate
+packages and source code files, examine the code and select the correct options.</p>
+
+<figure class="highlight"><pre><code class="language-java" data-lang="java"><span class="kn">package</span> <span class="nn">pack1</span><span class="o">;</span>
+
+<span class="kd">public</span> <span class="kd">class</span> <span class="nc">Class1</span> <span class="o">{</span>
+  <span class="kd">protected</span> <span class="nc">String</span> <span class="n">name</span> <span class="o">=</span> <span class="s">"Base"</span><span class="o">;</span>
+<span class="o">}</span></code></pre></figure>
+
+<figure class="highlight"><pre><code class="language-java" data-lang="java"><span class="kn">package</span> <span class="nn">pack2</span><span class="o">;</span>
+
+<span class="kn">import</span> <span class="nn">pack1.*</span><span class="o">;</span>
+
+<span class="kd">class</span> <span class="nc">Class2</span> <span class="kd">extends</span> <span class="nc">Class1</span> <span class="o">{</span>
+  <span class="nc">Class2</span><span class="o">()</span> <span class="o">{</span>
+    <span class="nc">Class1</span> <span class="n">cls1</span> <span class="o">=</span> <span class="k">new</span> <span class="nc">Class1</span><span class="o">();</span>    <span class="c1">// line 1</span>
+    <span class="n">name</span> <span class="o">=</span> <span class="s">"Derived"</span><span class="o">;</span>              <span class="c1">// line 2</span>
+    <span class="nc">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="n">cls1</span><span class="o">.</span><span class="na">name</span><span class="o">);</span> <span class="c1">// line 3</span>
+  <span class="o">}</span>
+<span class="o">}</span></code></pre></figure>
+
+<p>Class 2 won’t compile because it cannot access the <code class="language-plaintext highlighter-rouge">name</code> variable on line 3.
+The base class <code class="language-plaintext highlighter-rouge">Class1</code> and derived class <code class="language-plaintext highlighter-rouge">Class2</code> are in separate packages, so
+you cannot access protected members of the base class by using reference
+variables.</p>
+
+<p>Question ME-75: What is the result of the following code? (Choose the best
+option.)</p>
+
+<figure class="highlight"><pre><code class="language-java" data-lang="java"><span class="kd">class</span> <span class="nc">Metal</span> <span class="o">{</span>
+  <span class="o">{</span>
+    <span class="k">try</span> <span class="o">{</span>
+      <span class="k">throw</span> <span class="k">new</span> <span class="nf">RuntimeException</span><span class="o">();</span>
+    <span class="o">}</span> <span class="k">finally</span> <span class="o">{</span>
+      <span class="nc">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="s">"finally-"</span><span class="o">);</span>
+    <span class="o">}</span>
+  <span class="o">}</span>
+  <span class="nc">Metal</span><span class="o">()</span> <span class="o">{</span>
+    <span class="nc">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="s">"Metal-"</span><span class="o">);</span>
+  <span class="o">}</span>
+<span class="o">}</span></code></pre></figure>
+
+<p>The compilation will fail, becuase instance initializer of a class must complete
+normally to enable the class to compile. The code in <code class="language-plaintext highlighter-rouge">Metal</code>’s instance
+initializer throws a <code class="language-plaintext highlighter-rouge">RuntimeException</code>, which is not handled. So compilation of
+class <code class="language-plaintext highlighter-rouge">Metal</code> fails with the follwing message:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Metal.java:2: error: initializer must be able to complete normally
+  {
+  ^
+1 error
+</code></pre></div></div>
+
+<h2 id="advanced-class-design">Advanced Class Design</h2>
+
+<p><strong>Abstract classes:</strong></p>
+
+<ul>
+  <li>An abstract class must not necessarily define abstract methods. But if it
+defines even one abstract method, it <em>must</em> be marked as an abstract class.</li>
+  <li>An abstract class cannot be instantiated.</li>
+  <li>An abstract class forces all its non-abstract derived classes to implement the
+incomplete functionality in their own unique manner.</li>
+  <li>If an abstract class is extended by another abstract class, the derived
+abstract class might <em>not</em> implement the abstract methods of its base class.</li>
+  <li>If an abstract class is extended by a concrete class, the derived class <em>must</em>
+implement all the abstract methods of its base class, or it won’t compile.</li>
+  <li>A derived class <em>must</em> call its super class’s constructor (implictly or
+explicitly), irrespective of whether the super class or derived class is an
+abstract class or concrete class.</li>
+  <li>An abstract class cannot define abstract static methods. Because static
+methods belong to a class and not to an object, they aren’t inherited. A
+method that cannot be inherited cannot be implemented. Hence this combination
+is invalid.</li>
+  <li>A static variable defined in a base class is accessible to its derived class.
+Even though derived class does not define the static variable, it can access
+the static variable <em>defined in its base class</em>.</li>
+</ul>
+
+<p><strong>Non-access modifier—static</strong>:</p>
+
+<ul>
+  <li>Static members are also known as <em>class fields</em> or <em>class methods</em> because
+they are said to belong to their class, and not to any instance of that class.</li>
+  <li>A static variable and method cannot access non-static variables and methods of
+a class. But the reverse works: non-static variables and methods can access
+static variables and methods.</li>
+  <li>When you instantiate a derived class,  the derived class instantiates its base
+class. The static initializers execute when a class is loaded in <em>memory</em>, so
+the order of execution of static and instance initializer blocks is as
+follow: base class static init-block, derived class static init-block, base
+class instance init-block, derived class instance init-block.</li>
+</ul>
+
+<p><strong>Non-access modifier—final</strong>:</p>
+
+<ul>
+  <li>An instance final variable can be initialized either with its declaration in
+the initilizer block or in the class’s constructor.</li>
+  <li>A static final variable can be initialized either with its declaration or in
+the class’s static initializer block.</li>
+  <li>If you don’t initialize a final local variable in a method, the compiler won’t
+complain, as long as you don’t use it.</li>
+  <li>The Java compiler considers initialization of a final variable complete <em>only</em>
+if the initialization code will execute in <em>all</em> conditions. If the Java
+compiler cannot be sure of execution of code that assigns a value to your
+final variabl, it will complain (code won’t compile) that you haven’t
+initialized a final variable. If an <code class="language-plaintext highlighter-rouge">if</code> construct uses constant values, the
+Java compiler can predetermine whether the <code class="language-plaintext highlighter-rouge">then</code> or <code class="language-plaintext highlighter-rouge">else</code> blocks will
+execute. In this case, it can predetermine whether these blocks of code will
+execute to initialize a final variable.</li>
+  <li>The initialization of a final veriable defined in an abstract base class must
+complete in the class itself. It <em>connot</em> be deferred to its derived class.</li>
+</ul>
+
+<p><strong>Enumerated types:</strong></p>
+
+<ul>
+  <li>All enums extend the abstract class <code class="language-plaintext highlighter-rouge">java.lang.Enum</code>, defined in Java API.</li>
+  <li>Because a class can extend from only base class, an attempt to make your enum
+extend any other class will fail its compilation.</li>
+  <li>The enum constants are <em>implicit</em> static members.</li>
+  <li>The creation of enum constants happens in a static initializer block, before
+the execution of the rest of the code defined in the <code class="language-plaintext highlighter-rouge">static</code> block.</li>
+  <li>You can define multiple constructors in your enums.</li>
+  <li>Enum constants can define new methods, but these methods cannot be called on
+the enum constant.</li>
+  <li>All the constants of an enum type can be obtained by calling the <em>implicit</em>
+<code class="language-plaintext highlighter-rouge">public static T[] values()</code> method of that type. This array contains the
+enumerated types in natural order. (Probably defined by the private member
+<code class="language-plaintext highlighter-rouge">ordinal</code> of <code class="language-plaintext highlighter-rouge">java.lang.Enum</code>)</li>
+  <li>You can define an enum as a top-level enum or within another class or
+interface.<sup>[2.1]</sup></li>
+  <li>You cannot define an enum local to a method.<sup>[2.2]</sup></li>
+</ul>
+
+<p><sup>[2.1],[2.2]</sup> Example:</p>
+
+<figure class="highlight"><pre><code class="language-java" data-lang="java"><span class="c1">// Top-level</span>
+<span class="kd">enum</span> <span class="nc">Size</span> <span class="o">{</span> <span class="no">S</span><span class="o">,</span> <span class="no">M</span><span class="o">,</span> <span class="no">L</span> <span class="o">}</span>
+
+<span class="c1">// Member of a class</span>
+<span class="kd">class</span> <span class="nc">MyClass</span> <span class="o">{</span>
+  <span class="kd">enum</span> <span class="nc">Size</span> <span class="o">{</span> <span class="no">S</span><span class="o">,</span> <span class="no">M</span><span class="o">,</span> <span class="no">L</span> <span class="o">}</span>
+<span class="o">}</span>
+
+<span class="c1">// Member of an interface</span>
+<span class="kd">interface</span> <span class="nc">MyInterface</span> <span class="o">{</span>
+  <span class="kd">enum</span> <span class="nc">Size</span> <span class="o">{</span> <span class="no">S</span><span class="o">,</span> <span class="no">M</span><span class="o">,</span> <span class="no">L</span> <span class="o">}</span>
+<span class="o">}</span>
+
+<span class="c1">// WON'T compile: inside a method</span>
+<span class="kd">class</span> <span class="nc">MyClass</span> <span class="o">{</span>
+  <span class="kt">void</span> <span class="nf">aMethod</span><span class="o">()</span> <span class="o">{</span>
+    <span class="kd">enum</span> <span class="nc">Size</span> <span class="o">{</span> <span class="no">S</span><span class="o">,</span> <span class="no">M</span><span class="o">,</span> <span class="no">L</span> <span class="o">}</span>
+  <span class="o">}</span>
+<span class="o">}</span></code></pre></figure>
+
+<p><strong>Static nested class:</strong></p>
+
+<ul>
+  <li>This class is not associated with any object of its outer class. Nested within
+its outer class, it’s accessed like any other static member of a class—by
+using the class name of the outer class.</li>
+  <li>The accessibility of the nested static class depends on its access modifier.
+For example, a private static nested class cannot be accessed outside its
+class.</li>
+</ul>
+
+<p><strong>Inner class:</strong></p>
+
+<ul>
+  <li>An object of an <em>inner</em> class shares a special bound with its <em>outer class</em>
+and cannot exist without its instance.</li>
+  <li>An inner class cannot define <em>static methods</em> and non-final static variables.</li>
+  <li>You can create an object of an inner class within an outer class<sup>[4]</sup>
+or outside an outer class<sup>[5]</sup>.</li>
+</ul>
+
+<p><sup>[4]</sup> Inside the outer class, an inner class is instantiated like:</p>
+
+<figure class="highlight"><pre><code class="language-java" data-lang="java"><span class="nc">Inner</span> <span class="n">inner</span> <span class="o">=</span> <span class="k">new</span> <span class="nc">Inner</span><span class="o">();</span></code></pre></figure>
+
+<p><sup>[5]</sup> Outside the outer class, an inner class is instantiated like:</p>
+
+<figure class="highlight"><pre><code class="language-java" data-lang="java"><span class="nc">Outer</span><span class="o">.</span><span class="na">Inner</span> <span class="n">inner</span> <span class="o">=</span> <span class="k">new</span> <span class="nc">Outer</span><span class="o">().</span><span class="na">new</span> <span class="nc">Inner</span><span class="o">();</span></code></pre></figure>
+
+<p>Here’s a complete example:</p>
+
+<figure class="highlight"><pre><code class="language-java" data-lang="java"><span class="kd">public</span> <span class="kd">class</span> <span class="nc">Outer</span> <span class="o">{</span>
+
+  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">print</span><span class="o">()</span> <span class="o">{</span>
+    <span class="nc">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="s">"Outer: "</span> <span class="o">+</span> <span class="k">new</span> <span class="nc">Inner</span><span class="o">());</span>
+  <span class="o">}</span>
+
+  <span class="kd">public</span> <span class="kd">class</span> <span class="nc">Inner</span> <span class="o">{</span>
+    <span class="nd">@Override</span>
+    <span class="kd">public</span> <span class="nc">String</span> <span class="nf">toString</span><span class="o">()</span> <span class="o">{</span>
+      <span class="k">return</span> <span class="s">"Inner"</span><span class="o">;</span>
+    <span class="o">}</span>
+  <span class="o">}</span>
+<span class="o">}</span></code></pre></figure>
+
+<figure class="highlight"><pre><code class="language-java" data-lang="java"><span class="kd">public</span> <span class="kd">class</span> <span class="nc">App</span> <span class="o">{</span>
+
+  <span class="kd">public</span> <span class="kd">static</span> <span class="kt">void</span> <span class="nf">main</span><span class="o">(</span><span class="nc">String</span><span class="o">...</span> <span class="n">args</span><span class="o">)</span> <span class="o">{</span>
+    <span class="nc">Outer</span><span class="o">.</span><span class="na">Inner</span> <span class="n">inner</span> <span class="o">=</span> <span class="k">new</span> <span class="nc">Outer</span><span class="o">().</span><span class="na">new</span> <span class="nc">Inner</span><span class="o">();</span>
+    <span class="nc">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="s">"Outside: "</span> <span class="o">+</span> <span class="n">inner</span><span class="o">);</span>
+    <span class="nc">Outer</span> <span class="n">outer</span> <span class="o">=</span> <span class="k">new</span> <span class="nc">Outer</span><span class="o">();</span>
+    <span class="n">outer</span><span class="o">.</span><span class="na">print</span><span class="o">();</span>
+  <span class="o">}</span>
+<span class="o">}</span></code></pre></figure>
+
+<p>Compile and execute:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>$ javac Outer.java App.java
+$ java App
+Outside: Inner
+Outer: Inner
+</code></pre></div></div>
+
+<p><strong>Anonymous inner classes:</strong></p>
+
+<ul>
+  <li>An anonymous inner class is created when you combine object instance creation
+with inheriting a class or implementing an interface.</li>
+  <li>
+    <p>The following line creates an anonymous inner class that extends <code class="language-plaintext highlighter-rouge">Object</code> and
+assigns it to a reference variable of type <code class="language-plaintext highlighter-rouge">Object</code>:</p>
+
+    <div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Object o = new Object(){};
+</code></pre></div>    </div>
+  </li>
+  <li>When an anonymous inner class is defined within a method, it can access only
+the final variables of the method in which it’s defined. This is to prevent
+reassignment of the variable values by the inner class.</li>
+  <li>Since Java 8, certain variables that are not declared <code class="language-plaintext highlighter-rouge">final</code> are instead
+considered <em>effectively</em> final. See <a href="https://docs.oracle.com/javase/specs/jls/se8/html/jls-4.html#jls-4.12.4">JLS 4.12.4. final Variables</a>
+for more detail.</li>
+</ul>
+
+<p><strong>Method local inner classes:</strong></p>
+
+<ul>
+  <li>Method local inner classes are defined within a static or instance method of a
+class.</li>
+  <li>A method local inner class can define its own constructors, variables, and
+methods by using any of the four access levels—<code class="language-plaintext highlighter-rouge">public</code>, <code class="language-plaintext highlighter-rouge">protected</code>, default,
+and <code class="language-plaintext highlighter-rouge">private</code>.</li>
+  <li>A method local inner class can access all variables and methods of its <em>outer</em>
+class, including its private members and the ones that it inherits from its
+base classes. It can only access the <em>final</em> local variables of the method in
+which it’s defined.</li>
+</ul>
+
+<p><strong>Sample questions correction:</strong></p>
+
+<p>Question 2-13: What is the output of the following code?</p>
+
+<figure class="highlight"><pre><code class="language-java" data-lang="java"><span class="kd">enum</span> <span class="nc">BasicColor</span> <span class="o">{</span>
+  <span class="no">RED</span><span class="o">;</span>
+  <span class="kd">static</span> <span class="o">{</span>
+    <span class="nc">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="s">"Static init"</span><span class="o">);</span>
+  <span class="o">}</span>
+  <span class="o">{</span>
+    <span class="nc">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="s">"Init block"</span><span class="o">);</span>
+  <span class="o">}</span>
+  <span class="nc">BasicColor</span><span class="o">()</span> <span class="o">{</span>
+    <span class="nc">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="s">"Constructor"</span><span class="o">);</span>
+  <span class="o">}</span>
+  <span class="kd">public</span> <span class="kd">static</span> <span class="kt">void</span> <span class="nf">main</span><span class="o">(</span><span class="nc">String</span><span class="o">...</span> <span class="n">args</span><span class="o">)</span> <span class="o">{</span>
+    <span class="nc">BasicColor</span> <span class="n">red</span> <span class="o">=</span> <span class="nc">BasicColor</span><span class="o">.</span><span class="na">RED</span><span class="o">;</span>
+  <span class="o">}</span>
+<span class="o">}</span></code></pre></figure>
+
+<p>Here’s part of the decompiled code. Note that the contents of the default
+constructor and instance initializer blocks are added to the new constructor,
+implicitly defined during the compilation process.</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>final class BasicColor extends Enum
+{
+  private BasicColor(String s, int i)
+  {
+    super(s, i);
+    System.out.println("Init block");
+    System.out.println("Constructor");
+  }
+
+  ...
+
+  static
+  {
+    RED = new BasicColor("RED", 0);
+    $VALUES = (new BasicColor[] {
+      RED
+    });
+    System.out.println("Static init");
+  }
+}
+</code></pre></div></div>
+
+<p>Thus the answer is:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Init block
+Constructor
+Static init
+</code></pre></div></div>
+
+<h2 id="object-oriented-design-principles">Object-Oriented Design Principles</h2>
+
+<p><strong>Interfaces</strong></p>
+
+<ul>
+  <li>The methods of an interface are implicitly abstract and public.</li>
+  <li>The vairables of an interface are implicitly public, static, and final.</li>
+  <li>Because the methods in an interface are implicitly public, if you try to
+assign a weaker access to the implemented method in a class, it won’t compile.</li>
+</ul>
+
+<h2 id="generics-and-collections">Generics and Collections</h2>
+
+<p><strong>Creating generic entities:</strong></p>
+
+<ul>
+  <li>Java’s naming conventions limit the use of <em>single uppercase</em> letters for type
+parameters. Though not recommended, using any valid identifier name for type
+parameters is acceptable code.</li>
+  <li>When a non-generic class extends a generic class, the derived class doesn’t
+define any type parameters but passes arguments to all type parameters of its
+generic base class.</li>
+  <li>A method’s type parameter list is placed just after its access and non-access
+modifiers and before its return type. Because a type parameter could be used
+to define the return type, it should be known before the return type is used.</li>
+  <li>For a bounded type parameter, the bound can be a class, an interface, or an
+enum.</li>
+  <li>For a bounded type parameter, the bound cannot be primitive types or array.</li>
+  <li>All cases use the keyword <code class="language-plaintext highlighter-rouge">extends</code> to specify the bound, even if the bound is
+an interface.</li>
+  <li>Use method <code class="language-plaintext highlighter-rouge">Class#newInstance()</code> can create a new instance of the class
+represented by this <code class="language-plaintext highlighter-rouge">Class</code> object.<sup>[4.1]</sup></li>
+</ul>
+
+<p><sup>[4.1]</sup> Example:</p>
+
+<figure class="highlight"><pre><code class="language-java" data-lang="java"><span class="kd">public</span> <span class="kd">class</span> <span class="nc">App</span> <span class="o">{</span>
+
+  <span class="kd">public</span> <span class="kd">static</span> <span class="kt">void</span> <span class="nf">main</span><span class="o">(</span><span class="nc">String</span><span class="o">...</span> <span class="n">args</span><span class="o">)</span> <span class="kd">throws</span> <span class="nc">Exception</span> <span class="o">{</span>
+    <span class="nc">User</span> <span class="n">u</span> <span class="o">=</span> <span class="n">create</span><span class="o">(</span><span class="nc">User</span><span class="o">.</span><span class="na">class</span><span class="o">);</span>
+    <span class="n">u</span><span class="o">.</span><span class="na">name</span> <span class="o">=</span> <span class="s">"Tom"</span><span class="o">;</span>
+    <span class="nc">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="s">"Hi, "</span> <span class="o">+</span> <span class="n">u</span><span class="o">.</span><span class="na">name</span><span class="o">);</span>
+  <span class="o">}</span>
+
+  <span class="kd">static</span> <span class="o">&lt;</span><span class="no">T</span><span class="o">&gt;</span> <span class="no">T</span> <span class="nf">create</span><span class="o">(</span><span class="nc">Class</span><span class="o">&lt;</span><span class="no">T</span><span class="o">&gt;</span> <span class="n">cls</span><span class="o">)</span> <span class="kd">throws</span> <span class="nc">Exception</span> <span class="o">{</span>
+    <span class="k">return</span> <span class="n">cls</span><span class="o">.</span><span class="na">newInstance</span><span class="o">();</span>
+  <span class="o">}</span>
+
+  <span class="kd">static</span> <span class="kd">class</span> <span class="nc">User</span> <span class="o">{</span>
+    <span class="nc">String</span> <span class="n">name</span><span class="o">;</span>
+  <span class="o">}</span>
+
+<span class="o">}</span></code></pre></figure>
+
+<p>Compile and execution:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>$ javac App.java
+$ java App
+Hi, Tom
+</code></pre></div></div>
+
+<h2 id="string-processing">String Processing</h2>
+
+<p><strong>Regular expressions:</strong></p>
+
+<ul>
+  <li>Regular expressions, or regex, are used to define patterns of datat to be
+found in a stream.</li>
+  <li>Character classes aren’t classes defined in the Java API. The term refers to
+<em>a set of characters</em> that you can enclose within square brackets <code class="language-plaintext highlighter-rouge">[]</code>.</li>
+  <li>You can create a custom character class by enclosing a set of characters
+within square brackets <code class="language-plaintext highlighter-rouge">[]</code>.
+    <ul>
+      <li><code class="language-plaintext highlighter-rouge">[fdn]</code> can be used to find an exact match of f, d, or n.</li>
+      <li><code class="language-plaintext highlighter-rouge">[^fdn]</code> can be used to find a character that does not match either f, d, or
+n.</li>
+      <li><code class="language-plaintext highlighter-rouge">[a-cA-C]</code> can be used to find a exact match of either a, b, c, A, B, or C.</li>
+    </ul>
+  </li>
+  <li>Use predefined character classes:
+    <ul>
+      <li>A dot <code class="language-plaintext highlighter-rouge">.</code> matches any character</li>
+      <li><code class="language-plaintext highlighter-rouge">\d</code> matches any digit: <code class="language-plaintext highlighter-rouge">[0-9]</code></li>
+      <li><code class="language-plaintext highlighter-rouge">\D</code> matches any non-digit: <code class="language-plaintext highlighter-rouge">[^0-9]</code></li>
+      <li><code class="language-plaintext highlighter-rouge">\s</code> matches a whitespace character: spaces, <code class="language-plaintext highlighter-rouge">\t</code> tab, <code class="language-plaintext highlighter-rouge">\n</code> new line, <code class="language-plaintext highlighter-rouge">\x0B</code>
+end of line, <code class="language-plaintext highlighter-rouge">\f</code> form feed, <code class="language-plaintext highlighter-rouge">\r</code> carriage.</li>
+      <li><code class="language-plaintext highlighter-rouge">\S</code> matches a non-whitespace character: <code class="language-plaintext highlighter-rouge">[^\s]</code></li>
+      <li><code class="language-plaintext highlighter-rouge">\w</code> matches a word character: <code class="language-plaintext highlighter-rouge">[a-zA-Z_0-9]</code></li>
+      <li><code class="language-plaintext highlighter-rouge">\W</code> matches a non-word character: <code class="language-plaintext highlighter-rouge">[^\w]</code></li>
+    </ul>
+  </li>
+  <li>Boundary metchers:
+    <ul>
+      <li><code class="language-plaintext highlighter-rouge">\b</code> indicates a word boundary</li>
+      <li><code class="language-plaintext highlighter-rouge">\B</code> indicates a non-word boundary</li>
+      <li><code class="language-plaintext highlighter-rouge">^</code> indicates the beginning of a line</li>
+      <li><code class="language-plaintext highlighter-rouge">$</code> indicates the end of a line</li>
+    </ul>
+  </li>
+  <li>Specify the number of occurrences of a pattern to match in a target value by
+using quantifiers:
+    <ul>
+      <li><code class="language-plaintext highlighter-rouge">X?</code> matches X, once or not at all</li>
+      <li><code class="language-plaintext highlighter-rouge">X*</code> matches X, zero or more times</li>
+      <li><code class="language-plaintext highlighter-rouge">X+</code> matches X, one or more times</li>
+      <li><code class="language-plaintext highlighter-rouge">X{min,max}</code> matches X, which the specified range</li>
+    </ul>
+  </li>
+  <li>Regex in Java supports Unicode, as it matches against the <code class="language-plaintext highlighter-rouge">CharSequence</code>
+objects.</li>
+  <li>Class <code class="language-plaintext highlighter-rouge">Pattern</code> is a compiled representation of a regular expression.
+Instantiate a <code class="language-plaintext highlighter-rouge">Pattern</code> by using its factory method <code class="language-plaintext highlighter-rouge">compile()</code>.
+<sup>[5.1]</sup></li>
+  <li>Class <code class="language-plaintext highlighter-rouge">Matcher</code> is referred to as an engine that scans a target <code class="language-plaintext highlighter-rouge">CharSequence</code>
+for a metching regex pattern. You can create a <code class="language-plaintext highlighter-rouge">Matcher</code> object by calling the
+instance method <code class="language-plaintext highlighter-rouge">Pattern#matcher(CharSequence)</code>.<sup>[5.2]</sup></li>
+</ul>
+
+<p><sup>[5.1],[5.2]</sup> Example:</p>
+
+<figure class="highlight"><pre><code class="language-java" data-lang="java"><span class="kn">import</span> <span class="nn">java.util.regex.Matcher</span><span class="o">;</span>
+<span class="kn">import</span> <span class="nn">java.util.regex.Pattern</span><span class="o">;</span>
+
+<span class="kd">public</span> <span class="kd">class</span> <span class="nc">Regex</span> <span class="o">{</span>
+  <span class="kd">public</span> <span class="kd">static</span> <span class="kt">void</span> <span class="nf">main</span><span class="o">(</span><span class="nc">String</span><span class="o">...</span> <span class="n">args</span><span class="o">)</span> <span class="o">{</span>
+    <span class="nc">Pattern</span> <span class="n">p</span> <span class="o">=</span> <span class="nc">Pattern</span><span class="o">.</span><span class="na">compile</span><span class="o">(</span><span class="s">"\\d{4}-\\d{2}-\\d{2}"</span><span class="o">);</span>
+    <span class="nc">Matcher</span> <span class="n">m</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="na">matcher</span><span class="o">(</span><span class="s">"2018-01-06"</span><span class="o">);</span>
+    <span class="nc">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="s">"2018-01-06: "</span> <span class="o">+</span> <span class="n">m</span><span class="o">.</span><span class="na">matches</span><span class="o">());</span>
+  <span class="o">}</span>
+<span class="o">}</span></code></pre></figure>
+
+<p>Then compile and execute:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>$ javac Regex.java
+$ java Regex
+2018-01-06: true
+</code></pre></div></div>
+
+<p><strong>Search, parse, and build strings:</strong></p>
+
+<p>You can search strings for exact matches of characters or string, at the
+beginning of a string, or starting at a specified position, using <code class="language-plaintext highlighter-rouge">String</code>
+class’s overloaded methods <code class="language-plaintext highlighter-rouge">indexOf</code>.</p>
+
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">indexOf</code> increases position numbers</li>
+  <li><code class="language-plaintext highlighter-rouge">lastIndexOf</code> decreases position numbers</li>
+  <li><code class="language-plaintext highlighter-rouge">indexOf</code> and <code class="language-plaintext highlighter-rouge">lastIndexOf</code> <em>don’t</em> throw a compilation error or runtime
+exception if the search position is negative or greater than the length of
+this string. If no match is found, they return -1.</li>
+  <li><code class="language-plaintext highlighter-rouge">contains</code> searches for an exact match in this string. Becuase <code class="language-plaintext highlighter-rouge">contains</code>
+accepts a method parameter of interface <code class="language-plaintext highlighter-rouge">CharSequence</code>, you can pass to it
+<em>both</em> <code class="language-plaintext highlighter-rouge">String</code> and <code class="language-plaintext highlighter-rouge">StringBuilder</code> object.</li>
+  <li><code class="language-plaintext highlighter-rouge">substring</code> defines 2 overloaded versions, which accept one or two parameters
+for the start and end positions.<sup>[5.3]</sup> While <code class="language-plaintext highlighter-rouge">subSequence()</code> defines
+only one variant, the one that accepts two int method parameters for the start
+and end positions.<sup>[5.4]</sup></li>
+  <li><code class="language-plaintext highlighter-rouge">subSequence</code> is defined in interface <code class="language-plaintext highlighter-rouge">CharSequence</code>, it returns an object of
+type <code class="language-plaintext highlighter-rouge">CharSequence</code>.</li>
+  <li><code class="language-plaintext highlighter-rouge">subSequence</code> and <code class="language-plaintext highlighter-rouge">substring</code> do not include the character at the <em>end</em>
+position in the result <code class="language-plaintext highlighter-rouge">String</code>.</li>
+  <li>The combination of the <code class="language-plaintext highlighter-rouge">replace</code>, <code class="language-plaintext highlighter-rouge">replaceAll</code>, and <code class="language-plaintext highlighter-rouge">replaceFirst</code> overloaded
+methods can be confusing on the exam. Be aware of <code class="language-plaintext highlighter-rouge">StringBuilder</code>, which
+implements <code class="language-plaintext highlighter-rouge">CharSequence</code>:
+    <ul>
+      <li><code class="language-plaintext highlighter-rouge">replace(char oldChar, char newChar)</code></li>
+      <li><code class="language-plaintext highlighter-rouge">replace(CharSequence oldVal, CharSequence newVal)</code></li>
+      <li><code class="language-plaintext highlighter-rouge">replaceAll(String regex, String replacement)</code></li>
+      <li><code class="language-plaintext highlighter-rouge">replaceFirst(String regex, String replacement)</code></li>
+    </ul>
+  </li>
+  <li><code class="language-plaintext highlighter-rouge">Scanner</code> can be used to parse and tokenize strings.</li>
+  <li>If no delimiter specified, a pattern that matches <em>whitespace</em> is used by
+default.</li>
+  <li>Use customized pattern by calling <code class="language-plaintext highlighter-rouge">userDelimiter</code> with a <em>regex</em>.</li>
+  <li><code class="language-plaintext highlighter-rouge">next()</code> returns a string.</li>
+  <li><code class="language-plaintext highlighter-rouge">nextXXX()</code> returns a primitive type <code class="language-plaintext highlighter-rouge">XXX</code>.</li>
+</ul>
+
+<p><sup>[5.3],[5.4]</sup> Example:</p>
+
+<figure class="highlight"><pre><code class="language-java" data-lang="java"><span class="kn">import</span> <span class="nn">static</span> <span class="n">java</span><span class="o">.</span><span class="na">lang</span><span class="o">.</span><span class="na">System</span><span class="o">.</span><span class="na">out</span><span class="o">;</span>
+
+<span class="kd">public</span> <span class="kd">class</span> <span class="nc">Process</span> <span class="o">{</span>
+  <span class="kd">public</span> <span class="kd">static</span> <span class="kt">void</span> <span class="nf">main</span><span class="o">(</span><span class="nc">String</span><span class="o">...</span> <span class="n">args</span><span class="o">)</span> <span class="o">{</span>
+    <span class="nc">String</span> <span class="n">s</span> <span class="o">=</span> <span class="n">args</span><span class="o">[</span><span class="mi">0</span><span class="o">];</span>
+    <span class="n">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="s">"s:      "</span> <span class="o">+</span> <span class="n">s</span><span class="o">);</span>
+    <span class="n">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="s">"s[1:]:  "</span> <span class="o">+</span> <span class="n">s</span><span class="o">.</span><span class="na">substring</span><span class="o">(</span><span class="mi">1</span><span class="o">));</span>
+    <span class="n">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="s">"s[1:2]: "</span> <span class="o">+</span> <span class="n">s</span><span class="o">.</span><span class="na">substring</span><span class="o">(</span><span class="mi">1</span><span class="o">,</span> <span class="mi">2</span><span class="o">));</span>
+    <span class="n">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="s">"s[1:2]: "</span> <span class="o">+</span> <span class="n">s</span><span class="o">.</span><span class="na">subSequence</span><span class="o">(</span><span class="mi">1</span><span class="o">,</span> <span class="mi">2</span><span class="o">));</span>
+  <span class="o">}</span>
+<span class="o">}</span></code></pre></figure>
+
+<p>Compile and execute:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>$ javac Process.java
+$ java Process xPath
+s:      xPath
+s[1:]:  Path
+s[1:2]: P
+s[1:2]: P
+</code></pre></div></div>
+
+<p><strong>Formatting strings:</strong></p>
+
+<ul>
+  <li>
+    <p>The format specifier takes the following form:</p>
+
+    <div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>%[argument_index$][flags][width][.precision]conversion
+</code></pre></div>    </div>
+
+    <p>Width specifier indicates the <em>minimum</em> number of characters to be written to
+the output.</p>
+  </li>
+  <li>A format specification must start with a <code class="language-plaintext highlighter-rouge">%</code> sign and end with a conversion
+character:
+    <ul>
+      <li><code class="language-plaintext highlighter-rouge">b</code> for boolean</li>
+      <li><code class="language-plaintext highlighter-rouge">c</code> for char</li>
+      <li><code class="language-plaintext highlighter-rouge">d</code> for int, byte, short, and long</li>
+      <li><code class="language-plaintext highlighter-rouge">f</code> for float, and double</li>
+      <li><code class="language-plaintext highlighter-rouge">s</code> for string</li>
+    </ul>
+  </li>
+  <li>If the number of arguments <em>exceeds</em> the required count, the extra variables
+are quietly <em>ignored</em> by the compiler and JVM.</li>
+  <li>If the number of arguments falls short, the JVM throws a runtime exception.</li>
+  <li>The <code class="language-plaintext highlighter-rouge">-</code> indicates to left-justify this arguments; you must specify width as
+well. Number flags<sup>[5.5]</sup> (only applicable for numbers, conversion
+chars <code class="language-plaintext highlighter-rouge">d</code> and <code class="language-plaintext highlighter-rouge">f</code>) are as follows:
+    <ul>
+      <li>The <code class="language-plaintext highlighter-rouge">+</code> indicates to include a sign (<code class="language-plaintext highlighter-rouge">+</code>, <code class="language-plaintext highlighter-rouge">-</code>) with this argument.</li>
+      <li><code class="language-plaintext highlighter-rouge">0</code> indicates to pad this arguments with zeros. Must pecify width as well.</li>
+      <li><code class="language-plaintext highlighter-rouge">,</code> indicates to use local-specific grouping separators, e.g. the comma in
+123,456.</li>
+      <li><code class="language-plaintext highlighter-rouge">(</code> is used to enclose negative numbers in parentheses.</li>
+    </ul>
+  </li>
+  <li>The floags <code class="language-plaintext highlighter-rouge">+</code>, <code class="language-plaintext highlighter-rouge">0</code>, <code class="language-plaintext highlighter-rouge">(</code>, and <code class="language-plaintext highlighter-rouge">,</code> can be specified only with the numeric
+specifiers <code class="language-plaintext highlighter-rouge">%d</code> and <code class="language-plaintext highlighter-rouge">%f</code>. Using it with other specifier will raise a runtime
+exception.</li>
+  <li>Format specifier <code class="language-plaintext highlighter-rouge">%b</code>
+    <ul>
+      <li><code class="language-plaintext highlighter-rouge">null</code> -&gt; false</li>
+      <li>Boolean, boolean -&gt; itself</li>
+      <li>Else -&gt; true</li>
+    </ul>
+  </li>
+  <li>Format specifier <code class="language-plaintext highlighter-rouge">%c</code>
+    <ul>
+      <li>Accepted inputs: char, byte, short, int, and their related non-primitive
+types. The result is a unicode character.</li>
+      <li>Refused inputs: boolean, <em>long</em>, float, and their related non-primitive
+types. An <code class="language-plaintext highlighter-rouge">IllegalFormatConversionException</code> will be thrown.</li>
+    </ul>
+  </li>
+  <li>Format specifier <code class="language-plaintext highlighter-rouge">%f</code>
+    <ul>
+      <li>Accepted inputs: float, double, and their related non-primitive types.</li>
+      <li>By default, <code class="language-plaintext highlighter-rouge">%f</code> prints six digits after the decimal.</li>
+    </ul>
+  </li>
+  <li>Format specifier <code class="language-plaintext highlighter-rouge">%d</code>
+    <ul>
+      <li>Accepted inputs: byte, short, int, long and their related non-primitive
+types.</li>
+      <li>Refused inputs: float, double and their related non-primitive types.</li>
+    </ul>
+  </li>
+  <li>Format specifier <code class="language-plaintext highlighter-rouge">%s</code>
+    <ul>
+      <li><code class="language-plaintext highlighter-rouge">%s</code> outputs the value for a primitvie variable. It calles <code class="language-plaintext highlighter-rouge">toString</code> behind
+the screen, and outputs “null” for null values.</li>
+      <li>It accepts all types.</li>
+    </ul>
+  </li>
+</ul>
+
+<p><sup>[5.5]</sup> Example:</p>
+
+<figure class="highlight"><pre><code class="language-java" data-lang="java"><span class="kn">import</span> <span class="nn">static</span> <span class="n">java</span><span class="o">.</span><span class="na">lang</span><span class="o">.</span><span class="na">System</span><span class="o">.</span><span class="na">out</span><span class="o">;</span>
+
+<span class="kd">public</span> <span class="kd">class</span> <span class="nc">NumberFlags</span> <span class="o">{</span>
+  <span class="kd">public</span> <span class="kd">static</span> <span class="kt">void</span> <span class="nf">main</span><span class="o">(</span><span class="nc">String</span><span class="o">...</span> <span class="n">args</span><span class="o">)</span> <span class="o">{</span>
+    <span class="n">out</span><span class="o">.</span><span class="na">printf</span><span class="o">(</span><span class="s">"%+d%n"</span><span class="o">,</span> <span class="mi">1000</span><span class="o">);</span>
+    <span class="n">out</span><span class="o">.</span><span class="na">printf</span><span class="o">(</span><span class="s">"%05d%n"</span><span class="o">,</span> <span class="mi">1000</span><span class="o">);</span>
+    <span class="n">out</span><span class="o">.</span><span class="na">printf</span><span class="o">(</span><span class="s">"%,d%n"</span><span class="o">,</span> <span class="mi">1000</span><span class="o">);</span>
+    <span class="n">out</span><span class="o">.</span><span class="na">printf</span><span class="o">(</span><span class="s">"%(d%n"</span><span class="o">,</span> <span class="o">-</span><span class="mi">1000</span><span class="o">);</span>
+  <span class="o">}</span>
+<span class="o">}</span></code></pre></figure>
+
+<p>Compile and execute:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>$ javac NumberFlags.java
+$ java NumberFlags
++1000
+01000
+1,000
+(1000)
+</code></pre></div></div>
+
+<h2 id="exceptions-and-assertions">Exceptions and Assertions</h2>
+
+<p><strong>Using the throw statement and the throws clause:</strong></p>
+
+<ul>
+  <li>When you use a method that throws a <em>checked</em> exception, you must either
+enclose the code within a <code class="language-plaintext highlighter-rouge">try</code> block or declare it to be rethrown in the
+calling method’s declaration. This is also known as the <em>handle-or-declare</em>
+rule.</li>
+  <li>A method can throw a runtime exception or error irrespective of whether its
+name is included in the <code class="language-plaintext highlighter-rouge">throws</code> clause.</li>
+  <li>A method can throw a <em>subclass</em> of the exception mentioned in its <code class="language-plaintext highlighter-rouge">throws</code>
+clause but not a superclass.</li>
+  <li>A method can declare to throw any type of exception, checked or unchecked,
+even if it doesn’t.</li>
+  <li>But a <code class="language-plaintext highlighter-rouge">try</code> block <em>cannot</em> define a <code class="language-plaintext highlighter-rouge">catch</code> block for a checked exception
+(other than <code class="language-plaintext highlighter-rouge">Exception</code>) if the <code class="language-plaintext highlighter-rouge">try</code> block doesn’t throw that checked
+exception or use a method that declares to throw that checked exception.</li>
+</ul>
+
+<p><strong>Custom exceptions:</strong></p>
+
+<ul>
+  <li>Custom exceptions help you restrict the escalation of implementation-specific
+exceptions to higher layers. For example, <code class="language-plaintext highlighter-rouge">SQLException</code> thrown by data access
+code can be wrapped within a custom exception and rethrown.</li>
+</ul>
+
+<p><strong>Overriding methods that throw exceptions:</strong></p>
+
+<ul>
+  <li>If a method in the base class doesn’t declare to throw any checked exception,
+the overriding method in the derived class <em>cannot</em> throw any checked
+exception.</li>
+  <li>If a method in the base class declares to throw a checked exception, the
+overriding method in the derived class can choose <em>not to</em> declare to throw
+any checked exception.</li>
+  <li>Subclass <em>cannot</em> override a method in the base class, if it declares to throw
+a more generic checked exception.</li>
+  <li>Moethod overriding rules apply only to checked exceptions. They don’t apply to
+runtime exceptions or errors.</li>
+</ul>
+
+<p><strong>try statement with multi-catch and finally clauses:</strong></p>
+
+<ul>
+  <li>The exceptions that you catch in a multi-<code class="language-plaintext highlighter-rouge">catch</code> block cannot share an
+<em>inheritance</em> relationship. If you try to do so, your code won’t compile.</li>
+  <li>Declare more specific exceptions at the top, more general ones at the bottom.</li>
+</ul>
+
+<p><strong>Auto-close resources with try-with-resources statement:</strong></p>
+
+<ul>
+  <li>A try-with-resources block might not be followed by a <code class="language-plaintext highlighter-rouge">catch</code> or a <code class="language-plaintext highlighter-rouge">finally</code>
+block. This is unlike a regular <code class="language-plaintext highlighter-rouge">try</code> block, which must be followed by either
+a <code class="language-plaintext highlighter-rouge">catch</code> or a <code class="language-plaintext highlighter-rouge">finally</code> block.</li>
+  <li>The variables used to refer to resources are implicitly final variables. You
+must <em>declare</em> and <em>initialize</em> resources in the try-with-resources statement.</li>
+  <li>Resources are closed in the reverse order from that in which they were
+initialized. A resource is closed only if it initialized to a non-null value.
+An exception from the closing of one resource does not prevent the closing of
+other resources. Such an exception is <em>suppressed</em> if an exception was thrown
+previously by an initializer, the try block, or the closing of a resource.</li>
+</ul>
+
+<p><strong>Assertions:</strong></p>
+
+<p>An <em>assertion</em> is an assert statement containing a boolean expression. An
+assertion is either <em>enabled</em> or <em>disabled</em>. If the assertion is enabled,
+execution of the assertion causes evaluation of the boolean expression and an
+error is reported if the expression evaluates to <code class="language-plaintext highlighter-rouge">false</code>. If the assertion is
+disabled, execution of the assertion has no effect whatsoever.</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>AssertStatement:
+  assert Expression1 ;
+  assert Expression1 : Expression2 ;
+</code></pre></div></div>
+
+<p>It is a compile-time error if <em>Expression1</em> does not have type <code class="language-plaintext highlighter-rouge">boolean</code> or
+<code class="language-plaintext highlighter-rouge">Boolean</code>. In the second form of the <code class="language-plaintext highlighter-rouge">assert</code> statement, it is a compile-time
+error if <em>Expression2</em> is <code class="language-plaintext highlighter-rouge">void</code>.</p>
+
+<ul>
+  <li>The second form, when the boolean expression evaluates to <code class="language-plaintext highlighter-rouge">false</code>, the JRE
+creates an object of <code class="language-plaintext highlighter-rouge">AssertError</code> by passing the value of the second
+expression to <code class="language-plaintext highlighter-rouge">AssertionError</code>’s constructor.</li>
+  <li>
+    <p>From the Javadoc of <a href="https://docs.oracle.com/javase/8/docs/api/java/lang/AssertionError.html"><code class="language-plaintext highlighter-rouge">AssertionError</code></a>: the seven
+one-argument public constructors provided by this class ensure that the
+assertion error returned by the invoation:</p>
+
+    <div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>new AssertionError(expression)
+</code></pre></div>    </div>
+
+    <p>has as its detail message the <em>string conversion</em> of <em>expression</em>, regardless
+of the type of <em>expression</em>. (JLS §15.18.1.1)</p>
+  </li>
+  <li>Assertions can be enabled or disabled at the launche of a
+program.<sup>[6.1]</sup></li>
+  <li>Use the command-line option <code class="language-plaintext highlighter-rouge">-ea</code> or <code class="language-plaintext highlighter-rouge">-enableassertions</code> to enable assertions</li>
+  <li>Use the command-line option <code class="language-plaintext highlighter-rouge">-da</code> or <code class="language-plaintext highlighter-rouge">-disableassertions</code> to disable
+assertions</li>
+  <li>A generalized <code class="language-plaintext highlighter-rouge">-da</code> switch (no assertions enabled) corresponds to the default
+JRE behavior.</li>
+</ul>
+
+<p><sup>[6.1]</sup> Example:</p>
+
+<figure class="highlight"><pre><code class="language-java" data-lang="java"><span class="kd">public</span> <span class="kd">class</span> <span class="nc">App</span> <span class="o">{</span>
+  <span class="kd">private</span> <span class="kd">static</span> <span class="kt">boolean</span> <span class="n">isHappy</span><span class="o">;</span>
+
+  <span class="kd">public</span> <span class="kd">static</span> <span class="kt">void</span> <span class="nf">main</span><span class="o">(</span><span class="nc">String</span><span class="o">...</span> <span class="n">args</span><span class="o">)</span> <span class="o">{</span>
+    <span class="k">assert</span> <span class="n">isHappy</span> <span class="o">:</span> <span class="s">"You should be happy :)"</span><span class="o">;</span>
+    <span class="nc">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="s">"Finished."</span><span class="o">);</span>
+  <span class="o">}</span>
+<span class="o">}</span></code></pre></figure>
+
+<p>Compile and execute:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>$ javac App.java
+$ java App
+Finished.
+$ java -da App
+Finished.
+$ java -ea App
+Exception in thread "main" java.lang.AssertionError: You should be happy :)
+	at App.main(App.java:5)
+</code></pre></div></div>
+
+<h2 id="java-file-io">Java File IO</h2>
+
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">RandomAccessFile#readLine()</code> successively reads bytes from the file, starting
+at the current file pointer, until it reaches a line terminator or the end of
+the file.</li>
+  <li><code class="language-plaintext highlighter-rouge">FileInputStream</code> accepts <code class="language-plaintext highlighter-rouge">File</code> as constructor input parameter.</li>
+  <li><code class="language-plaintext highlighter-rouge">FileInputStream</code> accepts <code class="language-plaintext highlighter-rouge">String</code> as constructor input parameter.</li>
+  <li><code class="language-plaintext highlighter-rouge">BufferedInputStream</code> accepts <code class="language-plaintext highlighter-rouge">InputStream</code> as constructor input parameter.</li>
+  <li>Concatenating int and <code class="language-plaintext highlighter-rouge">StringBuilder</code> <em>fails</em> to compile. E.g.
+<code class="language-plaintext highlighter-rouge">String s = 1 + sb;</code>. Although using the additive operator for concatenation
+is implemented by invoking the append method on the <code class="language-plaintext highlighter-rouge">StringBuilder</code> or
+<code class="language-plaintext highlighter-rouge">StringBuffer</code> class, this operator is not supported for the <code class="language-plaintext highlighter-rouge">StringBuilder</code>
+or <code class="language-plaintext highlighter-rouge">StringBuffer</code> operands.</li>
+  <li><code class="language-plaintext highlighter-rouge">InputStream#read()</code> returns the next byte of data, or <code class="language-plaintext highlighter-rouge">-1</code> if the end of the
+stream is reached.</li>
+  <li><code class="language-plaintext highlighter-rouge">InputStream#skip()</code> skips over and discards <em>n</em> bytes of data from this input
+stream.</li>
+</ul>
+
+<h2 id="building-database-applications-with-jdbc">Building Database Applications with JDBC</h2>
+
+<p>JDBC 4.0 and its later version support automatic loading and registration of all
+JDBC drivers accessible via an application’s classpath. For all earlier versions
+of JDBC, you must manually load the JDBC drivers using <code class="language-plaintext highlighter-rouge">Class.forName()</code>, before
+you can access the driver.</p>
+
+<figure class="highlight"><pre><code class="language-java" data-lang="java"><span class="c1">// JDBC 4.0+</span>
+<span class="nc">DriverManager</span><span class="o">.</span><span class="na">getConnection</span><span class="o">(</span><span class="s">"jdbc:h2:mem:test"</span><span class="o">);</span></code></pre></figure>
+
+<p><strong>JDBC transactions:</strong></p>
+
+<ul>
+  <li>When connection’s auto-commit mode is changed <em>during</em> a transaction, the
+transaction is committed. So when auto-commit is enabled, all the “pending”
+changes in the current transaction are commited.</li>
+</ul>
+
+<h2 id="threads">Threads</h2>
+
+<p><strong>Create and use threads:</strong></p>
+
+<ul>
+  <li>Implementation of Java threads is JVM-specific.</li>
+  <li>To create your own thread objects using class <code class="language-plaintext highlighter-rouge">Thread</code>, you must extend it and
+override its method <code class="language-plaintext highlighter-rouge">run()</code>.</li>
+  <li>When you call <code class="language-plaintext highlighter-rouge">start()</code> on a <code class="language-plaintext highlighter-rouge">Thread</code> instance, it creates a new thread of
+execution. When a new thread of execution starts, it will execute the code
+defined in the thread instance’s method <code class="language-plaintext highlighter-rouge">run()</code>. Method <code class="language-plaintext highlighter-rouge">start()</code> will trigger
+the creation of a new thread of execution, allocating resources to it.</li>
+  <li>When you create a thread class by extending class <code class="language-plaintext highlighter-rouge">Thread</code>, you <em>lose</em> the
+fexibility of inheriting any other class.</li>
+  <li>When you implement the <code class="language-plaintext highlighter-rouge">Runnable</code> interface, you must implement its method
+<code class="language-plaintext highlighter-rouge">run()</code>.</li>
+  <li>The <code class="language-plaintext highlighter-rouge">Thread</code> constructor accepts a <code class="language-plaintext highlighter-rouge">Runnable</code> object. A <code class="language-plaintext highlighter-rouge">Thread</code> instance
+stores a reference to a <code class="language-plaintext highlighter-rouge">Runnable</code> object and uses it when you start its
+execution (by calling <code class="language-plaintext highlighter-rouge">start()</code>).</li>
+  <li>You <em>cannot</em> guarantee that a thread with a higher priority will always
+execute before a thread with a lower priority.</li>
+</ul>
+
+<p><strong>Thread lifecycle:</strong></p>
+
+<p align="center">
+  <img src="https://mincong.io/assets/20180106-thread-states.png" alt="Thread states in Java" style="max-height: 310px" />
+</p>
+
+<ul>
+  <li>Thread states: new, runnable, wait, timed, timed-waiting, blocked, or
+terminated.</li>
+  <li>Calling <code class="language-plaintext highlighter-rouge">start()</code> on a new thread instance implicitly calls its method
+<code class="language-plaintext highlighter-rouge">run()</code>, which transitions its state from “new” to “ready”.</li>
+  <li>A running thread might enter the blocked state when it’s waiting for other
+system resources like network connections or to acquire an object lock to
+execute a synchronized method or code block. Depending on whether the thread
+is able to acquire the monitor lock or resources, it returns back to the ready
+state.</li>
+</ul>
+
+<p><strong>Methods of class Thread:</strong></p>
+
+<ul>
+  <li>Calling <code class="language-plaintext highlighter-rouge">run()</code> on a <code class="language-plaintext highlighter-rouge">Thread</code> instance doesn’t start a new thread of
+execution. The <code class="language-plaintext highlighter-rouge">run()</code> continues to execute in the same thread.</li>
+  <li>Method <code class="language-plaintext highlighter-rouge">yield()</code> makes the currently executing thread pause its execution and
+give up its current use of the processor. But it only acts as a hint to the
+scheduler. The scheduler might also ignore it.</li>
+  <li>A thread that’s suspended due to a call to <code class="language-plaintext highlighter-rouge">sleep()</code> doesn’t lose ownership of
+any monitors.</li>
+</ul>
+
+<p><strong>Protect shared data:</strong></p>
+
+<ul>
+  <li>A simple statement like incrementing a variable value might involve multiple
+steps like loading of the variable value from memory to registers (working
+space), incrementing the value, and reloading the new value in memory.</li>
+  <li>When multiple threads execute this seemingly atomic statement, they might
+interleave, resulting in incorrect variable values.</li>
+  <li>Thread safety is about safe-guarding your shared data that might be accessible
+to multiple threads.</li>
+  <li>To execute synchronized statements, a thread must acquire a lock on an object
+monitor. For instance methods an implicit lock is acquired on the object on
+which it’s called. For synchronized statements, you can specify an object to
+acquire a lock on.</li>
+  <li>For instance synchronized methods, a thread locks the instance’s monitor</li>
+  <li>For static synchronized methods, a thread locks the <code class="language-plaintext highlighter-rouge">Class</code> object’s
+monitor.<sup>[10.1]</sup></li>
+  <li>A thread releases the lock on the object monitor once it exits the
+synchronized statement block due to successful completion or an exception.</li>
+  <li>Immutable objects are thread-safe, because they cannot be modified.</li>
+  <li>Using <code class="language-plaintext highlighter-rouge">valatile</code> ensures objects are accessed from the main memory, as opposed
+to storing its copy in the thread’s cache memory. It prevents data consistency
+problem caused by local copy.</li>
+</ul>
+
+<p><sup>[10.1]</sup> Example:</p>
+
+<figure class="highlight"><pre><code class="language-java" data-lang="java"><span class="kd">public</span> <span class="kd">class</span> <span class="nc">MultithreadClass</span> <span class="o">{</span>
+  <span class="kd">public</span> <span class="kd">static</span> <span class="kd">synchronized</span> <span class="kt">void</span> <span class="nf">foo</span><span class="o">(</span><span class="kt">byte</span><span class="o">[]</span> <span class="n">data</span><span class="o">)</span> <span class="o">{</span>
+    <span class="c1">// ...</span>
+  <span class="o">}</span>
+  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">bar</span><span class="o">(</span><span class="kt">byte</span><span class="o">[]</span> <span class="n">data</span><span class="o">)</span> <span class="o">{</span>
+    <span class="kd">synchronized</span><span class="o">(</span><span class="nc">MultithreadClass</span><span class="o">.</span><span class="na">class</span><span class="o">)</span> <span class="o">{</span>
+    <span class="c1">// ...</span>
+  <span class="o">}</span>
+<span class="o">}</span></code></pre></figure>
+
+<p><strong>Identify and fix code in a multi-threaded environment:</strong></p>
+
+<ul>
+  <li>Local variables, method params, and exception handler params are always safe.</li>
+  <li>Class and instance variables might not always be safe.</li>
+  <li>Use <code class="language-plaintext highlighter-rouge">wait()</code>, <code class="language-plaintext highlighter-rouge">notify()</code>, and <code class="language-plaintext highlighter-rouge">notifyAll()</code> for inter-thread notification.</li>
+  <li>
+    <p>To call <code class="language-plaintext highlighter-rouge">wait()</code> or <code class="language-plaintext highlighter-rouge">notify()</code> a thread <em>must</em> own the object’s monitor lock.
+So calls to these methods should be placed within <em>synchronized</em> methods or
+blocks or else an <code class="language-plaintext highlighter-rouge">IllegalMonitorStateException</code> will be thrown by the JVM.</p>
+
+    <p><img src="https://mincong.io/assets/20180106-java-monitor.gif" alt="Java Thread Monitor" style="max-height: 300px" /></p>
+  </li>
+  <li>A thread can starve to be scheduled when it’s waiting to acquire a lock on an
+object monitor that has been acquired by another thread that usually takes
+long to execute and is invoked frequently.</li>
+  <li>Java language uses <em>“happens-before”</em> relationship, which is when one task is
+guaranteed to happen before another.</li>
+  <li>The execution of <code class="language-plaintext highlighter-rouge">start()</code> happens-before any action in a thread is started.</li>
+  <li>When code is defined in a sequence, step 1 happens-before step 2.</li>
+  <li>Unlocking of an object monitor heppens-before any other thread acquires a
+lock on it.</li>
+  <li>A write to a volatile field happens-before every subsequent read of that
+field.</li>
+  <li>All actions in a thread happens-before any other thread returns from a join on
+that thread.</li>
+</ul>
+
+<p><strong>Miscellaneous:</strong></p>
+
+<ul>
+  <li>Livelock occurs when two or more threads are so busy responding to each other
+that they are unable to complete their tasks. Technically, these threads are
+<em>running</em> and not <em>waiting</em>, but the locking mechanism consumes their
+execution.</li>
+  <li>Starvation occurs when one or more threads access a shared resource so
+frequently that other threads are unable to gain needed access. Those threads
+with access to the shared resource are not waiting.</li>
+  <li>3 methods affect the frequency and/or duration of a running thread. They’re
+<code class="language-plaintext highlighter-rouge">setDaemon</code>, <code class="language-plaintext highlighter-rouge">setPriority</code>, and <code class="language-plaintext highlighter-rouge">yield</code>.</li>
+  <li>The <code class="language-plaintext highlighter-rouge">setPriority</code> method indicates the relative likelihood and frequency that
+a thread will be given a time slice to execute. Possible values: max, norm, or
+min.</li>
+  <li>The <code class="language-plaintext highlighter-rouge">yield</code> method will cause the current thread to give up its time slice, so
+that another thread can execute.</li>
+  <li>If true is specified for <code class="language-plaintext highlighter-rouge">setDaemon</code>, then the JVM may exit before the thread
+terminates. The JVM exits only when all non-daemon threads terminate.</li>
+  <li><code class="language-plaintext highlighter-rouge">java.util.ConcurrentModificationException</code> can be thrown by threads when
+modifying <code class="language-plaintext highlighter-rouge">ArrayList</code> which is not thread-safe. Use the thread-safe variant of
+<code class="language-plaintext highlighter-rouge">ArrayList</code>: <code class="language-plaintext highlighter-rouge">CopyOnWriteArrayList</code> is a good alternative.</li>
+  <li><code class="language-plaintext highlighter-rouge">ThreadLocalRandom</code> can be used to create random numbers in a multi-threaded
+application with the least amount of contention and best performance</li>
+</ul>
+
+<h2 id="concurrency">Concurrency</h2>
+
+<p><strong>Locks:</strong></p>
+
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">Lock</code> and <code class="language-plaintext highlighter-rouge">ReadWriteLock</code> are interface.</li>
+  <li><code class="language-plaintext highlighter-rouge">ReentrantLock</code> and <code class="language-plaintext highlighter-rouge">ReentrantReadWriteLock</code> are concrete classes.</li>
+  <li><code class="language-plaintext highlighter-rouge">Lock</code> objects offer multiple advantages over the implicit locking of an
+object’s monitor. Unlike an implicit lock, a thread can use explicit lock
+objects to wait to acquire a lock until a time duration elapses.</li>
+  <li>Method <code class="language-plaintext highlighter-rouge">lock()</code> acquires a lock on a <code class="language-plaintext highlighter-rouge">Lock</code> object. If the lock is not
+available, it waits until the lock can be acquired.</li>
+  <li>Call <code class="language-plaintext highlighter-rouge">unlock</code> on a <code class="language-plaintext highlighter-rouge">Lock</code> object to release its lock when you no longer need
+it.</li>
+  <li>The <code class="language-plaintext highlighter-rouge">ReadWriteLock</code> interface doesn’t extend <code class="language-plaintext highlighter-rouge">Lock</code> or any other interface.</li>
+</ul>
+
+<p><strong>Parallel fork/join framework:</strong></p>
+
+<ul>
+  <li>Method <code class="language-plaintext highlighter-rouge">compute()</code> determines whether the task is small enough to be executed
+or if it needs to be divided into multiple tasks.</li>
+  <li>If the task needs to be split, a new <code class="language-plaintext highlighter-rouge">RecursiveAction</code> or <code class="language-plaintext highlighter-rouge">RecursiveTask</code>
+object is created, calling <code class="language-plaintext highlighter-rouge">fork</code> on it.</li>
+  <li>Calling <code class="language-plaintext highlighter-rouge">join</code> on these tasks returns their result.</li>
+</ul>
+
+<h2 id="localization">Localization</h2>
+
+<p><strong>Internationalization and localization:</strong></p>
+
+<ul>
+  <li>Class <code class="language-plaintext highlighter-rouge">Locale</code> does not itself provide any moethod to format the numbers,
+dates or currencies. You use <code class="language-plaintext highlighter-rouge">Locale</code> objects to pass locale-specific
+information to other classes like <code class="language-plaintext highlighter-rouge">NumberFormat</code> or <code class="language-plaintext highlighter-rouge">DateFormat</code> to format
+data.</li>
+  <li>You can create and access objects of class <code class="language-plaintext highlighter-rouge">Locale</code> by using constructors,
+methods, constants, and builder.</li>
+  <li>
+    <p>Overloaded constructors of <code class="language-plaintext highlighter-rouge">Locale</code></p>
+
+    <div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Locale(String language)
+Locale(String language, String country)
+Locale(String language, String country, String variant)
+</code></pre></div>    </div>
+  </li>
+  <li>Variant is a vendor- or browser-specific code, such as WIN for Windows and MAC
+for Macintosh.</li>
+  <li>Language is the most important parameter that you pass to a <code class="language-plaintext highlighter-rouge">Locale</code> object.</li>
+  <li>You can access the current value of a JVM’s default locale by using method
+<code class="language-plaintext highlighter-rouge">Locale#getDefault</code>.</li>
+</ul>
+
+<p><strong>Resource bundles:</strong></p>
+
+<ul>
+  <li>
+    <p>An abstract class <code class="language-plaintext highlighter-rouge">ResourceBundle</code> represents locale-specific resources.</p>
+
+    <div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>ResourceBundle r = ResourceBundle.getBundle("i18n.foo", Locale.FRANCE);
+</code></pre></div>    </div>
+  </li>
+  <li>You can call methods <code class="language-plaintext highlighter-rouge">getString()</code>, <code class="language-plaintext highlighter-rouge">getObject()</code>, <code class="language-plaintext highlighter-rouge">keySet()</code>, <code class="language-plaintext highlighter-rouge">getKeys()</code>,
+and <code class="language-plaintext highlighter-rouge">getStringArray()</code> from class <code class="language-plaintext highlighter-rouge">ResourceBundle</code> to access its keys and
+values.</li>
+  <li>
+    <p>The order in which Java searches for a matching:</p>
+
+    <div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>bundle_localeLang_localeCountry_localeVariant
+bundle_localeLang_localeCountry
+bundle_localeLang
+bundle_defaultLang_defaultCountry_defaultVariant
+bundle_defaultLang_defaultCountry
+bundle_defaultLang
+bundle
+</code></pre></div>    </div>
+  </li>
+  <li>If there’s no matching resource bundle for the target language, neither a
+default resource bundle, then the application throws a
+<code class="language-plaintext highlighter-rouge">MissingResourceException</code> at runtime.</li>
+</ul>
+
+<p><strong>Formatting dates, numbers, and currencies for locales:</strong></p>
+
+<ul>
+  <li>
+    <p>Format currency</p>
+
+    <div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>NumberFormat numberFormat = NumberFormat.getCurrencyInstance(Locale.FRANCE);
+assertThat(numberFormat.format(10000L)).isEqualTo("10 000,00 €");
+</code></pre></div>    </div>
+  </li>
+  <li>
+    <p>Format date using <code class="language-plaintext highlighter-rouge">DateFormat</code></p>
+
+    <div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>DateFormat dateFormat = DateFormat.getDateInstance(DateFormat.MEDIUM, Locale.US);
+assertThat(dateFormat.format(date)).isEqualTo("Nov 26, 2017");
+</code></pre></div>    </div>
+  </li>
+  <li>
+    <p>Format date using <code class="language-plaintext highlighter-rouge">SimpleDateFormat</code></p>
+
+    <div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>SimpleDateFormat iso = new SimpleDateFormat("yyyy-MM-dd'T'hh:mm:ss.SSSZ");
+assertThat(iso.format(date)).isEqualTo("2017-11-26T10:15:49.000+0000");
+</code></pre></div>    </div>
+  </li>
+  <li>
+    <p>Create a <code class="language-plaintext highlighter-rouge">Calendar</code>:</p>
+
+    <div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>private static Calendar newCalendar() {
+  Calendar calendar = Calendar.getInstance(Locale.US);
+  calendar.set(2017, Calendar.NOVEMBER, 26, 10, 15, 49);
+  calendar.set(Calendar.MILLISECOND, 0);
+  calendar.setTimeZone(TimeZone.getTimeZone("UTC"));
+  return calendar;
+}
+</code></pre></div>    </div>
+  </li>
+</ul>
+
+<h2 id="frequently-asked-java-api">Frequently Asked Java API</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th style="text-align: left">Method</th>
+      <th style="text-align: center">Return Type</th>
+      <th style="text-align: left">Checked Exception</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td style="text-align: left"><code class="language-plaintext highlighter-rouge">Thread#sleep()</code></td>
+      <td style="text-align: center">void</td>
+      <td style="text-align: left"><code class="language-plaintext highlighter-rouge">InterruptedException</code></td>
+    </tr>
+    <tr>
+      <td style="text-align: left"><code class="language-plaintext highlighter-rouge">Runnable#run()</code></td>
+      <td style="text-align: center">void</td>
+      <td style="text-align: left">-</td>
+    </tr>
+    <tr>
+      <td style="text-align: left"><code class="language-plaintext highlighter-rouge">Callable#call()</code></td>
+      <td style="text-align: center">V</td>
+      <td style="text-align: left"><code class="language-plaintext highlighter-rouge">Exception</code></td>
+    </tr>
+    <tr>
+      <td style="text-align: left"><code class="language-plaintext highlighter-rouge">RecursiveAction#compute()</code></td>
+      <td style="text-align: center">void</td>
+      <td style="text-align: left">-</td>
+    </tr>
+    <tr>
+      <td style="text-align: left"><code class="language-plaintext highlighter-rouge">RecursiveTask#compute()</code></td>
+      <td style="text-align: center">V</td>
+      <td style="text-align: left">-</td>
+    </tr>
+    <tr>
+      <td style="text-align: left"><code class="language-plaintext highlighter-rouge">Predicate#test(T)</code></td>
+      <td style="text-align: center">boolean</td>
+      <td style="text-align: left">-</td>
+    </tr>
+    <tr>
+      <td style="text-align: left"><code class="language-plaintext highlighter-rouge">Consumer#accept(T)</code></td>
+      <td style="text-align: center">void</td>
+      <td style="text-align: left">-</td>
+    </tr>
+    <tr>
+      <td style="text-align: left"><code class="language-plaintext highlighter-rouge">Supplier#get()</code></td>
+      <td style="text-align: center">T</td>
+      <td style="text-align: left">-</td>
+    </tr>
+    <tr>
+      <td style="text-align: left"><code class="language-plaintext highlighter-rouge">Function#apply(T)</code></td>
+      <td style="text-align: center">R</td>
+      <td style="text-align: left">-</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2 id="tricky-points">Tricky points</h2>
+
+<p>Some tricky points that can happen in OCP exam.</p>
+
+<ul>
+  <li>The method name can be mis-spelled. For example, <code class="language-plaintext highlighter-rouge">hashcode()</code> is <em>not</em> the
+correct method for providing a hash-code in Java. The correct one is
+camel-case: <code class="language-plaintext highlighter-rouge">hashCode()</code>.</li>
+  <li>The default locale defined in JVM might not be <code class="language-plaintext highlighter-rouge">Locale.US</code>.</li>
+  <li>Be careful whether the method output is assigned to a variable, e.g.
+<code class="language-plaintext highlighter-rouge">String#replaceAll(String, String)</code> returns another string.</li>
+</ul>
+
+<h2 id="references">References</h2>
+
+<ul>
+  <li><a href="https://coderanch.com/t/616837/certification/state">CodeRanch - The new state</a></li>
+  <li><a href="https://www.artima.com/insidejvm/ed2/threadsynch.html">artima - Thread synchronization</a></li>
+</ul>
+
+</div><section class="article__sharing d-print-none"></section><div class="d-print-none"><footer class="article__footer"><meta itemprop="dateModified" content="2018-01-03T19:37:53+01:00"><!-- start custom article footer snippet -->
+
+<!-- end custom article footer snippet -->
+<div class="article__subscribe"><div class="subscribe">
+  <i class="fas fa-rss"></i>
+  <a type="application/rss+xml" href="/feed.xml">Subscribe</a>
+</div></div><div class="article__license"><div class="license">
+    <p>This work is licensed under a <a itemprop="license" rel="license" href="https://creativecommons.org/licenses/by/4.0/">Attribution 4.0 International</a> license.
+      <a rel="license" href="https://creativecommons.org/licenses/by/4.0/">
+        <img alt="Attribution 4.0 International" src="https://i.creativecommons.org/l/by/4.0/88x31.png" />
+      </a>
+    </p>
+  </div></div></footer>
+<div class="article__section-navigator clearfix"><div class="previous"><span>PREVIOUS</span><a href="/2017/12/09/sonar-integration-with-maven/">Sonar Integration with Maven</a></div><div class="next"><span>NEXT</span><a href="/2018/01/29/learning-gwt-with-maven/">Learning GWT with Maven</a></div></div></div>
+
+</div>
+
+<script>(function() {
+  var SOURCES = window.TEXT_VARIABLES.sources;
+  window.Lazyload.js(SOURCES.jquery, function() {
+    $(function() {
+      var $this ,$scroll;
+      var $articleContent = $('.js-article-content');
+      var hasSidebar = $('.js-page-root').hasClass('layout--page--sidebar');
+      var scroll = hasSidebar ? '.js-page-main' : 'html, body';
+      $scroll = $(scroll);
+
+      $articleContent.find('.highlight').each(function() {
+        $this = $(this);
+        $this.attr('data-lang', $this.find('code').attr('data-lang'));
+      });
+      $articleContent.find('h1[id], h2[id], h3[id], h4[id], h5[id], h6[id]').each(function() {
+        $this = $(this);
+        $this.append($('<a class="anchor d-print-none" aria-hidden="true"></a>').html('<i class="fas fa-anchor"></i>'));
+      });
+      $articleContent.on('click', '.anchor', function() {
+        $scroll.scrollToAnchor('#' + $(this).parent().attr('id'), 400);
+      });
+    });
+  });
+})();
+</script>
+</div><section class="page__comments d-print-none"><div id="disqus_thread"></div>
+  <script>
+  /**
+  *  RECOMMENDED CONFIGURATION VARIABLES: EDIT AND UNCOMMENT THE SECTION BELOW TO INSERT DYNAMIC VALUES FROM YOUR PLATFORM OR CMS.
+  *  LEARN WHY DEFINING THESE VARIABLES IS IMPORTANT: https://disqus.com/admin/universalcode/#configuration-variables*/
+  var disqus_config = function () {
+    this.page.url = 'https://mincong.io/2018/01/03/ocp-java-8-review-notes/';
+    this.page.identifier = '/2018/01/03/ocp-java-8-review-notes';
+  };
+  (function() { // DON'T EDIT BELOW THIS LINE
+    var d = document, s = d.createElement('script');
+    s.src = 'https://mincong-h.disqus.com/embed.js';
+    s.setAttribute('data-timestamp', +new Date());
+    (d.head || d.body).appendChild(s);
+  })();
+  </script>
+  <noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript></section></article><!-- start custom main bottom snippet -->
+
+<!-- end custom main bottom snippet -->
+</div>
+            </div></div></div><div class="page__footer d-print-none">
+<footer class="footer py-4 js-page-footer">
+  <div class="main"><div itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Mincong Huang"><meta itemprop="url" content="/"><meta itemprop="description" content="I am an amazing person."><div class="footer__author-links"><div class="author-links">
+  <ul class="menu menu--nowrap menu--inline"><li title="Send me an Email.">
+      <a class="button button--circle mail-button" itemprop="email" href="mailto:mincong.h@gmail.com" target="_blank">
+        <i class="fas fa-envelope"></i>
+      </a><li title="Follow me on Twitter.">
+        <a class="button button--circle twitter-button" itemprop="sameAs" href="https://twitter.com/mincong_h" target="_blank">
+          <div class="icon"><svg fill="#000000" width="24px" height="24px" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg">
+  <path d="M1024.032 194.432c-37.664 16.704-78.176 28-120.672 33.088 43.36-26.016 76.672-67.168 92.384-116.224-40.608 24.064-85.568 41.568-133.408 50.976-38.336-40.832-92.928-66.336-153.344-66.336-116.032 0-210.08 94.048-210.08 210.08 0 16.48 1.856 32.512 5.44 47.872-174.592-8.768-329.408-92.416-433.024-219.52-18.08 31.04-28.448 67.104-28.448 105.632 0 72.896 37.088 137.184 93.472 174.88-34.432-1.088-66.816-10.528-95.168-26.272-0.032 0.864-0.032 1.76-0.032 2.656 0 101.792 72.416 186.688 168.512 205.984-17.632 4.8-36.192 7.36-55.36 7.36-13.536 0-26.688-1.312-39.52-3.776 26.72 83.456 104.32 144.192 196.256 145.888-71.904 56.352-162.496 89.92-260.928 89.92-16.96 0-33.664-0.992-50.112-2.944 92.96 59.616 203.392 94.4 322.048 94.4 386.432 0 597.728-320.128 597.728-597.76 0-9.12-0.192-18.176-0.608-27.168 41.056-29.632 76.672-66.624 104.832-108.736z" />
+</svg>
+</div>
+        </a>
+      </li><li title="Follow me on Linkedin.">
+        <a class="button button--circle linkedin-button" itemprop="sameAs" href="https://www.linkedin.com/in/mincong-huang" target="_blank">
+          <div class="icon"><svg fill="#000000" width="24px" height="24px" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg">
+  <path d="M260.096 155.648c0 27.307008-9.899008 50.516992-29.696 69.632-19.796992 19.115008-45.396992 28.672-76.8 28.672-30.036992 0-54.612992-9.556992-73.728-28.672-19.115008-19.115008-28.672-42.324992-28.672-69.632 0-28.672 9.556992-52.224 28.672-70.656 19.115008-18.432 44.372992-27.648 75.776-27.648 31.403008 0 56.32 9.216 74.752 27.648 18.432 18.432 28.331008 41.984 29.696 70.656 0 0 0 0 0 0m-202.752 808.96c0 0 0-632.832 0-632.832 0 0 196.608 0 196.608 0 0 0 0 632.832 0 632.832 0 0-196.608 0-196.608 0 0 0 0 0 0 0m313.344-430.08c0-58.708992-1.364992-126.292992-4.096-202.752 0 0 169.984 0 169.984 0 0 0 10.24 88.064 10.24 88.064 0 0 4.096 0 4.096 0 40.96-68.267008 105.812992-102.4 194.56-102.4 68.267008 0 123.220992 22.868992 164.864 68.608 41.643008 45.739008 62.464 113.664 62.464 203.776 0 0 0 374.784 0 374.784 0 0-196.608 0-196.608 0 0 0 0-350.208 0-350.208 0-91.476992-33.451008-137.216-100.352-137.216-47.787008 0-81.236992 24.576-100.352 73.728-4.096 8.192-6.144 24.576-6.144 49.152 0 0 0 364.544 0 364.544 0 0-198.656 0-198.656 0 0 0 0-430.08 0-430.08 0 0 0 0 0 0" />
+</svg>
+</div>
+        </a>
+      </li><li title="Follow me on Github.">
+        <a class="button button--circle github-button" itemprop="sameAs" href="https://github.com/mincong-h" target="_blank">
+          <div class="icon"><svg fill="#000000" width="24px" height="24px" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg">
+  <path class="svgpath" data-index="path_0" fill="#272636" d="M0 525.2c0 223.6 143.3 413.7 343 483.5 26.9 6.8 22.8-12.4 22.8-25.4l0-88.7c-155.3 18.2-161.5-84.6-172-101.7-21.1-36-70.8-45.2-56-62.3 35.4-18.2 71.4 4.6 113.1 66.3 30.2 44.7 89.1 37.2 119 29.7 6.5-26.9 20.5-50.9 39.7-69.6C248.8 728.2 181.7 630 181.7 513.2c0-56.6 18.7-108.7 55.3-150.7-23.3-69.3 2.2-128.5 5.6-137.3 66.5-6 135.5 47.6 140.9 51.8 37.8-10.2 80.9-15.6 129.1-15.6 48.5 0 91.8 5.6 129.8 15.9 12.9-9.8 77-55.8 138.8-50.2 3.3 8.8 28.2 66.7 6.3 135 37.1 42.1 56 94.6 56 151.4 0 117-67.5 215.3-228.8 243.7 26.9 26.6 43.6 63.4 43.6 104.2l0 128.8c0.9 10.3 0 20.5 17.2 20.5C878.1 942.4 1024 750.9 1024 525.3c0-282.9-229.3-512-512-512C229.1 13.2 0 242.3 0 525.2L0 525.2z" />
+</svg>
+</div>
+        </a>
+      </li></ul>
+</div>
+</div>
+    </div><div class="site-info mt-2">
+      <div>© Mincong Huang 2021,
+        Powered by <a title="Jekyll is a simple, blog-aware, static site generator." href="http://jekyllrb.com/">Jekyll</a> & <a
+        title="TeXt is a super customizable Jekyll theme." href="https://github.com/kitian616/jekyll-TeXt-theme">TeXt Theme</a>.
+      </div>
+    </div>
+  </div>
+</footer>
+</div></div>
+    </div><script>(function() {
+  var SOURCES = window.TEXT_VARIABLES.sources;
+  window.Lazyload.js(SOURCES.jquery, function() {
+    var $body = $('body'), $window = $(window);
+    var $pageRoot = $('.js-page-root'), $pageMain = $('.js-page-main');
+    var activeCount = 0;
+    function modal(options) {
+      var $root = this, visible, onChange, hideWhenWindowScroll = false;
+      var scrollTop;
+      function setOptions(options) {
+        var _options = options || {};
+        visible = _options.initialVisible === undefined ? false : show;
+        onChange = _options.onChange;
+        hideWhenWindowScroll = _options.hideWhenWindowScroll;
+      }
+      function init() {
+        setState(visible);
+      }
+      function setState(isShow) {
+        if (isShow === visible) {
+          return;
+        }
+        visible = isShow;
+        if (visible) {
+          activeCount++;
+          scrollTop = $(window).scrollTop() || $pageMain.scrollTop();
+          $root.addClass('modal--show');
+          $pageMain.scrollTop(scrollTop);
+          activeCount === 1 && ($pageRoot.addClass('show-modal'), $body.addClass('of-hidden'));
+          hideWhenWindowScroll && window.hasEvent('touchstart') && $window.on('scroll', hide);
+          $window.on('keyup', handleKeyup);
+        } else {
+          activeCount > 0 && activeCount--;
+          $root.removeClass('modal--show');
+          $window.scrollTop(scrollTop);
+          activeCount === 0 && ($pageRoot.removeClass('show-modal'), $body.removeClass('of-hidden'));
+          hideWhenWindowScroll && window.hasEvent('touchstart') && $window.off('scroll', hide);
+          $window.off('keyup', handleKeyup);
+        }
+        onChange && onChange(visible);
+      }
+      function show() {
+        setState(true);
+      }
+      function hide() {
+        setState(false);
+      }
+      function handleKeyup(e) {
+        // Char Code: 27  ESC
+        if (e.which ===  27) {
+          hide();
+        }
+      }
+      setOptions(options);
+      init();
+      return {
+        show: show,
+        hide: hide,
+        $el: $root
+      };
+    }
+    $.fn.modal = modal;
+  });
+})();
+</script><div class="modal modal--overflow page__search-modal d-print-none js-page-search-modal"><script>
+(function () {
+  var SOURCES = window.TEXT_VARIABLES.sources;
+  window.Lazyload.js(SOURCES.jquery, function() {
+    // search panel
+    var search = (window.search || (window.search = {}));
+    var useDefaultSearchBox = window.useDefaultSearchBox === undefined ?
+      true : window.useDefaultSearchBox ;
+
+    var $searchModal = $('.js-page-search-modal');
+    var $searchToggle = $('.js-search-toggle');
+    var searchModal = $searchModal.modal({ onChange: handleModalChange, hideWhenWindowScroll: true });
+    var modalVisible = false;
+    search.searchModal = searchModal;
+
+    var $searchBox = null;
+    var $searchInput = null;
+    var $searchClear = null;
+
+    function getModalVisible() {
+      return modalVisible;
+    }
+    search.getModalVisible = getModalVisible;
+
+    function handleModalChange(visible) {
+      modalVisible = visible;
+      if (visible) {
+        search.onShow && search.onShow();
+        useDefaultSearchBox && $searchInput[0] && $searchInput[0].focus();
+      } else {
+        search.onShow && search.onHide();
+        useDefaultSearchBox && $searchInput[0] && $searchInput[0].blur();
+        setTimeout(function() {
+          useDefaultSearchBox && ($searchInput.val(''), $searchBox.removeClass('not-empty'));
+          search.clear && search.clear();
+          window.pageAsideAffix && window.pageAsideAffix.refresh();
+        }, 400);
+      }
+    }
+
+    $searchToggle.on('click', function() {
+      modalVisible ? searchModal.hide() : searchModal.show();
+    });
+    // Char Code: 83  S, 191 /
+    $(window).on('keyup', function(e) {
+      if (!modalVisible && !window.isFormElement(e.target || e.srcElement) && (e.which === 83 || e.which === 191)) {
+        modalVisible || searchModal.show();
+      }
+    });
+
+    if (useDefaultSearchBox) {
+      $searchBox = $('.js-search-box');
+      $searchInput = $searchBox.children('input');
+      $searchClear = $searchBox.children('.js-icon-clear');
+      search.getSearchInput = function() {
+        return $searchInput.get(0);
+      };
+      search.getVal = function() {
+        return $searchInput.val();
+      };
+      search.setVal = function(val) {
+        $searchInput.val(val);
+      };
+
+      $searchInput.on('focus', function() {
+        $(this).addClass('focus');
+      });
+      $searchInput.on('blur', function() {
+        $(this).removeClass('focus');
+      });
+      $searchInput.on('input', window.throttle(function() {
+        var val = $(this).val();
+        if (val === '' || typeof val !== 'string') {
+          search.clear && search.clear();
+        } else {
+          $searchBox.addClass('not-empty');
+          search.onInputNotEmpty && search.onInputNotEmpty(val);
+        }
+      }, 400));
+      $searchClear.on('click', function() {
+        $searchInput.val(''); $searchBox.removeClass('not-empty');
+        search.clear && search.clear();
+      });
+    }
+  });
+})();
+</script><div class="search search--dark">
+  <div class="main">
+    <div class="search__header">Search</div>
+    <div class="search-bar">
+      <div class="search-box js-search-box">
+        <div class="search-box__icon-search"><i class="fas fa-search"></i></div>
+        <input type="text" />
+        <div class="search-box__icon-clear js-icon-clear">
+          <a><i class="fas fa-times"></i></a>
+        </div>
+      </div>
+      <button class="button button--theme-dark button--pill search__cancel js-search-toggle">
+        Cancel</button>
+    </div>
+    <div class="search-result js-search-result"></div>
+  </div>
+</div>
+<script>var SOURCES = window.TEXT_VARIABLES.sources;
+var PAHTS = window.TEXT_VARIABLES.paths;
+window.Lazyload.js([SOURCES.jquery, PAHTS.search_js], function() {
+  var search = (window.search || (window.search = {}));
+  var searchData = window.TEXT_SEARCH_DATA || {};
+
+  function memorize(f) {
+    var cache = {};
+    return function () {
+      var key = Array.prototype.join.call(arguments, ',');
+      if (key in cache) return cache[key];
+      else return cache[key] = f.apply(this, arguments);
+    };
+  }
+
+  /// search
+  function searchByQuery(query) {
+    var i, j, key, keys, cur, _title, result = {};
+    keys = Object.keys(searchData);
+    for (i = 0; i < keys.length; i++) {
+      key = keys[i];
+      for (j = 0; j < searchData[key].length; j++) {
+        cur = searchData[key][j], _title = cur.title;
+        if ((result[key] === undefined || result[key] && result[key].length < 4 )
+          && _title.toLowerCase().indexOf(query.toLowerCase()) >= 0) {
+          if (result[key] === undefined) {
+            result[key] = [];
+          }
+          result[key].push(cur);
+        }
+      }
+    }
+    return result;
+  }
+
+  var renderHeader = memorize(function(header) {
+    return $('<p class="search-result__header">' + header + '</p>');
+  });
+
+  var renderItem = function(index, title, url) {
+    return $('<li class="search-result__item" data-index="' + index + '"><a class="button" href="' + url + '">' + title + '</a></li>');
+  };
+
+  function render(data) {
+    if (!data) { return null; }
+    var $root = $('<ul></ul>'), i, j, key, keys, cur, itemIndex = 0;
+    keys = Object.keys(data);
+    for (i = 0; i < keys.length; i++) {
+      key = keys[i];
+      $root.append(renderHeader(key));
+      for (j = 0; j < data[key].length; j++) {
+        cur = data[key][j];
+        $root.append(renderItem(itemIndex++, cur.title, cur.url));
+      }
+    }
+    return $root;
+  }
+
+  // search box
+  var $result = $('.js-search-result'), $resultItems;
+  var lastActiveIndex, activeIndex;
+
+  function clear() {
+    $result.html(null);
+    $resultItems = $('.search-result__item'); activeIndex = 0;
+  }
+  function onInputNotEmpty(val) {
+    $result.html(render(searchByQuery(val)));
+    $resultItems = $('.search-result__item'); activeIndex = 0;
+    $resultItems.eq(0).addClass('active');
+  }
+
+  search.clear = clear;
+  search.onInputNotEmpty = onInputNotEmpty;
+
+  function updateResultItems() {
+    lastActiveIndex >= 0 && $resultItems.eq(lastActiveIndex).removeClass('active');
+    activeIndex >= 0 && $resultItems.eq(activeIndex).addClass('active');
+  }
+
+  function moveActiveIndex(direction) {
+    var itemsCount = $resultItems ? $resultItems.length : 0;
+    if (itemsCount > 1) {
+      lastActiveIndex = activeIndex;
+      if (direction === 'up') {
+        activeIndex = (activeIndex - 1 + itemsCount) % itemsCount;
+      } else if (direction === 'down') {
+        activeIndex = (activeIndex + 1 + itemsCount) % itemsCount;
+      }
+      updateResultItems();
+    }
+  }
+
+  // Char Code: 13  Enter, 37  ⬅, 38  ⬆, 39  ➡, 40  ⬇
+  $(window).on('keyup', function(e) {
+    var modalVisible = search.getModalVisible && search.getModalVisible();
+    if (modalVisible) {
+      if (e.which === 38) {
+        modalVisible && moveActiveIndex('up');
+      } else if (e.which === 40) {
+        modalVisible && moveActiveIndex('down');
+      } else if (e.which === 13) {
+        modalVisible && $resultItems && activeIndex >= 0 && $resultItems.eq(activeIndex).children('a')[0].click();
+      }
+    }
+  });
+
+  $result.on('mouseover', '.search-result__item > a', function() {
+    var itemIndex = $(this).parent().data('index');
+    itemIndex >= 0 && (lastActiveIndex = activeIndex, activeIndex = itemIndex, updateResultItems());
+  });
+});
+</script>
+</div></div>
+
+
+<script>(function() {
+  var SOURCES = window.TEXT_VARIABLES.sources;
+  window.Lazyload.js(SOURCES.jquery, function() {
+    function scrollToAnchor(anchor, duration, callback) {
+      var $root = this;
+      $root.animate({ scrollTop: $(anchor).position().top }, duration, function() {
+        window.history.replaceState(null, '', window.location.href.split('#')[0] + anchor);
+        callback && callback();
+      });
+    }
+    $.fn.scrollToAnchor = scrollToAnchor;
+  });
+})();
+(function() {
+  var SOURCES = window.TEXT_VARIABLES.sources;
+  window.Lazyload.js(SOURCES.jquery, function() {
+    function affix(options) {
+      var $root = this, $window = $(window), $scrollTarget, $scroll,
+        offsetBottom = 0, scrollTarget = window, scroll = window.document, disabled = false, isOverallScroller = true,
+        rootTop, rootLeft, rootHeight, scrollBottom, rootBottomTop,
+        hasInit = false, curState;
+
+      function setOptions(options) {
+        var _options = options || {};
+        _options.offsetBottom && (offsetBottom = _options.offsetBottom);
+        _options.scrollTarget && (scrollTarget = _options.scrollTarget);
+        _options.scroll && (scroll = _options.scroll);
+        _options.disabled !== undefined && (disabled = _options.disabled);
+        $scrollTarget = $(scrollTarget);
+        isOverallScroller = window.isOverallScroller($scrollTarget[0]);
+        $scroll = $(scroll);
+      }
+      function preCalc() {
+        top();
+        rootHeight = $root.outerHeight();
+        rootTop = $root.offset().top + (isOverallScroller ? 0 :  $scrollTarget.scrollTop());
+        rootLeft = $root.offset().left;
+      }
+      function calc(needPreCalc) {
+        needPreCalc && preCalc();
+        scrollBottom = $scroll.outerHeight() - offsetBottom - rootHeight;
+        rootBottomTop = scrollBottom - rootTop;
+      }
+      function top() {
+        if (curState !== 'top') {
+          $root.removeClass('fixed').css({
+            left: 0,
+            top: 0
+          });
+          curState = 'top';
+        }
+      }
+      function fixed() {
+        if (curState !== 'fixed') {
+          $root.addClass('fixed').css({
+            left: rootLeft + 'px',
+            top: 0
+          });
+          curState = 'fixed';
+        }
+      }
+      function bottom() {
+        if (curState !== 'bottom') {
+          $root.removeClass('fixed').css({
+            left: 0,
+            top: rootBottomTop + 'px'
+          });
+          curState = 'bottom';
+        }
+      }
+      function setState() {
+        var scrollTop = $scrollTarget.scrollTop();
+        if (scrollTop >= rootTop && scrollTop <= scrollBottom) {
+          fixed();
+        } else if (scrollTop < rootTop) {
+          top();
+        } else {
+          bottom();
+        }
+      }
+      function init() {
+        if(!hasInit) {
+          var interval, timeout;
+          calc(true); setState();
+          // run calc every 100 millisecond
+          interval = setInterval(function() {
+            calc();
+          }, 100);
+          timeout = setTimeout(function() {
+            clearInterval(interval);
+          }, 45000);
+          window.pageLoad.then(function() {
+            setTimeout(function() {
+              clearInterval(interval);
+              clearTimeout(timeout);
+            }, 3000);
+          });
+          $scrollTarget.on('scroll', function() {
+            disabled || setState();
+          });
+          $window.on('resize', function() {
+            disabled || (calc(true), setState());
+          });
+          hasInit = true;
+        }
+      }
+
+      setOptions(options);
+      if (!disabled) {
+        init();
+      }
+      $window.on('resize', window.throttle(function() {
+        init();
+      }, 200));
+      return {
+        setOptions: setOptions,
+        refresh: function() {
+          calc(true, { animation: false }); setState();
+        }
+      };
+    }
+    $.fn.affix = affix;
+  });
+})();
+(function() {
+  var SOURCES = window.TEXT_VARIABLES.sources;
+  window.Lazyload.js(SOURCES.jquery, function() {
+    function toc(options) {
+      var $root = this, $window = $(window), $scrollTarget, $scroller, $tocUl = $('<ul class="toc toc--ellipsis"></ul>'), $tocLi, $headings, $activeLast, $activeCur,
+        selectors = 'h1,h2,h3', container = 'body', scrollTarget = window, scroller = 'html, body', disabled = false,
+        headingsPos, scrolling = false, hasRendered = false, hasInit = false;
+
+      function setOptions(options) {
+        var _options = options || {};
+        _options.selectors && (selectors = _options.selectors);
+        _options.container && (container = _options.container);
+        _options.scrollTarget && (scrollTarget = _options.scrollTarget);
+        _options.scroller && (scroller = _options.scroller);
+        _options.disabled !== undefined && (disabled = _options.disabled);
+        $headings = $(container).find(selectors).filter('[id]');
+        $scrollTarget = $(scrollTarget);
+        $scroller = $(scroller);
+      }
+      function calc() {
+        headingsPos = [];
+        $headings.each(function() {
+          headingsPos.push(Math.floor($(this).position().top));
+        });
+      }
+      function setState(element, disabled) {
+        var scrollTop = $scrollTarget.scrollTop(), i;
+        if (disabled || !headingsPos || headingsPos.length < 1) { return; }
+        if (element) {
+          $activeCur = element;
+        } else {
+          for (i = 0; i < headingsPos.length; i++) {
+            if (scrollTop >= headingsPos[i]) {
+              $activeCur = $tocLi.eq(i);
+            } else {
+              $activeCur || ($activeCur = $tocLi.eq(i));
+              break;
+            }
+          }
+        }
+        $activeLast && $activeLast.removeClass('active');
+        ($activeLast = $activeCur).addClass('active');
+      }
+      function render() {
+        if(!hasRendered) {
+          $root.append($tocUl);
+          $headings.each(function() {
+            var $this = $(this);
+            $tocUl.append($('<li></li>').addClass('toc-' + $this.prop('tagName').toLowerCase())
+              .append($('<a></a>').text($this.text()).attr('href', '#' + $this.prop('id'))));
+          });
+          $tocLi = $tocUl.children('li');
+          $tocUl.on('click', 'a', function(e) {
+            e.preventDefault();
+            var $this = $(this);
+            scrolling = true;
+            setState($this.parent());
+            $scroller.scrollToAnchor($this.attr('href'), 400, function() {
+              scrolling = false;
+            });
+          });
+        }
+        hasRendered = true;
+      }
+      function init() {
+        var interval, timeout;
+        if(!hasInit) {
+          render(); calc(); setState(null, scrolling);
+          // run calc every 100 millisecond
+          interval = setInterval(function() {
+            calc();
+          }, 100);
+          timeout = setTimeout(function() {
+            clearInterval(interval);
+          }, 45000);
+          window.pageLoad.then(function() {
+            setTimeout(function() {
+              clearInterval(interval);
+              clearTimeout(timeout);
+            }, 3000);
+          });
+          $scrollTarget.on('scroll', function() {
+            disabled || setState(null, scrolling);
+          });
+          $window.on('resize', window.throttle(function() {
+            if (!disabled) {
+              render(); calc(); setState(null, scrolling);
+            }
+          }, 100));
+        }
+        hasInit = true;
+      }
+
+      setOptions(options);
+      if (!disabled) {
+        init();
+      }
+      $window.on('resize', window.throttle(function() {
+        init();
+      }, 200));
+      return {
+        setOptions: setOptions
+      };
+    }
+    $.fn.toc = toc;
+  });
+})();
+/*(function () {
+
+})();*/
+</script><script>
+  /* toc must before affix, since affix need to konw toc' height. */(function() {
+  var SOURCES = window.TEXT_VARIABLES.sources;
+  var TOC_SELECTOR = window.TEXT_VARIABLES.site.toc.selectors;
+  window.Lazyload.js(SOURCES.jquery, function() {
+    var $window = $(window);
+    var $articleContent = $('.js-article-content');
+    var $tocRoot = $('.js-toc-root'), $col2 = $('.js-col-aside');
+    var toc;
+    var tocDisabled = false;
+    var hasSidebar = $('.js-page-root').hasClass('layout--page--sidebar');
+    var hasToc = $articleContent.find(TOC_SELECTOR).length > 0;
+
+    function disabled() {
+      return $col2.css('display') === 'none' || !hasToc;
+    }
+
+    tocDisabled = disabled();
+
+    toc = $tocRoot.toc({
+      selectors: TOC_SELECTOR,
+      container: $articleContent,
+      scrollTarget: hasSidebar ? '.js-page-main' : null,
+      scroller: hasSidebar ? '.js-page-main' : null,
+      disabled: tocDisabled
+    });
+
+    $window.on('resize', window.throttle(function() {
+      tocDisabled = disabled();
+      toc && toc.setOptions({
+        disabled: tocDisabled
+      });
+    }, 100));
+
+  });
+})();
+(function() {
+  var SOURCES = window.TEXT_VARIABLES.sources;
+  window.Lazyload.js(SOURCES.jquery, function() {
+    var $window = $(window), $pageFooter = $('.js-page-footer');
+    var $pageAside = $('.js-page-aside');
+    var affix;
+    var tocDisabled = false;
+    var hasSidebar = $('.js-page-root').hasClass('layout--page--sidebar');
+
+    affix = $pageAside.affix({
+      offsetBottom: $pageFooter.outerHeight(),
+      scrollTarget: hasSidebar ? '.js-page-main' : null,
+      scroller: hasSidebar ? '.js-page-main' : null,
+      scroll: hasSidebar ? $('.js-page-main').children() : null,
+      disabled: tocDisabled
+    });
+
+    $window.on('resize', window.throttle(function() {
+      affix && affix.setOptions({
+        disabled: tocDisabled
+      });
+    }, 100));
+
+    window.pageAsideAffix = affix;
+  });
+})();
+</script>
+    </div>
+    <script>(function () {
+  var $root = document.getElementsByClassName('root')[0];
+  if (window.hasEvent('touchstart')) {
+    $root.dataset.isTouch = true;
+    document.addEventListener('touchstart', function(){}, false);
+  }
+})();
+</script>
+  </body>
+</html>
+

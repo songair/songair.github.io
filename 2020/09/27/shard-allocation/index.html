@@ -1,0 +1,2180 @@
+<!DOCTYPE html><html lang="en">
+  <head><!-- Global site tag (gtag.js) - Google Analytics -->
+	<script async src="https://www.googletagmanager.com/gtag/js?id=UA-87129300-1"></script>
+	<script>
+		window.dataLayer = window.dataLayer || [];
+		function gtag(){dataLayer.push(arguments);}
+		gtag('js', new Date());
+
+		gtag('config', 'UA-87129300-1');
+		
+	</script><meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no"><title>18 Allocation Deciders in Elasticsearch - Mincong Huang</title>
+
+<meta name="description" content="This article explains the 18 allocation deciders in Elasticsearch: when they decide to allow, deny, or throttle the shard allocation under different circumst...">
+
+<!-- Begin Jekyll SEO tag v2.7.1 -->
+<title>18 Allocation Deciders in Elasticsearch | Mincong Huang</title>
+<meta name="generator" content="Jekyll v4.2.0" />
+<meta property="og:title" content="18 Allocation Deciders in Elasticsearch" />
+<meta name="author" content="Mincong Huang" />
+<meta property="og:locale" content="en" />
+<meta name="description" content="This article explains the 18 allocation deciders in Elasticsearch: when they decide to allow, deny, or throttle the shard allocation under different circumstances. Also, a complete list of messages for unassigned shards." />
+<meta property="og:description" content="This article explains the 18 allocation deciders in Elasticsearch: when they decide to allow, deny, or throttle the shard allocation under different circumstances. Also, a complete list of messages for unassigned shards." />
+<link rel="canonical" href="https://mincong.io/2020/09/27/shard-allocation/" />
+<meta property="og:url" content="https://mincong.io/2020/09/27/shard-allocation/" />
+<meta property="og:site_name" content="Mincong Huang" />
+<meta property="og:image" content="https://mincong.io/assets/bg-robert-ruggiero-X2bcQMMhaow-unsplash.jpg" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2020-09-27T11:44:32+02:00" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta property="twitter:image" content="https://mincong.io/assets/bg-robert-ruggiero-X2bcQMMhaow-unsplash.jpg" />
+<meta property="twitter:title" content="18 Allocation Deciders in Elasticsearch" />
+<meta name="twitter:site" content="@mincong_h" />
+<meta name="twitter:creator" content="@mincong_h" />
+<script type="application/ld+json">
+{"author":{"@type":"Person","name":"Mincong Huang"},"description":"This article explains the 18 allocation deciders in Elasticsearch: when they decide to allow, deny, or throttle the shard allocation under different circumstances. Also, a complete list of messages for unassigned shards.","@type":"BlogPosting","image":"https://mincong.io/assets/bg-robert-ruggiero-X2bcQMMhaow-unsplash.jpg","url":"https://mincong.io/2020/09/27/shard-allocation/","dateModified":"2020-09-27T11:44:32+02:00","datePublished":"2020-09-27T11:44:32+02:00","headline":"18 Allocation Deciders in Elasticsearch","mainEntityOfPage":{"@type":"WebPage","@id":"https://mincong.io/2020/09/27/shard-allocation/"},"@context":"https://schema.org"}</script>
+<!-- End Jekyll SEO tag -->
+
+
+<!-- Extra Open Graph :: Start -->
+
+<meta property="og:image:width" content="847"/>
+<meta property="og:image:height" content="1280"/>
+
+<!-- Extra Open Graph :: End -->
+
+<link rel="canonical" href="https://mincong.io/2020/09/27/shard-allocation/"><link rel="alternate" type="application/rss+xml" title="Mincong Huang" href="/feed.xml"><!-- start favicons snippet, use https://realfavicongenerator.net/ --><link rel="apple-touch-icon" sizes="180x180" href="/assets/apple-touch-icon.png"><link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon-32x32.png"><link rel="icon" type="image/png" sizes="16x16" href="/assets/favicon-16x16.png"><link rel="manifest" href="/assets/site.webmanifest"><link rel="mask-icon" href="/assets/safari-pinned-tab.svg" color="#fc4d50"><link rel="shortcut icon" href="/assets/favicon.ico">
+
+<meta name="msapplication-TileColor" content="#ffc40d"><meta name="msapplication-config" content="/assets/browserconfig.xml">
+
+<meta name="theme-color" content="#ffffff">
+<!-- end favicons snippet --><link rel="stylesheet" href="/assets/css/main.css"><link rel="stylesheet" href="https://cdn.bootcdn.net/ajax/libs/font-awesome/5.15.1/css/all.css" ><!-- start custom head snippets -->
+
+<!-- end custom head snippets -->
+<script>(function() {
+  window.isArray = function(val) {
+    return Object.prototype.toString.call(val) === '[object Array]';
+  };
+  window.isString = function(val) {
+    return typeof val === 'string';
+  };
+
+  window.hasEvent = function(event) {
+    return 'on'.concat(event) in window.document;
+  };
+
+  window.isOverallScroller = function(node) {
+    return node === document.documentElement || node === document.body || node === window;
+  };
+
+  window.isFormElement = function(node) {
+    var tagName = node.tagName;
+    return tagName === 'INPUT' || tagName === 'SELECT' || tagName === 'TEXTAREA';
+  };
+
+  window.pageLoad = (function () {
+    var loaded = false, cbs = [];
+    window.addEventListener('load', function () {
+      var i;
+      loaded = true;
+      if (cbs.length > 0) {
+        for (i = 0; i < cbs.length; i++) {
+          cbs[i]();
+        }
+      }
+    });
+    return {
+      then: function(cb) {
+        cb && (loaded ? cb() : (cbs.push(cb)));
+      }
+    };
+  })();
+})();
+(function() {
+  window.throttle = function(func, wait) {
+    var args, result, thisArg, timeoutId, lastCalled = 0;
+
+    function trailingCall() {
+      lastCalled = new Date;
+      timeoutId = null;
+      result = func.apply(thisArg, args);
+    }
+    return function() {
+      var now = new Date,
+        remaining = wait - (now - lastCalled);
+
+      args = arguments;
+      thisArg = this;
+
+      if (remaining <= 0) {
+        clearTimeout(timeoutId);
+        timeoutId = null;
+        lastCalled = now;
+        result = func.apply(thisArg, args);
+      } else if (!timeoutId) {
+        timeoutId = setTimeout(trailingCall, remaining);
+      }
+      return result;
+    };
+  };
+})();
+(function() {
+  var Set = (function() {
+    var add = function(item) {
+      var i, data = this._data;
+      for (i = 0; i < data.length; i++) {
+        if (data[i] === item) {
+          return;
+        }
+      }
+      this.size ++;
+      data.push(item);
+      return data;
+    };
+
+    var Set = function(data) {
+      this.size = 0;
+      this._data = [];
+      var i;
+      if (data.length > 0) {
+        for (i = 0; i < data.length; i++) {
+          add.call(this, data[i]);
+        }
+      }
+    };
+    Set.prototype.add = add;
+    Set.prototype.get = function(index) { return this._data[index]; };
+    Set.prototype.has = function(item) {
+      var i, data = this._data;
+      for (i = 0; i < data.length; i++) {
+        if (this.get(i) === item) {
+          return true;
+        }
+      }
+      return false;
+    };
+    Set.prototype.is = function(map) {
+      if (map._data.length !== this._data.length) { return false; }
+      var i, j, flag, tData = this._data, mData = map._data;
+      for (i = 0; i < tData.length; i++) {
+        for (flag = false, j = 0; j < mData.length; j++) {
+          if (tData[i] === mData[j]) {
+            flag = true;
+            break;
+          }
+        }
+        if (!flag) { return false; }
+      }
+      return true;
+    };
+    Set.prototype.values = function() {
+      return this._data;
+    };
+    return Set;
+  })();
+
+  window.Lazyload = (function(doc) {
+    var queue = {js: [], css: []}, sources = {js: {}, css: {}}, context = this;
+    var createNode = function(name, attrs) {
+      var node = doc.createElement(name), attr;
+      for (attr in attrs) {
+        if (attrs.hasOwnProperty(attr)) {
+          node.setAttribute(attr, attrs[attr]);
+        }
+      }
+      return node;
+    };
+    var end = function(type, url) {
+      var s, q, qi, cbs, i, j, cur, val, flag;
+      if (type === 'js' || type ==='css') {
+        s = sources[type], q = queue[type];
+        s[url] = true;
+        for (i = 0; i < q.length; i++) {
+          cur = q[i];
+          if (cur.urls.has(url)) {
+            qi = cur, val = qi.urls.values();
+            qi && (cbs = qi.callbacks);
+            for (flag = true, j = 0; j < val.length; j++) {
+              cur = val[j];
+              if (!s[cur]) {
+                flag = false;
+              }
+            }
+            if (flag && cbs && cbs.length > 0) {
+              for (j = 0; j < cbs.length; j++) {
+                cbs[j].call(context);
+              }
+              qi.load = true;
+            }
+          }
+        }
+      }
+    };
+    var load = function(type, urls, callback) {
+      var s, q, qi, node, i, cur,
+        _urls = typeof urls === 'string' ? new Set([urls]) : new Set(urls), val, url;
+      if (type === 'js' || type ==='css') {
+        s = sources[type], q = queue[type];
+        for (i = 0; i < q.length; i++) {
+          cur = q[i];
+          if (_urls.is(cur.urls)) {
+            qi = cur;
+            break;
+          }
+        }
+        val = _urls.values();
+        if (qi) {
+          callback && (qi.load || qi.callbacks.push(callback));
+          callback && (qi.load && callback());
+        } else {
+          q.push({
+            urls: _urls,
+            callbacks: callback ? [callback] : [],
+            load: false
+          });
+          for (i = 0; i < val.length; i++) {
+            node = null, url = val[i];
+            if (s[url] === undefined) {
+              (type === 'js' ) && (node = createNode('script', { src: url }));
+              (type === 'css') && (node = createNode('link', { rel: 'stylesheet', href: url }));
+              if (node) {
+                node.onload = (function(type, url) {
+                  return function() {
+                    end(type, url);
+                  };
+                })(type, url);
+                (doc.head || doc.body).appendChild(node);
+                s[url] = false;
+              }
+            }
+          }
+        }
+      }
+    };
+    return {
+      js: function(url, callback) {
+        load('js', url, callback);
+      },
+      css: function(url, callback) {
+        load('css', url, callback);
+      }
+    };
+  })(this.document);
+})();
+</script><script>
+  (function() {
+    var TEXT_VARIABLES = {
+      version: '2.2.6',
+      sources: {
+        font_awesome: 'https://cdn.bootcdn.net/ajax/libs/font-awesome/5.15.1/css/all.css',
+        jquery: 'https://cdn.bootcss.com/jquery/3.1.1/jquery.min.js',
+        leancloud_js_sdk: '//cdn.jsdelivr.net/npm/leancloud-storage@3.13.2/dist/av-min.js',
+        chart: 'https://cdn.bootcss.com/Chart.js/2.7.2/Chart.bundle.min.js',
+        gitalk: {
+          js: 'https://cdn.bootcss.com/gitalk/1.2.2/gitalk.min.js',
+          css: 'https://cdn.bootcss.com/gitalk/1.2.2/gitalk.min.css'
+        },
+        valine: 'https://unpkg.com/valine/dist/Valine.min.js',
+        mathjax: 'https://cdn.bootcss.com/mathjax/2.7.4/MathJax.js?config=TeX-MML-AM_CHTML',
+        mermaid: 'https://cdn.bootcss.com/mermaid/8.0.0-rc.8/mermaid.min.js'
+      },
+      site: {
+        toc: {
+          selectors: 'h1,h2,h3'
+        }
+      },
+      paths: {
+        search_js: '/assets/search.js'
+      }
+    };
+    window.TEXT_VARIABLES = TEXT_VARIABLES;
+  })();
+</script>
+</head>
+  <body>
+    <div class="root" data-is-touch="false">
+      <div class="layout--page js-page-root"><div class="page__main js-page-main page__viewport has-aside cell cell--auto">
+
+      <div class="page__main-inner"><div class="page__header d-print-none"><header class="header"><div class="main">
+      <div class="header__title">
+        <div class="header__brand"><svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
+	 width="24px" height="24px" viewBox="0 0 24 24">
+<style type="text/css">
+	.st0{fill:#515151;}
+</style>
+<path class="st0" d="M1.7,22.3c5.7-5.7,11.3-5.7,17,0c3.3-3.3,3.5-5.3,0.8-6c2.7,0.7,3.5-1.1,2.3-5.6s-3.3-5.2-6.3-2.1
+	c3-3,2.3-5.2-2.1-6.3S7,1.8,7.7,4.6C7,1.8,5,2.1,1.7,5.3C7.3,11,7.3,16.7,1.7,22.3"/>
+</svg>
+<a title="Hi, welcome to my blog! I'm a software engineer at Datadog. I write blog posts in my free time. My blogs are bits and pieces of my tech journey. Most of them are related to Java. Hope you enjoy them! My opinions are my own, not Datadog's. This blog is powered by Jekyll, a simple, blog-aware, static sites solution.
+" href="/">Mincong Huang</a></div><button class="button button--secondary button--circle search-button js-search-toggle"><i class="fas fa-search"></i></button></div><nav class="navigation">
+        <ul><li class="navigation__item"><a href="/categories">Categories</a></li><li class="navigation__item"><a href="/series">Series</a></li><li class="navigation__item"><a href="/archive">Archive</a></li><li class="navigation__item"><a href="/about">About</a></li><li><button class="button button--secondary button--circle search-button js-search-toggle"><i class="fas fa-search"></i></button></li></ul>
+      </nav></div>
+  </header>
+</div><div class="page__content"><div class="article__header--overlay"><div class="hero hero--dark overlay" style="background-image:linear-gradient(135deg, rgba(0, 0, 0, .6), rgba(0, 0, 0, .4)),url(/assets/bg-robert-ruggiero-X2bcQMMhaow-unsplash.jpg);background-color:#203028;"><div class="hero__content"><div class ="main"><div class="article__info clearfix"><ul class="left-col menu"><li>
+              <a class="button button--secondary button--pill button--sm"
+                href="/archive?tag=elasticsearch">elasticsearch</a>
+            </li><li>
+              <a class="button button--secondary button--pill button--sm"
+                href="/archive?tag=java">java</a>
+            </li></ul><ul class="right-col menu"><li><i class="far fa-calendar-alt"></i> <span>Sep 27, 2020</span>
+            </li></ul></div><div class="article__header"><header><h1>18 Allocation Deciders in Elasticsearch</h1></header></div><div class="article__header">
+                        <p class="overlay__excerpt">This article explains the 18 allocation deciders in Elasticsearch: when they decide to allow, deny, or throttle the shard allocation under different circumstances. Also, a complete list of messages...</p>
+                      </div><div class="article__info clearfix">
+  <ul class="left-col menu">
+    <li>
+      <i class="fas fa-camera"></i>
+      Photo by
+      <a href="https://unsplash.com/@robert2301" target="_blank">
+        Robert Ruggiero
+      </a>
+      on
+      <a href="https://unsplash.com/license" target="_blank">
+        Unplash 
+      </a>
+    </li>
+  </ul>
+</div>
+</div></div>
+              </div>
+            </div><div class ="main"><div class="grid grid--reverse">
+
+              <div class="col-aside d-print-none js-col-aside"><aside class="page__aside js-page-aside"><div class="toc-aside js-toc-root"></div>
+</aside></div>
+
+              <div class="col-main cell cell--auto"><!-- start custom main top snippet -->
+
+<!-- end custom main top snippet -->
+<article itemscope itemtype="http://schema.org/Article"><meta itemprop="headline" content="18 Allocation Deciders in Elasticsearch"><meta itemprop="author" content="Mincong Huang"/><meta itemprop="datePublished" content="2020-09-27T11:44:32+02:00">
+    <meta itemprop="keywords" content="elasticsearch,java"><div class="js-article-content"><div class="layout--article"><!-- start custom article top snippet -->
+
+
+<!-- end custom article top snippet -->
+<div class="article__content" itemprop="articleBody"><h2 id="introduction">Introduction</h2>
+
+<p>This article explains the 18 allocation deciders in Elasticsearch 7.8.0. It will
+help you understand about unassigned shards or shard allocation in
+general, by going through decisions made by different deciders.</p>
+
+<p>After reading this article, you will understand:</p>
+
+<ul>
+  <li>Different deciders in Elasticsearch 7.8</li>
+  <li>Where to find the source code</li>
+  <li>The list of decisions and related messages given by each decider</li>
+  <li>The list of settings available</li>
+  <li>A brief description of the decision making from Elasticsearch Javadoc.</li>
+  <li>References to go further in each of these deciders</li>
+</ul>
+
+<p>This is a long article. Now, let’s get started!</p>
+
+<h2 id="overview">Overview</h2>
+
+<p>In Elasticsearch 7.8.0, allocation decisions are made by allocation deciders. To
+find out all the deciders, you can search all the classes extending the base
+class <code class="language-plaintext highlighter-rouge">AllocationDecider</code> under the source code of <code class="language-plaintext highlighter-rouge">server</code> directory:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>elasticsearch ((v7.8.0)) $ rg -l --sort-files "extends AllocationDecider" server/src/main | sed 's/.*\///g'
+AllocationDeciders.java
+AwarenessAllocationDecider.java
+ClusterRebalanceAllocationDecider.java
+ConcurrentRebalanceAllocationDecider.java
+DiskThresholdDecider.java
+EnableAllocationDecider.java
+FilterAllocationDecider.java
+MaxRetryAllocationDecider.java
+NodeVersionAllocationDecider.java
+RebalanceOnlyWhenActiveAllocationDecider.java
+ReplicaAfterPrimaryActiveAllocationDecider.java
+ResizeAllocationDecider.java
+RestoreInProgressAllocationDecider.java
+SameShardAllocationDecider.java
+ShardsLimitAllocationDecider.java
+SnapshotInProgressAllocationDecider.java
+ThrottlingAllocationDecider.java
+</code></pre></div></div>
+
+<p>In the sections below, we are going to visit all of them and see how they work.</p>
+
+<h2 id="all">All</h2>
+
+<p><a href="https://github.com/elastic/elasticsearch/blob/v7.8.0/server/src/main/java/org/elasticsearch/cluster/routing/allocation/decider/AllocationDeciders.java">org.elasticsearch.cluster.routing.allocation.decider.AllocationDeciders</a></p>
+
+<p>A composite allocation decider combining the “decision” of multiple
+allocation decider implementations into a single allocation decision.</p>
+
+<h2 id="awareness">Awareness</h2>
+
+<p><a href="https://github.com/elastic/elasticsearch/blob/v7.8.0/server/src/main/java/org/elasticsearch/cluster/routing/allocation/decider/AwarenessAllocationDecider.java">org.elasticsearch.cluster.routing.allocation.decider.AwarenessAllocationDecider</a></p>
+
+<table>
+  <thead>
+    <tr>
+      <th style="text-align: center">Decision</th>
+      <th style="text-align: left">Message</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td style="text-align: center">YES</td>
+      <td style="text-align: left">allocation awareness is not enabled, set cluster setting [cluster.routing.allocation.awareness.attributes] to enable it</td>
+    </tr>
+    <tr>
+      <td style="text-align: center">NO</td>
+      <td style="text-align: left">node does not contain the awareness attribute [%s]; required attributes cluster setting [cluster.routing.allocation.awareness.attributes=%s]</td>
+    </tr>
+    <tr>
+      <td style="text-align: center">NO</td>
+      <td style="text-align: left">there are too many copies of the shard allocated to nodes with attribute [%s], there are [%d] total configured shard copies for this shard id and [%d] total attribute values, expected the allocated shard count per attribute [%d] to be less than or equal to the upper bound of the required number of shards per attribute [%d]”_</td>
+    </tr>
+  </tbody>
+</table>
+
+<table>
+  <thead>
+    <tr>
+      <th style="text-align: left">Setting</th>
+      <th style="text-align: left">Comment</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td style="text-align: left"><code class="language-plaintext highlighter-rouge">cluster.routing.allocation.awareness.attributes</code></td>
+      <td style="text-align: left">Dynamic setting; Scope: Node; Default to empty list.</td>
+    </tr>
+    <tr>
+      <td style="text-align: left"><code class="language-plaintext highlighter-rouge">cluster.routing.allocation.awareness.force.*</code></td>
+      <td style="text-align: left">Dynamic setting; Scope: Node; Defaults to empty list.</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>This allocation decider controls shard allocation based on
+<code class="language-plaintext highlighter-rouge">awareness</code> key-value pairs defined in the node configuration.
+Awareness explicitly controls where replicas should be allocated based on
+attributes like node or physical rack locations. Awareness attributes accept
+arbitrary configuration keys like a rack data-center identifier. For example
+the setting:</p>
+
+<div class="language-yml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="s">cluster.routing.allocation.awareness.attributes</span><span class="pi">:</span> <span class="s">rack_id</span>
+</code></pre></div></div>
+
+<p>will cause allocations to be distributed over different racks such that
+ideally at least one replicas of the all shard is available on the same rack.
+To enable allocation awareness in this example nodes should contain a value
+for the <code class="language-plaintext highlighter-rouge">rack_id</code> key like:</p>
+
+<div class="language-yml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="s">node.attr.rack_id</span><span class="pi">:</span> <span class="m">1</span>
+</code></pre></div></div>
+
+<p>Awareness can also be used to prevent over-allocation in the case of node or
+even “zone” failure. For example in cloud-computing infrastructures like
+Amazon AWS a cluster might span over multiple “zones”. Awareness can be used
+to distribute replicas to individual zones by setting:</p>
+
+<div class="language-yml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="s">cluster.routing.allocation.awareness.attributes</span><span class="pi">:</span> <span class="s">zone</span>
+</code></pre></div></div>
+
+<p>and forcing allocation to be aware of the following zone the data resides in:</p>
+
+<div class="language-yml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="s">cluster.routing.allocation.awareness.force.zone.values</span><span class="pi">:</span> <span class="s">zone1,zone2</span>
+</code></pre></div></div>
+
+<p>In contrast to regular awareness this setting will prevent over-allocation on
+<code class="language-plaintext highlighter-rouge">zone1</code> even if <code class="language-plaintext highlighter-rouge">zone2</code> fails partially or becomes entirely
+unavailable. Nodes that belong to a certain zone / group should be started
+with the zone id configured on the node-level settings like:</p>
+
+<div class="language-yml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="s">node.zone</span><span class="pi">:</span> <span class="s">zone1</span>
+</code></pre></div></div>
+
+<h2 id="cluster-rebalance">Cluster-Rebalance</h2>
+
+<p><a href="https://github.com/elastic/elasticsearch/blob/v7.8.0/server/src/main/java/org/elasticsearch/cluster/routing/allocation/decider/ClusterRebalanceAllocationDecider.java">org.elasticsearch.cluster.routing.allocation.decider.ClusterRebalanceAllocationDecider</a></p>
+
+<table>
+  <thead>
+    <tr>
+      <th style="text-align: center">Decision</th>
+      <th style="text-align: left">Message</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td style="text-align: center">NO</td>
+      <td style="text-align: left">the cluster has unassigned primary shards and cluster setting [cluster.routing.allocation.allow_rebalance] is set to [%s]</td>
+    </tr>
+    <tr>
+      <td style="text-align: center">NO</td>
+      <td style="text-align: left">the cluster has inactive primary shards and cluster setting [cluster.routing.allocation.allow_rebalance] is set to [%s]</td>
+    </tr>
+    <tr>
+      <td style="text-align: center">YES</td>
+      <td style="text-align: left">all primary shards are active</td>
+    </tr>
+    <tr>
+      <td style="text-align: center">NO</td>
+      <td style="text-align: left">the cluster has unassigned shards and cluster setting [cluster.routing.allocation.allow_rebalance] is set to [%s]</td>
+    </tr>
+    <tr>
+      <td style="text-align: center">NO</td>
+      <td style="text-align: left">the cluster has inactive shards and cluster setting [cluster.routing.allocation.allow_rebalance] is set to [%s]</td>
+    </tr>
+    <tr>
+      <td style="text-align: center">YES</td>
+      <td style="text-align: left">all shards are active</td>
+    </tr>
+  </tbody>
+</table>
+
+<table>
+  <thead>
+    <tr>
+      <th style="text-align: center">Setting</th>
+      <th style="text-align: left">Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td style="text-align: center"><code class="language-plaintext highlighter-rouge">cluster.routing.allocation.allow_rebalance</code></td>
+      <td style="text-align: left">Dynamic setting; Scope: Node; Defaults to <code class="language-plaintext highlighter-rouge">indices_all_active</code>.</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>This allocation decider controls re-balancing operations based on the
+cluster wide active shard state. This decided can not be configured in
+real-time and should be pre-cluster start via
+<code class="language-plaintext highlighter-rouge">cluster.routing.allocation.allow_rebalance</code>. This setting respects the following
+values:</p>
+
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">indices_primaries_active</code> - Re-balancing is allowed only once all
+primary shards on all indices are active.</li>
+  <li><code class="language-plaintext highlighter-rouge">indices_all_active</code> - Re-balancing is allowed only once all
+shards on all indices are active.</li>
+  <li><code class="language-plaintext highlighter-rouge">always</code> - Re-balancing is allowed once a shard replication group
+is active</li>
+</ul>
+
+<h2 id="concurrent-rebalance">Concurrent-Rebalance</h2>
+
+<p><a href="https://github.com/elastic/elasticsearch/blob/v7.8.0/server/src/main/java/org/elasticsearch/cluster/routing/allocation/decider/ConcurrentRebalanceAllocationDecider.java">org.elasticsearch.cluster.routing.allocation.decider.ConcurrentRebalanceAllocationDecider</a></p>
+
+<table>
+  <thead>
+    <tr>
+      <th style="text-align: center">Decision</th>
+      <th style="text-align: left">Message</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td style="text-align: center">YES</td>
+      <td style="text-align: left">unlimited concurrent rebalances are allowed</td>
+    </tr>
+    <tr>
+      <td style="text-align: center">THROTTLE</td>
+      <td style="text-align: left">reached the limit of concurrently rebalancing shards [%d], cluster setting [cluster.routing.allocation.cluster_concurrent_rebalance=%d]</td>
+    </tr>
+    <tr>
+      <td style="text-align: center">YES</td>
+      <td style="text-align: left">below threshold [%d] for concurrent rebalances, current rebalance shard count [%d]</td>
+    </tr>
+  </tbody>
+</table>
+
+<table>
+  <thead>
+    <tr>
+      <th style="text-align: left">Setting</th>
+      <th style="text-align: center">Type</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td style="text-align: left"><code class="language-plaintext highlighter-rouge">cluster.routing.allocation.cluster_concurrent_rebalance</code></td>
+      <td style="text-align: center">Integer</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>Similar to the <code class="language-plaintext highlighter-rouge">ClusterRebalanceAllocationDecider</code> this
+<code class="language-plaintext highlighter-rouge">AllocationDecider</code> controls the number of currently in-progress
+re-balance (relocation) operations and restricts node allocations if the
+configured threshold is reached. The default number of concurrent rebalance
+operations is set to <code class="language-plaintext highlighter-rouge">2</code>.</p>
+
+<p>Re-balance operations can be controlled in real-time via the cluster update API using
+<code class="language-plaintext highlighter-rouge">cluster.routing.allocation.cluster_concurrent_rebalance</code>. Iff this
+setting is set to <code class="language-plaintext highlighter-rouge">-1</code> the number of concurrent re-balance operations
+are unlimited.</p>
+
+<h2 id="disk-threshold">Disk-Threshold</h2>
+
+<p><a href="https://github.com/elastic/elasticsearch/blob/v7.8.0/server/src/main/java/org/elasticsearch/cluster/routing/allocation/decider/DiskThresholdDecider.java">org.elasticsearch.cluster.routing.allocation.decider.DiskThresholdDecider</a></p>
+
+<table>
+  <thead>
+    <tr>
+      <th style="text-align: center">Decision</th>
+      <th style="text-align: left">Message</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td style="text-align: center">NO</td>
+      <td style="text-align: left">the node has fewer free bytes remaining than the total size of all incoming shards: free space [%sB], relocating shards [%sB]</td>
+    </tr>
+    <tr>
+      <td style="text-align: center">NO</td>
+      <td style="text-align: left">the node is above the low watermark cluster setting [cluster.routing.allocation.disk.watermark.low=%s], having less than the minimum required [%s] free space, actual free: [%s]</td>
+    </tr>
+    <tr>
+      <td style="text-align: center">NO</td>
+      <td style="text-align: left">the node is above the high watermark cluster setting [cluster.routing.allocation.disk.watermark.high=%s], having less than the minimum required [%s] free space, actual free: [%s]</td>
+    </tr>
+    <tr>
+      <td style="text-align: center">NO</td>
+      <td style="text-align: left">the node is above the low watermark cluster setting [cluster.routing.allocation.disk.watermark.low=%s], using more disk space than the maximum allowed [%s%%], actual free: [%s%%]</td>
+    </tr>
+    <tr>
+      <td style="text-align: center">NO</td>
+      <td style="text-align: left">the node is above the high watermark cluster setting [cluster.routing.allocation.disk.watermark.high=%s], using more disk space than the maximum allowed [%s%%], actual free: [%s%%]</td>
+    </tr>
+    <tr>
+      <td style="text-align: center">NO</td>
+      <td style="text-align: left">allocating the shard to this node will bring the node above the high watermark cluster setting [cluster.routing.allocation.disk.watermark.high=%s] and cause it to have less than the minimum required [%s] of free space (free: [%s], estimated shard size: [%s])</td>
+    </tr>
+    <tr>
+      <td style="text-align: center">NO</td>
+      <td style="text-align: left">allocating the shard to this node will bring the node above the high watermark cluster setting [cluster.routing.allocation.disk.watermark.high=%s] and cause it to use more disk space than the maximum allowed [%s%%] (free space after shard added: [%s%%])</td>
+    </tr>
+    <tr>
+      <td style="text-align: center">NO</td>
+      <td style="text-align: left">the shard cannot remain on this node because the node has fewer free bytes remaining than the total size of all incoming shards: free space [%s], relocating shards [%s]</td>
+    </tr>
+    <tr>
+      <td style="text-align: center">NO</td>
+      <td style="text-align: left">the shard cannot remain on this node because it is above the high watermark cluster setting [cluster.routing.allocation.disk.watermark.high=%s] and there is less than the required [%s] free space on node, actual free: [%s]</td>
+    </tr>
+    <tr>
+      <td style="text-align: center">NO</td>
+      <td style="text-align: left">the shard cannot remain on this node because it is above the high watermark cluster setting [cluster.routing.allocation.disk.watermark.high=%s] and there is less than the required [%s%%] free disk on node, actual free: [%s%%]</td>
+    </tr>
+    <tr>
+      <td style="text-align: center">YES</td>
+      <td style="text-align: left">the node is above the low watermark, but less than the high watermark, and this primary shard has never been allocated before</td>
+    </tr>
+    <tr>
+      <td style="text-align: center">YES</td>
+      <td style="text-align: left">enough disk for shard on node, free: [%s], shard size: [%s], free after allocating shard: [%s]</td>
+    </tr>
+    <tr>
+      <td style="text-align: center">YES</td>
+      <td style="text-align: left">this shard is not allocated on the most utilized disk and can remain</td>
+    </tr>
+    <tr>
+      <td style="text-align: center">YES</td>
+      <td style="text-align: left">there is enough disk on this node for the shard to remain, free: [%s]</td>
+    </tr>
+    <tr>
+      <td style="text-align: center">YES</td>
+      <td style="text-align: left">the disk threshold decider is disabled</td>
+    </tr>
+    <tr>
+      <td style="text-align: center">YES</td>
+      <td style="text-align: left">there is only a single data node present</td>
+    </tr>
+    <tr>
+      <td style="text-align: center">YES</td>
+      <td style="text-align: left">the cluster info is unavailable</td>
+    </tr>
+    <tr>
+      <td style="text-align: center">YES</td>
+      <td style="text-align: left">disk usages are unavailable</td>
+    </tr>
+  </tbody>
+</table>
+
+<table>
+  <thead>
+    <tr>
+      <th style="text-align: left">Setting</th>
+      <th style="text-align: center">Type</th>
+      <th style="text-align: left">Comment</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td style="text-align: left"><code class="language-plaintext highlighter-rouge">cluster.routing.allocation.disk.watermark.enable_for_single_data_node</code></td>
+      <td style="text-align: center">Boolean</td>
+      <td style="text-align: left">Will be removed in Elasticsearch 9</td>
+    </tr>
+    <tr>
+      <td style="text-align: left"><code class="language-plaintext highlighter-rouge">cluster.routing.allocation.disk.watermark.low</code></td>
+      <td style="text-align: center">Percentage / Bytes</td>
+      <td style="text-align: left">Defaults to 85%</td>
+    </tr>
+    <tr>
+      <td style="text-align: left"><code class="language-plaintext highlighter-rouge">cluster.routing.allocation.disk.watermark.high</code></td>
+      <td style="text-align: center">Percentage / Bytes</td>
+      <td style="text-align: left">Defaults to 90%</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>This allocation decider checks that the node a shard is potentially
+being allocated to has enough disk space.</p>
+
+<p>It has three configurable settings, all of which can be changed dynamically:</p>
+
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">cluster.routing.allocation.disk.watermark.low</code> is the low disk
+watermark. New shards will not allocated to a node with usage higher than this,
+although this watermark may be passed by allocating a shard. It defaults to
+0.85 (85.0%).</li>
+  <li><code class="language-plaintext highlighter-rouge">cluster.routing.allocation.disk.watermark.high</code> is the high disk
+watermark. If a node has usage higher than this, shards are not allowed to
+remain on the node. In addition, if allocating a shard to a node causes the
+node to pass this watermark, it will not be allowed. It defaults to
+0.90 (90.0%).</li>
+  <li>Both watermark settings are expressed in terms of used disk percentage, or
+exact byte values for free space (like “500mb”)</li>
+  <li><code class="language-plaintext highlighter-rouge">cluster.routing.allocation.disk.threshold_enabled</code> is used to
+enable or disable this decider. It defaults to true (enabled).</li>
+</ul>
+
+<h2 id="enable">Enable</h2>
+
+<p><a href="https://github.com/elastic/elasticsearch/blob/v7.8.0/server/src/main/java/org/elasticsearch/cluster/routing/allocation/decider/EnableAllocationDecider.java">org.elasticsearch.cluster.routing.allocation.decider.EnableAllocationDecider</a></p>
+
+<table>
+  <thead>
+    <tr>
+      <th style="text-align: center">Decision</th>
+      <th style="text-align: left">Message</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td style="text-align: center">YES</td>
+      <td style="text-align: left">explicitly ignoring any disabling of allocation due to manual allocation commands via the reroute API</td>
+    </tr>
+    <tr>
+      <td style="text-align: center">YES</td>
+      <td style="text-align: left">all allocations are allowed</td>
+    </tr>
+    <tr>
+      <td style="text-align: center">NO</td>
+      <td style="text-align: left">no allocations are allowed due to %s</td>
+    </tr>
+    <tr>
+      <td style="text-align: center">YES</td>
+      <td style="text-align: left">new primary allocations are allowed</td>
+    </tr>
+    <tr>
+      <td style="text-align: center">NO</td>
+      <td style="text-align: left">non-new primary allocations are forbidden due to %s</td>
+    </tr>
+    <tr>
+      <td style="text-align: center">YES</td>
+      <td style="text-align: left">primary allocations are allowed</td>
+    </tr>
+    <tr>
+      <td style="text-align: center">NO</td>
+      <td style="text-align: left">replica allocations are forbidden due to %s</td>
+    </tr>
+    <tr>
+      <td style="text-align: center">NO</td>
+      <td style="text-align: left">no rebalancing is allowed due to %s</td>
+    </tr>
+    <tr>
+      <td style="text-align: center">YES</td>
+      <td style="text-align: left">rebalancing is not globally disabled</td>
+    </tr>
+    <tr>
+      <td style="text-align: center">YES</td>
+      <td style="text-align: left">allocation is explicitly ignoring any disabling of rebalancing</td>
+    </tr>
+    <tr>
+      <td style="text-align: center">YES</td>
+      <td style="text-align: left">all rebalancing is allowed</td>
+    </tr>
+    <tr>
+      <td style="text-align: center">NO</td>
+      <td style="text-align: left">no rebalancing is allowed due to %s</td>
+    </tr>
+    <tr>
+      <td style="text-align: center">YES</td>
+      <td style="text-align: left">primary rebalancing is allowed</td>
+    </tr>
+    <tr>
+      <td style="text-align: center">NO</td>
+      <td style="text-align: left">replica rebalancing is forbidden due to %s</td>
+    </tr>
+    <tr>
+      <td style="text-align: center">YES</td>
+      <td style="text-align: left">replica rebalancing is allowed</td>
+    </tr>
+    <tr>
+      <td style="text-align: center">NO</td>
+      <td style="text-align: left">primary rebalancing is forbidden due to %s</td>
+    </tr>
+  </tbody>
+</table>
+
+<table>
+  <thead>
+    <tr>
+      <th style="text-align: left">Setting</th>
+      <th style="text-align: center">Type</th>
+      <th style="text-align: left">Comment</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td style="text-align: left"><code class="language-plaintext highlighter-rouge">cluster.routing.allocation.enable</code></td>
+      <td style="text-align: center">Boolean</td>
+      <td style="text-align: left"> </td>
+    </tr>
+    <tr>
+      <td style="text-align: left"><code class="language-plaintext highlighter-rouge">cluster.routing.rebalance.enable</code></td>
+      <td style="text-align: center">Boolean</td>
+      <td style="text-align: left"> </td>
+    </tr>
+    <tr>
+      <td style="text-align: left"><code class="language-plaintext highlighter-rouge">index.routing.allocation.enable</code></td>
+      <td style="text-align: center">Boolean</td>
+      <td style="text-align: left"> </td>
+    </tr>
+    <tr>
+      <td style="text-align: left"><code class="language-plaintext highlighter-rouge">index.routing.rebalance.enable</code></td>
+      <td style="text-align: center">Boolean</td>
+      <td style="text-align: left"> </td>
+    </tr>
+  </tbody>
+</table>
+
+<p>This allocation decider allows shard allocations / rebalancing via the cluster wide settings
+<code class="language-plaintext highlighter-rouge">cluster.routing.allocation.enable</code> / <code class="language-plaintext highlighter-rouge">cluster.routing.rebalance.enable</code> and the per index setting
+<code class="language-plaintext highlighter-rouge">index.routing.allocation.enable</code> / <code class="language-plaintext highlighter-rouge">index.routing.rebalance.enable</code>.
+The per index settings overrides the cluster wide setting.</p>
+
+<p>Allocation settings can have the following values (non-casesensitive):</p>
+
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">NONE</code> - no shard allocation is allowed.</li>
+  <li><code class="language-plaintext highlighter-rouge">NEW_PRIMARIES</code> - only primary shards of new indices are allowed to be allocated</li>
+  <li><code class="language-plaintext highlighter-rouge">PRIMARIES</code> - only primary shards are allowed to be allocated</li>
+  <li><code class="language-plaintext highlighter-rouge">ALL</code> - all shards are allowed to be allocated</li>
+</ul>
+
+<p>Rebalancing settings can have the following values (non-casesensitive):</p>
+
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">NONE</code> - no shard rebalancing is allowed.</li>
+  <li><code class="language-plaintext highlighter-rouge">REPLICAS</code> - only replica shards are allowed to be balanced</li>
+  <li><code class="language-plaintext highlighter-rouge">PRIMARIES</code> - only primary shards are allowed to be balanced</li>
+  <li><code class="language-plaintext highlighter-rouge">ALL</code> - all shards are allowed to be balanced</li>
+</ul>
+
+<h2 id="filter">Filter</h2>
+
+<p><a href="https://github.com/elastic/elasticsearch/blob/v7.8.0/server/src/main/java/org/elasticsearch/cluster/routing/allocation/decider/FilterAllocationDecider.java">org.elasticsearch.cluster.routing.allocation.decider.FilterAllocationDecider</a></p>
+
+<table>
+  <thead>
+    <tr>
+      <th style="text-align: center">Decision</th>
+      <th style="text-align: left">Message</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td style="text-align: center">YES</td>
+      <td style="text-align: left">node passes include/exclude/require filters</td>
+    </tr>
+    <tr>
+      <td style="text-align: center">NO</td>
+      <td style="text-align: left">initial allocation of the shrunken index is only allowed on nodes [%s] that hold a copy of every shard in the index</td>
+    </tr>
+    <tr>
+      <td style="text-align: center">NO</td>
+      <td style="text-align: left">node does not match index setting [index.routing.allocation.require] filters [%s]</td>
+    </tr>
+    <tr>
+      <td style="text-align: center">NO</td>
+      <td style="text-align: left">node does not match index setting [index.routing.allocation.include] filters [%s]</td>
+    </tr>
+    <tr>
+      <td style="text-align: center">NO</td>
+      <td style="text-align: left">node matches index setting [index.routing.allocation.exclude] filters [%s]</td>
+    </tr>
+    <tr>
+      <td style="text-align: center">NO</td>
+      <td style="text-align: left">node does not match cluster setting [cluster.routing.allocation.require] filters [%s]</td>
+    </tr>
+    <tr>
+      <td style="text-align: center">NO</td>
+      <td style="text-align: left">node does not cluster setting [cluster.routing.allocation.include] filters [%s]</td>
+    </tr>
+    <tr>
+      <td style="text-align: center">NO</td>
+      <td style="text-align: left">node matches cluster setting [cluster.routing.allocation.exclude] filters [%s]</td>
+    </tr>
+  </tbody>
+</table>
+
+<table>
+  <thead>
+    <tr>
+      <th style="text-align: left">Setting</th>
+      <th style="text-align: center">Type</th>
+      <th style="text-align: left">Comment</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td style="text-align: left"><code class="language-plaintext highlighter-rouge">index.routing.allocation.require.{attribute}</code></td>
+      <td style="text-align: center">String</td>
+      <td style="text-align: left"> </td>
+    </tr>
+    <tr>
+      <td style="text-align: left"><code class="language-plaintext highlighter-rouge">index.routing.allocation.include.{attribute}</code></td>
+      <td style="text-align: center">String</td>
+      <td style="text-align: left"> </td>
+    </tr>
+    <tr>
+      <td style="text-align: left"><code class="language-plaintext highlighter-rouge">index.routing.allocation.exclude.{attribute}</code></td>
+      <td style="text-align: center">String</td>
+      <td style="text-align: left"> </td>
+    </tr>
+    <tr>
+      <td style="text-align: left"><code class="language-plaintext highlighter-rouge">cluster.routing.allocation.require.{attribute}</code></td>
+      <td style="text-align: center">String</td>
+      <td style="text-align: left"> </td>
+    </tr>
+    <tr>
+      <td style="text-align: left"><code class="language-plaintext highlighter-rouge">cluster.routing.allocation.include.{attribute}</code></td>
+      <td style="text-align: center">String</td>
+      <td style="text-align: left"> </td>
+    </tr>
+    <tr>
+      <td style="text-align: left"><code class="language-plaintext highlighter-rouge">cluster.routing.allocation.exclude.{attribute}</code></td>
+      <td style="text-align: center">String</td>
+      <td style="text-align: left"> </td>
+    </tr>
+  </tbody>
+</table>
+
+<p>This <code class="language-plaintext highlighter-rouge">AllocationDecider</code> control shard allocation by include and
+exclude filters via dynamic cluster and index routing settings.</p>
+
+<p>This filter is used to make explicit decision on which nodes certain shard
+can / should be allocated. The decision if a shard can be allocated, must not
+be allocated or should be allocated is based on either cluster wide dynamic
+settings (<code class="language-plaintext highlighter-rouge">cluster.routing.allocation.*</code>) or index specific dynamic
+settings (<code class="language-plaintext highlighter-rouge">index.routing.allocation.*</code>). All of those settings can be
+changed at runtime via the cluster or the index update settings API.</p>
+
+<p>Note: Cluster settings are applied first and will override index specific
+settings such that if a shard can be allocated according to the index routing
+settings it wont be allocated on a node if the cluster specific settings
+would disallow the allocation. Filters are applied in the following order:</p>
+
+<ol>
+  <li><code class="language-plaintext highlighter-rouge">required</code> - filters required allocations.
+If any <code class="language-plaintext highlighter-rouge">required</code> filters are set the allocation is denied if the index is <strong>not</strong> in the set of <code class="language-plaintext highlighter-rouge">required</code> to allocate
+on the filtered node</li>
+  <li><code class="language-plaintext highlighter-rouge">include</code> - filters “allowed” allocations.
+If any <code class="language-plaintext highlighter-rouge">include</code> filters are set the allocation is denied if the index is <strong>not</strong> in the set of <code class="language-plaintext highlighter-rouge">include</code> filters for
+the filtered node</li>
+  <li><code class="language-plaintext highlighter-rouge">exclude</code> - filters “prohibited” allocations.
+If any <code class="language-plaintext highlighter-rouge">exclude</code> filters are set the allocation is denied if the index is in the set of <code class="language-plaintext highlighter-rouge">exclude</code> filters for the
+filtered node</li>
+</ol>
+
+<p>References:</p>
+
+<ul>
+  <li>Index-level shard allocation filtering | Elasticsearch References 7.8
+<a href="https://www.elastic.co/guide/en/elasticsearch/reference/7.8/shard-allocation-filtering.html">https://www.elastic.co/guide/en/elasticsearch/reference/7.8/shard-allocation-filtering.html</a></li>
+</ul>
+
+<h2 id="max-retry">Max-Retry</h2>
+
+<p><a href="https://github.com/elastic/elasticsearch/blob/v7.8.0/server/src/main/java/org/elasticsearch/cluster/routing/allocation/decider/MaxRetryAllocationDecider.java">org.elasticsearch.cluster.routing.allocation.decider.MaxRetryAllocationDecider</a></p>
+
+<table>
+  <thead>
+    <tr>
+      <th style="text-align: center">Decision</th>
+      <th style="text-align: left">Message</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td style="text-align: center">NO</td>
+      <td style="text-align: left">shard has exceeded the maximum number of retries [%d] on failed allocation attempts - manually call [\/_cluster\/reroute?retry_failed=true] to retry, [%s]</td>
+    </tr>
+    <tr>
+      <td style="text-align: center">YES</td>
+      <td style="text-align: left">shard has failed allocating [%d] times but [%d] retries are allowed</td>
+    </tr>
+    <tr>
+      <td style="text-align: center">YES</td>
+      <td style="text-align: left">shard has no previous failures</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>An allocation decider that prevents shards from being allocated on any node if the shards allocation has been retried N times without
+success. This means if a shard has been INITIALIZING N times in a row without being moved to STARTED the shard will be ignored until
+the setting for <code class="language-plaintext highlighter-rouge">index.allocation.max_retry</code> is raised. The default value is 5.
+Note: This allocation decider also allows allocation of repeatedly failing shards when the <code class="language-plaintext highlighter-rouge">/_cluster/reroute?retry_failed=true</code>
+API is manually invoked. This allows single retries without raising the limits.</p>
+
+<h2 id="node-version">Node-Version</h2>
+
+<p><a href="https://github.com/elastic/elasticsearch/blob/v7.8.0/server/src/main/java/org/elasticsearch/cluster/routing/allocation/decider/NodeVersionAllocationDecider.java">org.elasticsearch.cluster.routing.allocation.decider.NodeVersionAllocationDecider</a></p>
+
+<table>
+  <thead>
+    <tr>
+      <th style="text-align: center">Decision</th>
+      <th style="text-align: left">Message</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td style="text-align: center">YES</td>
+      <td style="text-align: left">the primary shard is new or already existed on the node</td>
+    </tr>
+    <tr>
+      <td style="text-align: center">YES</td>
+      <td style="text-align: left">no active primary shard yet</td>
+    </tr>
+    <tr>
+      <td style="text-align: center">YES</td>
+      <td style="text-align: left">can relocate primary shard from a node with version [%s] to a node with equal-or-newer version [%s]</td>
+    </tr>
+    <tr>
+      <td style="text-align: center">NO</td>
+      <td style="text-align: left">cannot relocate primary shard from a node with version [%s] to a node with older version [%s]</td>
+    </tr>
+    <tr>
+      <td style="text-align: center">YES</td>
+      <td style="text-align: left">can allocate replica shard to a node with version [%s] since this is equal-or-newer than the primary version [%s]</td>
+    </tr>
+    <tr>
+      <td style="text-align: center">NO</td>
+      <td style="text-align: left">cannot allocate replica shard to a node with version [%s] since this is older than the primary version [%s]</td>
+    </tr>
+    <tr>
+      <td style="text-align: center">YES</td>
+      <td style="text-align: left">node version [%s] is the same or newer than snapshot version [%s]</td>
+    </tr>
+    <tr>
+      <td style="text-align: center">NO</td>
+      <td style="text-align: left">node version [%s] is older than the snapshot version [%s]</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>An allocation decider that prevents relocation or allocation from nodes
+that might not be version compatible. If we relocate from a node that runs
+a newer version than the node we relocate to this might cause <code class="language-plaintext highlighter-rouge">org.apache.lucene.index.IndexFormatTooNewException</code>
+on the lowest level since it might have already written segments that use a new postings format or codec that is not
+available on the target node.</p>
+
+<h2 id="rebalance-only-when-active">Rebalance-Only-When-Active</h2>
+
+<p><a href="https://github.com/elastic/elasticsearch/blob/v7.8.0/server/src/main/java/org/elasticsearch/cluster/routing/allocation/decider/RebalanceOnlyWhenActiveAllocationDecider.java">org.elasticsearch.cluster.routing.allocation.decider.RebalanceOnlyWhenActiveAllocationDecider</a></p>
+
+<table>
+  <thead>
+    <tr>
+      <th style="text-align: center">Decision</th>
+      <th style="text-align: left">Message</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td style="text-align: center">NO</td>
+      <td style="text-align: left">rebalancing is not allowed until all replicas in the cluster are active</td>
+    </tr>
+    <tr>
+      <td style="text-align: center">YES</td>
+      <td style="text-align: left">rebalancing is allowed as all replicas are active in the cluster</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>Only allow rebalancing when all shards are active within the shard replication group.</p>
+
+<h2 id="replica-after-primary-active">Replica-After-Primary-Active</h2>
+
+<p><a href="https://github.com/elastic/elasticsearch/blob/v7.8.0/server/src/main/java/org/elasticsearch/cluster/routing/allocation/decider/ReplicaAfterPrimaryActiveAllocationDecider.java">org.elasticsearch.cluster.routing.allocation.decider.ReplicaAfterPrimaryActiveAllocationDecider</a></p>
+
+<table>
+  <thead>
+    <tr>
+      <th style="text-align: center">Decision</th>
+      <th style="text-align: left">Message</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td style="text-align: center">YES</td>
+      <td style="text-align: left">shard is primary and can be allocated</td>
+    </tr>
+    <tr>
+      <td style="text-align: center">NO</td>
+      <td style="text-align: left">primary shard for this replica is not yet active</td>
+    </tr>
+    <tr>
+      <td style="text-align: center">YES</td>
+      <td style="text-align: left">primary shard for this replica is already active</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>An allocation strategy that only allows for a replica to be allocated when the primary is active.</p>
+
+<h2 id="resize">Resize</h2>
+
+<p><a href="https://github.com/elastic/elasticsearch/blob/v7.8.0/server/src/main/java/org/elasticsearch/cluster/routing/allocation/decider/ResizeAllocationDecider.java">org.elasticsearch.cluster.routing.allocation.decider.ResizeAllocationDecider</a></p>
+
+<table>
+  <thead>
+    <tr>
+      <th style="text-align: center">Decision</th>
+      <th style="text-align: left">Message</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td style="text-align: center">NO</td>
+      <td style="text-align: left">resize source index [%s] doesn’t exists</td>
+    </tr>
+    <tr>
+      <td style="text-align: center">NO</td>
+      <td style="text-align: left">source primary shard [%s] is not active</td>
+    </tr>
+    <tr>
+      <td style="text-align: center">YES</td>
+      <td style="text-align: left">source primary is allocated on this node</td>
+    </tr>
+    <tr>
+      <td style="text-align: center">NO</td>
+      <td style="text-align: left">source primary is allocated on another node</td>
+    </tr>
+    <tr>
+      <td style="text-align: center">YES</td>
+      <td style="text-align: left">source primary is active</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>An allocation decider that ensures we allocate the shards of a target index for resize operations next to the source primaries.</p>
+
+<h2 id="restore-in-progress">Restore-In-Progress</h2>
+
+<p><a href="https://github.com/elastic/elasticsearch/blob/v7.8.0/server/src/main/java/org/elasticsearch/cluster/routing/allocation/decider/RestoreInProgressAllocationDecider.java">org.elasticsearch.cluster.routing.allocation.decider.RestoreInProgressAllocationDecider</a></p>
+
+<table>
+  <thead>
+    <tr>
+      <th style="text-align: center">Decision</th>
+      <th style="text-align: left">Message</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td style="text-align: center">YES</td>
+      <td style="text-align: left">ignored as shard is not being recovered from a snapshot</td>
+    </tr>
+    <tr>
+      <td style="text-align: center">YES</td>
+      <td style="text-align: left">shard is currently being restored</td>
+    </tr>
+    <tr>
+      <td style="text-align: center">NO</td>
+      <td style="text-align: left">shard has failed to be restored from the snapshot [%s] because of [%s] - manually close or delete the index [%s] in order to retry to restore the snapshot again or use the reroute API to force the allocation of an empty primary shard</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>This allocation decider prevents shards that have failed to be
+restored from a snapshot to be allocated.</p>
+
+<h2 id="same-shard">Same-Shard</h2>
+
+<p><a href="https://github.com/elastic/elasticsearch/blob/v7.8.0/server/src/main/java/org/elasticsearch/cluster/routing/allocation/decider/SameShardAllocationDecider.java">org.elasticsearch.cluster.routing.allocation.decider.SameShardAllocationDecider</a></p>
+
+<table>
+  <thead>
+    <tr>
+      <th style="text-align: center">Decision</th>
+      <th style="text-align: left">Message</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td style="text-align: center">NO</td>
+      <td style="text-align: left">a copy of this shard is already allocated to host %s [%s], on node [%s], and [cluster.routing.allocation.same_shard.host] is [true] which forbids more than one node on this host from holding a copy of this shard</td>
+    </tr>
+    <tr>
+      <td style="text-align: center">NO</td>
+      <td style="text-align: left">this shard is already allocated to this node [%s]</td>
+    </tr>
+    <tr>
+      <td style="text-align: center">NO</td>
+      <td style="text-align: left">a copy of this shard is already allocated to this node [%s]</td>
+    </tr>
+    <tr>
+      <td style="text-align: center">YES</td>
+      <td style="text-align: left">this node does not hold a copy of this shard</td>
+    </tr>
+  </tbody>
+</table>
+
+<table>
+  <thead>
+    <tr>
+      <th style="text-align: left">Setting</th>
+      <th style="text-align: center">Type</th>
+      <th style="text-align: left">Comment</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td style="text-align: left"><code class="language-plaintext highlighter-rouge">cluster.routing.allocation.same_shard.host</code></td>
+      <td style="text-align: center">Boolean</td>
+      <td style="text-align: left">Dynamic, node scope</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>An allocation decider that prevents multiple instances of the same shard to
+be allocated on the same <code class="language-plaintext highlighter-rouge">node</code>.</p>
+
+<p>The <code class="language-plaintext highlighter-rouge">cluster.routing.allocation.same_shard.host</code> setting allows to perform a check to prevent
+allocation of multiple instances of the same shard on a single <code class="language-plaintext highlighter-rouge">host</code>,
+based on host name and host address. Defaults to <code class="language-plaintext highlighter-rouge">false</code>, meaning that no
+check is performed by default.</p>
+
+<p>Note: this setting only applies if multiple nodes are started on the same
+<code class="language-plaintext highlighter-rouge">host</code>. Allocations of multiple copies of the same shard on the same
+<code class="language-plaintext highlighter-rouge">node</code> are not allowed independently of this setting.</p>
+
+<h2 id="shards-limit">Shards-Limit</h2>
+
+<p><a href="https://github.com/elastic/elasticsearch/blob/v7.8.0/server/src/main/java/org/elasticsearch/cluster/routing/allocation/decider/ShardsLimitAllocationDecider.java">org.elasticsearch.cluster.routing.allocation.decider.ShardsLimitAllocationDecider</a></p>
+
+<table>
+  <thead>
+    <tr>
+      <th style="text-align: center">Decision</th>
+      <th style="text-align: left">Message</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td style="text-align: center">YES</td>
+      <td style="text-align: left">total shard limits are disabled: [index: %d, cluster: %d] &lt;= 0</td>
+    </tr>
+    <tr>
+      <td style="text-align: center">NO</td>
+      <td style="text-align: left">too many shards [%d] allocated to this node, cluster setting [cluster.routing.allocation.total_shards_per_node=%d]</td>
+    </tr>
+    <tr>
+      <td style="text-align: center">NO</td>
+      <td style="text-align: left">too many shards [%d] allocated to this node for index [%s], index setting [index.routing.allocation.total_shards_per_node=%d]</td>
+    </tr>
+    <tr>
+      <td style="text-align: center">YES</td>
+      <td style="text-align: left">“the shard count [%d] for this node is under the index limit [%d] and cluster level node limit [%d]”</td>
+    </tr>
+  </tbody>
+</table>
+
+<table>
+  <thead>
+    <tr>
+      <th style="text-align: left">Setting</th>
+      <th style="text-align: center">Type</th>
+      <th style="text-align: left">Comment</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td style="text-align: left"><code class="language-plaintext highlighter-rouge">index.routing.allocation.total_shards_per_node</code></td>
+      <td style="text-align: center">Integer</td>
+      <td style="text-align: left">Index scope. Controls the maximum number of shards per index on a single Elasticsearch node. Negative values are interpreted as unlimited.</td>
+    </tr>
+    <tr>
+      <td style="text-align: left"><code class="language-plaintext highlighter-rouge">cluster.routing.allocation.total_shards_per_node</code></td>
+      <td style="text-align: center">Integer</td>
+      <td style="text-align: left">Node scope. Controls the maximum number of shards per node on a global level. Negative values are interpreted as unlimited.</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>This <code class="language-plaintext highlighter-rouge">AllocationDecider</code> limits the number of shards per node on a per
+index or node-wide basis. The allocator prevents a single node to hold more
+than <code class="language-plaintext highlighter-rouge">index.routing.allocation.total_shards_per_node</code> per index and
+<code class="language-plaintext highlighter-rouge">cluster.routing.allocation.total_shards_per_node</code> globally during the allocation
+process. The limits of this decider can be changed in real-time via a the
+index settings API.</p>
+
+<p>If <code class="language-plaintext highlighter-rouge">index.routing.allocation.total_shards_per_node</code> is reset to a negative value shards
+per index are unlimited per node. Shards currently in the
+<code class="language-plaintext highlighter-rouge">ShardRoutingState#RELOCATING relocating</code> state are ignored by this
+<code class="language-plaintext highlighter-rouge">AllocationDecider</code> until the shard changed its state to either
+<code class="language-plaintext highlighter-rouge">ShardRoutingState#STARTED started</code>,
+<code class="language-plaintext highlighter-rouge">ShardRoutingState#INITIALIZING inializing</code> or
+<code class="language-plaintext highlighter-rouge">ShardRoutingState#UNASSIGNED unassigned</code></p>
+
+<p>Note: Reducing the number of shards per node via the index update API can
+trigger relocation and significant additional load on the clusters nodes.</p>
+
+<h2 id="snapshot-in-progress">Snapshot-In-Progress</h2>
+
+<p><a href="https://github.com/elastic/elasticsearch/blob/v7.8.0/server/src/main/java/org/elasticsearch/cluster/routing/allocation/decider/SnapshotInProgressAllocationDecider.java">org.elasticsearch.cluster.routing.allocation.decider.SnapshotInProgressAllocationDecider</a></p>
+
+<table>
+  <thead>
+    <tr>
+      <th style="text-align: center">Decision</th>
+      <th style="text-align: left">Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td style="text-align: center">YES</td>
+      <td style="text-align: left">no snapshots are currently running</td>
+    </tr>
+    <tr>
+      <td style="text-align: center">THROTTLE</td>
+      <td style="text-align: left">waiting for snapshotting of shard [%s] to complete on this node [%s]</td>
+    </tr>
+    <tr>
+      <td style="text-align: center">YES</td>
+      <td style="text-align: left">the shard is not being snapshotted</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>This allocation decider prevents shards that
+are currently been snapshotted to be moved to other nodes.</p>
+
+<h2 id="throttling">Throttling</h2>
+
+<p><a href="https://github.com/elastic/elasticsearch/blob/v7.8.0/server/src/main/java/org/elasticsearch/cluster/routing/allocation/decider/ThrottlingAllocationDecider.java">org.elasticsearch.cluster.routing.allocation.decider.ThrottlingAllocationDecider</a></p>
+
+<table>
+  <thead>
+    <tr>
+      <th style="text-align: center">Decision</th>
+      <th style="text-align: left">Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td style="text-align: center">THROTTLE</td>
+      <td style="text-align: left">reached the limit of ongoing initial primary recoveries [%d], cluster setting [cluster.routing.allocation.node_initial_primaries_recoveries=%d]</td>
+    </tr>
+    <tr>
+      <td style="text-align: center">YES</td>
+      <td style="text-align: left">below primary recovery limit of [%d]</td>
+    </tr>
+    <tr>
+      <td style="text-align: center">THROTTLE</td>
+      <td style="text-align: left">reached the limit of incoming shard recoveries [%d], cluster setting [cluster.routing.allocation.node_concurrent_incoming_recoveries=%d] (can also be set via [cluster.routing.allocation.node_concurrent_recoveries])currentInRecoveries</td>
+    </tr>
+    <tr>
+      <td style="text-align: center">NO</td>
+      <td style="text-align: left">primary shard for this replica is not yet active</td>
+    </tr>
+    <tr>
+      <td style="text-align: center">THROTTLE</td>
+      <td style="text-align: left">reached the limit of outgoing shard recoveries [%d] on the node [%s] which holds the primary, cluster setting [cluster.routing.allocation.node_concurrent_outgoing_recoveries=%d] (can also be set via [cluster.routing.allocation.node_concurrent_recoveries])</td>
+    </tr>
+    <tr>
+      <td style="text-align: center">NO</td>
+      <td style="text-align: left">primary shard for this replica is not yet active</td>
+    </tr>
+    <tr>
+      <td style="text-align: center">YES</td>
+      <td style="text-align: left">below shard recovery limit of outgoing: [%d &lt; %d] incoming: [%d &lt; %d]</td>
+    </tr>
+  </tbody>
+</table>
+
+<table>
+  <thead>
+    <tr>
+      <th style="text-align: left">Setting</th>
+      <th style="text-align: center">Type</th>
+      <th style="text-align: left">Comment</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td style="text-align: left"><code class="language-plaintext highlighter-rouge">cluster.routing.allocation.node_concurrent_recoveries</code></td>
+      <td style="text-align: center">Integer</td>
+      <td style="text-align: left">Defaults to 2. Node scope.</td>
+    </tr>
+    <tr>
+      <td style="text-align: left"><code class="language-plaintext highlighter-rouge">cluster.routing.allocation.node_initial_primaries_recoveries</code></td>
+      <td style="text-align: center">Integer</td>
+      <td style="text-align: left">Defaults to 4. Node scope.</td>
+    </tr>
+    <tr>
+      <td style="text-align: left"><code class="language-plaintext highlighter-rouge">cluster.routing.allocation.node_concurrent_incoming_recoveries</code></td>
+      <td style="text-align: center">Integer</td>
+      <td style="text-align: left">Node scope.</td>
+    </tr>
+    <tr>
+      <td style="text-align: left"><code class="language-plaintext highlighter-rouge">cluster.routing.allocation.node_concurrent_outgoing_recoveries</code></td>
+      <td style="text-align: center">Integer</td>
+      <td style="text-align: left">Node scope.</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>This allocation decider controls the recovery process per node in
+the cluster. It exposes two settings via the cluster update API that allow
+changes in real-time:</p>
+
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">cluster.routing.allocation.node_initial_primaries_recoveries</code> -
+restricts the number of initial primary shard recovery operations on a single
+node. The default is <code class="language-plaintext highlighter-rouge">4</code></li>
+  <li><code class="language-plaintext highlighter-rouge">cluster.routing.allocation.node_concurrent_recoveries</code> -
+restricts the number of total concurrent shards initializing on a single node. The
+default is <code class="language-plaintext highlighter-rouge">2</code></li>
+</ul>
+
+<p>If one of the above thresholds is exceeded per node this allocation decider
+will return <code class="language-plaintext highlighter-rouge">Decision#THROTTLE</code> as a hit to upstream logic to throttle
+the allocation process to prevent overloading nodes due to too many concurrent recovery
+processes.</p>
+
+<h2 id="conclusion">Conclusion</h2>
+
+<p>In this article we went through all the allocation deciders available in
+Elasticsearch 7.8, pointing out the link of the source code, listing all the
+possible decision and their messages, their associated settings, and also a
+brief description of each decider.
+Interested to know more? You can subscribe to <a href="/feed.xml">the feed of my blog</a>, follow me
+on <a href="https://twitter.com/mincong_h">Twitter</a> or
+<a href="https://github.com/mincong-h/">GitHub</a>. Hope you enjoy this article, see you the next time!</p>
+
+<h2 id="references">References</h2>
+
+<ul>
+  <li>Elasticsearch Contributors, “elastic/elasticsearch: Open Source, Distributed,
+RESTful Search Engine”, <em>GitHub</em>, 2020.
+<a href="https://github.com/elastic/elasticsearch">https://github.com/elastic/elasticsearch</a></li>
+  <li>Emily Change, “How to Resolved Unassigned Shards in Elasticsearch”, <em>Datadog</em>, 2020.<br />
+<a href="https://www.datadoghq.com/blog/elasticsearch-unassigned-shards/">https://www.datadoghq.com/blog/elasticsearch-unassigned-shards/</a></li>
+</ul>
+</div><section class="article__sharing d-print-none"></section><div class="d-print-none"><footer class="article__footer"><meta itemprop="dateModified" content="2020-09-27T11:44:32+02:00"><!-- start custom article footer snippet -->
+
+<!-- end custom article footer snippet -->
+<div class="article__subscribe"><div class="subscribe">
+  <i class="fas fa-rss"></i>
+  <a type="application/rss+xml" href="/feed.xml">Subscribe</a>
+</div></div><div class="article__license"><div class="license">
+    <p>This work is licensed under a <a itemprop="license" rel="license" href="https://creativecommons.org/licenses/by/4.0/">Attribution 4.0 International</a> license.
+      <a rel="license" href="https://creativecommons.org/licenses/by/4.0/">
+        <img alt="Attribution 4.0 International" src="https://i.creativecommons.org/l/by/4.0/88x31.png" />
+      </a>
+    </p>
+  </div></div></footer>
+<div class="article__section-navigator clearfix"><div class="previous"><span>PREVIOUS</span><a href="/2020/09/13/es-index-exceptions/">Elasticsearch: Common Index Exceptions</a></div><div class="next"><span>NEXT</span><a href="/2020/10/25/java-time/">Using Java Time In Different Frameworks</a></div></div></div>
+
+</div>
+
+<script>(function() {
+  var SOURCES = window.TEXT_VARIABLES.sources;
+  window.Lazyload.js(SOURCES.jquery, function() {
+    $(function() {
+      var $this ,$scroll;
+      var $articleContent = $('.js-article-content');
+      var hasSidebar = $('.js-page-root').hasClass('layout--page--sidebar');
+      var scroll = hasSidebar ? '.js-page-main' : 'html, body';
+      $scroll = $(scroll);
+
+      $articleContent.find('.highlight').each(function() {
+        $this = $(this);
+        $this.attr('data-lang', $this.find('code').attr('data-lang'));
+      });
+      $articleContent.find('h1[id], h2[id], h3[id], h4[id], h5[id], h6[id]').each(function() {
+        $this = $(this);
+        $this.append($('<a class="anchor d-print-none" aria-hidden="true"></a>').html('<i class="fas fa-anchor"></i>'));
+      });
+      $articleContent.on('click', '.anchor', function() {
+        $scroll.scrollToAnchor('#' + $(this).parent().attr('id'), 400);
+      });
+    });
+  });
+})();
+</script>
+</div><section class="page__comments d-print-none"><div id="disqus_thread"></div>
+  <script>
+  /**
+  *  RECOMMENDED CONFIGURATION VARIABLES: EDIT AND UNCOMMENT THE SECTION BELOW TO INSERT DYNAMIC VALUES FROM YOUR PLATFORM OR CMS.
+  *  LEARN WHY DEFINING THESE VARIABLES IS IMPORTANT: https://disqus.com/admin/universalcode/#configuration-variables*/
+  var disqus_config = function () {
+    this.page.url = 'https://mincong.io/2020/09/27/shard-allocation/';
+    this.page.identifier = '/2020/09/27/shard-allocation';
+  };
+  (function() { // DON'T EDIT BELOW THIS LINE
+    var d = document, s = d.createElement('script');
+    s.src = 'https://mincong-h.disqus.com/embed.js';
+    s.setAttribute('data-timestamp', +new Date());
+    (d.head || d.body).appendChild(s);
+  })();
+  </script>
+  <noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript></section></article><!-- start custom main bottom snippet -->
+
+<!-- end custom main bottom snippet -->
+</div>
+            </div></div></div><div class="page__footer d-print-none">
+<footer class="footer py-4 js-page-footer">
+  <div class="main"><div itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Mincong Huang"><meta itemprop="url" content="/"><meta itemprop="description" content="I am an amazing person."><div class="footer__author-links"><div class="author-links">
+  <ul class="menu menu--nowrap menu--inline"><li title="Send me an Email.">
+      <a class="button button--circle mail-button" itemprop="email" href="mailto:mincong.h@gmail.com" target="_blank">
+        <i class="fas fa-envelope"></i>
+      </a><li title="Follow me on Twitter.">
+        <a class="button button--circle twitter-button" itemprop="sameAs" href="https://twitter.com/mincong_h" target="_blank">
+          <div class="icon"><svg fill="#000000" width="24px" height="24px" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg">
+  <path d="M1024.032 194.432c-37.664 16.704-78.176 28-120.672 33.088 43.36-26.016 76.672-67.168 92.384-116.224-40.608 24.064-85.568 41.568-133.408 50.976-38.336-40.832-92.928-66.336-153.344-66.336-116.032 0-210.08 94.048-210.08 210.08 0 16.48 1.856 32.512 5.44 47.872-174.592-8.768-329.408-92.416-433.024-219.52-18.08 31.04-28.448 67.104-28.448 105.632 0 72.896 37.088 137.184 93.472 174.88-34.432-1.088-66.816-10.528-95.168-26.272-0.032 0.864-0.032 1.76-0.032 2.656 0 101.792 72.416 186.688 168.512 205.984-17.632 4.8-36.192 7.36-55.36 7.36-13.536 0-26.688-1.312-39.52-3.776 26.72 83.456 104.32 144.192 196.256 145.888-71.904 56.352-162.496 89.92-260.928 89.92-16.96 0-33.664-0.992-50.112-2.944 92.96 59.616 203.392 94.4 322.048 94.4 386.432 0 597.728-320.128 597.728-597.76 0-9.12-0.192-18.176-0.608-27.168 41.056-29.632 76.672-66.624 104.832-108.736z" />
+</svg>
+</div>
+        </a>
+      </li><li title="Follow me on Linkedin.">
+        <a class="button button--circle linkedin-button" itemprop="sameAs" href="https://www.linkedin.com/in/mincong-huang" target="_blank">
+          <div class="icon"><svg fill="#000000" width="24px" height="24px" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg">
+  <path d="M260.096 155.648c0 27.307008-9.899008 50.516992-29.696 69.632-19.796992 19.115008-45.396992 28.672-76.8 28.672-30.036992 0-54.612992-9.556992-73.728-28.672-19.115008-19.115008-28.672-42.324992-28.672-69.632 0-28.672 9.556992-52.224 28.672-70.656 19.115008-18.432 44.372992-27.648 75.776-27.648 31.403008 0 56.32 9.216 74.752 27.648 18.432 18.432 28.331008 41.984 29.696 70.656 0 0 0 0 0 0m-202.752 808.96c0 0 0-632.832 0-632.832 0 0 196.608 0 196.608 0 0 0 0 632.832 0 632.832 0 0-196.608 0-196.608 0 0 0 0 0 0 0m313.344-430.08c0-58.708992-1.364992-126.292992-4.096-202.752 0 0 169.984 0 169.984 0 0 0 10.24 88.064 10.24 88.064 0 0 4.096 0 4.096 0 40.96-68.267008 105.812992-102.4 194.56-102.4 68.267008 0 123.220992 22.868992 164.864 68.608 41.643008 45.739008 62.464 113.664 62.464 203.776 0 0 0 374.784 0 374.784 0 0-196.608 0-196.608 0 0 0 0-350.208 0-350.208 0-91.476992-33.451008-137.216-100.352-137.216-47.787008 0-81.236992 24.576-100.352 73.728-4.096 8.192-6.144 24.576-6.144 49.152 0 0 0 364.544 0 364.544 0 0-198.656 0-198.656 0 0 0 0-430.08 0-430.08 0 0 0 0 0 0" />
+</svg>
+</div>
+        </a>
+      </li><li title="Follow me on Github.">
+        <a class="button button--circle github-button" itemprop="sameAs" href="https://github.com/mincong-h" target="_blank">
+          <div class="icon"><svg fill="#000000" width="24px" height="24px" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg">
+  <path class="svgpath" data-index="path_0" fill="#272636" d="M0 525.2c0 223.6 143.3 413.7 343 483.5 26.9 6.8 22.8-12.4 22.8-25.4l0-88.7c-155.3 18.2-161.5-84.6-172-101.7-21.1-36-70.8-45.2-56-62.3 35.4-18.2 71.4 4.6 113.1 66.3 30.2 44.7 89.1 37.2 119 29.7 6.5-26.9 20.5-50.9 39.7-69.6C248.8 728.2 181.7 630 181.7 513.2c0-56.6 18.7-108.7 55.3-150.7-23.3-69.3 2.2-128.5 5.6-137.3 66.5-6 135.5 47.6 140.9 51.8 37.8-10.2 80.9-15.6 129.1-15.6 48.5 0 91.8 5.6 129.8 15.9 12.9-9.8 77-55.8 138.8-50.2 3.3 8.8 28.2 66.7 6.3 135 37.1 42.1 56 94.6 56 151.4 0 117-67.5 215.3-228.8 243.7 26.9 26.6 43.6 63.4 43.6 104.2l0 128.8c0.9 10.3 0 20.5 17.2 20.5C878.1 942.4 1024 750.9 1024 525.3c0-282.9-229.3-512-512-512C229.1 13.2 0 242.3 0 525.2L0 525.2z" />
+</svg>
+</div>
+        </a>
+      </li></ul>
+</div>
+</div>
+    </div><div class="site-info mt-2">
+      <div>© Mincong Huang 2021,
+        Powered by <a title="Jekyll is a simple, blog-aware, static site generator." href="http://jekyllrb.com/">Jekyll</a> & <a
+        title="TeXt is a super customizable Jekyll theme." href="https://github.com/kitian616/jekyll-TeXt-theme">TeXt Theme</a>.
+      </div>
+    </div>
+  </div>
+</footer>
+</div></div>
+    </div><script>(function() {
+  var SOURCES = window.TEXT_VARIABLES.sources;
+  window.Lazyload.js(SOURCES.jquery, function() {
+    var $body = $('body'), $window = $(window);
+    var $pageRoot = $('.js-page-root'), $pageMain = $('.js-page-main');
+    var activeCount = 0;
+    function modal(options) {
+      var $root = this, visible, onChange, hideWhenWindowScroll = false;
+      var scrollTop;
+      function setOptions(options) {
+        var _options = options || {};
+        visible = _options.initialVisible === undefined ? false : show;
+        onChange = _options.onChange;
+        hideWhenWindowScroll = _options.hideWhenWindowScroll;
+      }
+      function init() {
+        setState(visible);
+      }
+      function setState(isShow) {
+        if (isShow === visible) {
+          return;
+        }
+        visible = isShow;
+        if (visible) {
+          activeCount++;
+          scrollTop = $(window).scrollTop() || $pageMain.scrollTop();
+          $root.addClass('modal--show');
+          $pageMain.scrollTop(scrollTop);
+          activeCount === 1 && ($pageRoot.addClass('show-modal'), $body.addClass('of-hidden'));
+          hideWhenWindowScroll && window.hasEvent('touchstart') && $window.on('scroll', hide);
+          $window.on('keyup', handleKeyup);
+        } else {
+          activeCount > 0 && activeCount--;
+          $root.removeClass('modal--show');
+          $window.scrollTop(scrollTop);
+          activeCount === 0 && ($pageRoot.removeClass('show-modal'), $body.removeClass('of-hidden'));
+          hideWhenWindowScroll && window.hasEvent('touchstart') && $window.off('scroll', hide);
+          $window.off('keyup', handleKeyup);
+        }
+        onChange && onChange(visible);
+      }
+      function show() {
+        setState(true);
+      }
+      function hide() {
+        setState(false);
+      }
+      function handleKeyup(e) {
+        // Char Code: 27  ESC
+        if (e.which ===  27) {
+          hide();
+        }
+      }
+      setOptions(options);
+      init();
+      return {
+        show: show,
+        hide: hide,
+        $el: $root
+      };
+    }
+    $.fn.modal = modal;
+  });
+})();
+</script><div class="modal modal--overflow page__search-modal d-print-none js-page-search-modal"><script>
+(function () {
+  var SOURCES = window.TEXT_VARIABLES.sources;
+  window.Lazyload.js(SOURCES.jquery, function() {
+    // search panel
+    var search = (window.search || (window.search = {}));
+    var useDefaultSearchBox = window.useDefaultSearchBox === undefined ?
+      true : window.useDefaultSearchBox ;
+
+    var $searchModal = $('.js-page-search-modal');
+    var $searchToggle = $('.js-search-toggle');
+    var searchModal = $searchModal.modal({ onChange: handleModalChange, hideWhenWindowScroll: true });
+    var modalVisible = false;
+    search.searchModal = searchModal;
+
+    var $searchBox = null;
+    var $searchInput = null;
+    var $searchClear = null;
+
+    function getModalVisible() {
+      return modalVisible;
+    }
+    search.getModalVisible = getModalVisible;
+
+    function handleModalChange(visible) {
+      modalVisible = visible;
+      if (visible) {
+        search.onShow && search.onShow();
+        useDefaultSearchBox && $searchInput[0] && $searchInput[0].focus();
+      } else {
+        search.onShow && search.onHide();
+        useDefaultSearchBox && $searchInput[0] && $searchInput[0].blur();
+        setTimeout(function() {
+          useDefaultSearchBox && ($searchInput.val(''), $searchBox.removeClass('not-empty'));
+          search.clear && search.clear();
+          window.pageAsideAffix && window.pageAsideAffix.refresh();
+        }, 400);
+      }
+    }
+
+    $searchToggle.on('click', function() {
+      modalVisible ? searchModal.hide() : searchModal.show();
+    });
+    // Char Code: 83  S, 191 /
+    $(window).on('keyup', function(e) {
+      if (!modalVisible && !window.isFormElement(e.target || e.srcElement) && (e.which === 83 || e.which === 191)) {
+        modalVisible || searchModal.show();
+      }
+    });
+
+    if (useDefaultSearchBox) {
+      $searchBox = $('.js-search-box');
+      $searchInput = $searchBox.children('input');
+      $searchClear = $searchBox.children('.js-icon-clear');
+      search.getSearchInput = function() {
+        return $searchInput.get(0);
+      };
+      search.getVal = function() {
+        return $searchInput.val();
+      };
+      search.setVal = function(val) {
+        $searchInput.val(val);
+      };
+
+      $searchInput.on('focus', function() {
+        $(this).addClass('focus');
+      });
+      $searchInput.on('blur', function() {
+        $(this).removeClass('focus');
+      });
+      $searchInput.on('input', window.throttle(function() {
+        var val = $(this).val();
+        if (val === '' || typeof val !== 'string') {
+          search.clear && search.clear();
+        } else {
+          $searchBox.addClass('not-empty');
+          search.onInputNotEmpty && search.onInputNotEmpty(val);
+        }
+      }, 400));
+      $searchClear.on('click', function() {
+        $searchInput.val(''); $searchBox.removeClass('not-empty');
+        search.clear && search.clear();
+      });
+    }
+  });
+})();
+</script><div class="search search--dark">
+  <div class="main">
+    <div class="search__header">Search</div>
+    <div class="search-bar">
+      <div class="search-box js-search-box">
+        <div class="search-box__icon-search"><i class="fas fa-search"></i></div>
+        <input type="text" />
+        <div class="search-box__icon-clear js-icon-clear">
+          <a><i class="fas fa-times"></i></a>
+        </div>
+      </div>
+      <button class="button button--theme-dark button--pill search__cancel js-search-toggle">
+        Cancel</button>
+    </div>
+    <div class="search-result js-search-result"></div>
+  </div>
+</div>
+<script>var SOURCES = window.TEXT_VARIABLES.sources;
+var PAHTS = window.TEXT_VARIABLES.paths;
+window.Lazyload.js([SOURCES.jquery, PAHTS.search_js], function() {
+  var search = (window.search || (window.search = {}));
+  var searchData = window.TEXT_SEARCH_DATA || {};
+
+  function memorize(f) {
+    var cache = {};
+    return function () {
+      var key = Array.prototype.join.call(arguments, ',');
+      if (key in cache) return cache[key];
+      else return cache[key] = f.apply(this, arguments);
+    };
+  }
+
+  /// search
+  function searchByQuery(query) {
+    var i, j, key, keys, cur, _title, result = {};
+    keys = Object.keys(searchData);
+    for (i = 0; i < keys.length; i++) {
+      key = keys[i];
+      for (j = 0; j < searchData[key].length; j++) {
+        cur = searchData[key][j], _title = cur.title;
+        if ((result[key] === undefined || result[key] && result[key].length < 4 )
+          && _title.toLowerCase().indexOf(query.toLowerCase()) >= 0) {
+          if (result[key] === undefined) {
+            result[key] = [];
+          }
+          result[key].push(cur);
+        }
+      }
+    }
+    return result;
+  }
+
+  var renderHeader = memorize(function(header) {
+    return $('<p class="search-result__header">' + header + '</p>');
+  });
+
+  var renderItem = function(index, title, url) {
+    return $('<li class="search-result__item" data-index="' + index + '"><a class="button" href="' + url + '">' + title + '</a></li>');
+  };
+
+  function render(data) {
+    if (!data) { return null; }
+    var $root = $('<ul></ul>'), i, j, key, keys, cur, itemIndex = 0;
+    keys = Object.keys(data);
+    for (i = 0; i < keys.length; i++) {
+      key = keys[i];
+      $root.append(renderHeader(key));
+      for (j = 0; j < data[key].length; j++) {
+        cur = data[key][j];
+        $root.append(renderItem(itemIndex++, cur.title, cur.url));
+      }
+    }
+    return $root;
+  }
+
+  // search box
+  var $result = $('.js-search-result'), $resultItems;
+  var lastActiveIndex, activeIndex;
+
+  function clear() {
+    $result.html(null);
+    $resultItems = $('.search-result__item'); activeIndex = 0;
+  }
+  function onInputNotEmpty(val) {
+    $result.html(render(searchByQuery(val)));
+    $resultItems = $('.search-result__item'); activeIndex = 0;
+    $resultItems.eq(0).addClass('active');
+  }
+
+  search.clear = clear;
+  search.onInputNotEmpty = onInputNotEmpty;
+
+  function updateResultItems() {
+    lastActiveIndex >= 0 && $resultItems.eq(lastActiveIndex).removeClass('active');
+    activeIndex >= 0 && $resultItems.eq(activeIndex).addClass('active');
+  }
+
+  function moveActiveIndex(direction) {
+    var itemsCount = $resultItems ? $resultItems.length : 0;
+    if (itemsCount > 1) {
+      lastActiveIndex = activeIndex;
+      if (direction === 'up') {
+        activeIndex = (activeIndex - 1 + itemsCount) % itemsCount;
+      } else if (direction === 'down') {
+        activeIndex = (activeIndex + 1 + itemsCount) % itemsCount;
+      }
+      updateResultItems();
+    }
+  }
+
+  // Char Code: 13  Enter, 37  ⬅, 38  ⬆, 39  ➡, 40  ⬇
+  $(window).on('keyup', function(e) {
+    var modalVisible = search.getModalVisible && search.getModalVisible();
+    if (modalVisible) {
+      if (e.which === 38) {
+        modalVisible && moveActiveIndex('up');
+      } else if (e.which === 40) {
+        modalVisible && moveActiveIndex('down');
+      } else if (e.which === 13) {
+        modalVisible && $resultItems && activeIndex >= 0 && $resultItems.eq(activeIndex).children('a')[0].click();
+      }
+    }
+  });
+
+  $result.on('mouseover', '.search-result__item > a', function() {
+    var itemIndex = $(this).parent().data('index');
+    itemIndex >= 0 && (lastActiveIndex = activeIndex, activeIndex = itemIndex, updateResultItems());
+  });
+});
+</script>
+</div></div>
+
+
+<script>(function() {
+  var SOURCES = window.TEXT_VARIABLES.sources;
+  window.Lazyload.js(SOURCES.jquery, function() {
+    function scrollToAnchor(anchor, duration, callback) {
+      var $root = this;
+      $root.animate({ scrollTop: $(anchor).position().top }, duration, function() {
+        window.history.replaceState(null, '', window.location.href.split('#')[0] + anchor);
+        callback && callback();
+      });
+    }
+    $.fn.scrollToAnchor = scrollToAnchor;
+  });
+})();
+(function() {
+  var SOURCES = window.TEXT_VARIABLES.sources;
+  window.Lazyload.js(SOURCES.jquery, function() {
+    function affix(options) {
+      var $root = this, $window = $(window), $scrollTarget, $scroll,
+        offsetBottom = 0, scrollTarget = window, scroll = window.document, disabled = false, isOverallScroller = true,
+        rootTop, rootLeft, rootHeight, scrollBottom, rootBottomTop,
+        hasInit = false, curState;
+
+      function setOptions(options) {
+        var _options = options || {};
+        _options.offsetBottom && (offsetBottom = _options.offsetBottom);
+        _options.scrollTarget && (scrollTarget = _options.scrollTarget);
+        _options.scroll && (scroll = _options.scroll);
+        _options.disabled !== undefined && (disabled = _options.disabled);
+        $scrollTarget = $(scrollTarget);
+        isOverallScroller = window.isOverallScroller($scrollTarget[0]);
+        $scroll = $(scroll);
+      }
+      function preCalc() {
+        top();
+        rootHeight = $root.outerHeight();
+        rootTop = $root.offset().top + (isOverallScroller ? 0 :  $scrollTarget.scrollTop());
+        rootLeft = $root.offset().left;
+      }
+      function calc(needPreCalc) {
+        needPreCalc && preCalc();
+        scrollBottom = $scroll.outerHeight() - offsetBottom - rootHeight;
+        rootBottomTop = scrollBottom - rootTop;
+      }
+      function top() {
+        if (curState !== 'top') {
+          $root.removeClass('fixed').css({
+            left: 0,
+            top: 0
+          });
+          curState = 'top';
+        }
+      }
+      function fixed() {
+        if (curState !== 'fixed') {
+          $root.addClass('fixed').css({
+            left: rootLeft + 'px',
+            top: 0
+          });
+          curState = 'fixed';
+        }
+      }
+      function bottom() {
+        if (curState !== 'bottom') {
+          $root.removeClass('fixed').css({
+            left: 0,
+            top: rootBottomTop + 'px'
+          });
+          curState = 'bottom';
+        }
+      }
+      function setState() {
+        var scrollTop = $scrollTarget.scrollTop();
+        if (scrollTop >= rootTop && scrollTop <= scrollBottom) {
+          fixed();
+        } else if (scrollTop < rootTop) {
+          top();
+        } else {
+          bottom();
+        }
+      }
+      function init() {
+        if(!hasInit) {
+          var interval, timeout;
+          calc(true); setState();
+          // run calc every 100 millisecond
+          interval = setInterval(function() {
+            calc();
+          }, 100);
+          timeout = setTimeout(function() {
+            clearInterval(interval);
+          }, 45000);
+          window.pageLoad.then(function() {
+            setTimeout(function() {
+              clearInterval(interval);
+              clearTimeout(timeout);
+            }, 3000);
+          });
+          $scrollTarget.on('scroll', function() {
+            disabled || setState();
+          });
+          $window.on('resize', function() {
+            disabled || (calc(true), setState());
+          });
+          hasInit = true;
+        }
+      }
+
+      setOptions(options);
+      if (!disabled) {
+        init();
+      }
+      $window.on('resize', window.throttle(function() {
+        init();
+      }, 200));
+      return {
+        setOptions: setOptions,
+        refresh: function() {
+          calc(true, { animation: false }); setState();
+        }
+      };
+    }
+    $.fn.affix = affix;
+  });
+})();
+(function() {
+  var SOURCES = window.TEXT_VARIABLES.sources;
+  window.Lazyload.js(SOURCES.jquery, function() {
+    function toc(options) {
+      var $root = this, $window = $(window), $scrollTarget, $scroller, $tocUl = $('<ul class="toc toc--ellipsis"></ul>'), $tocLi, $headings, $activeLast, $activeCur,
+        selectors = 'h1,h2,h3', container = 'body', scrollTarget = window, scroller = 'html, body', disabled = false,
+        headingsPos, scrolling = false, hasRendered = false, hasInit = false;
+
+      function setOptions(options) {
+        var _options = options || {};
+        _options.selectors && (selectors = _options.selectors);
+        _options.container && (container = _options.container);
+        _options.scrollTarget && (scrollTarget = _options.scrollTarget);
+        _options.scroller && (scroller = _options.scroller);
+        _options.disabled !== undefined && (disabled = _options.disabled);
+        $headings = $(container).find(selectors).filter('[id]');
+        $scrollTarget = $(scrollTarget);
+        $scroller = $(scroller);
+      }
+      function calc() {
+        headingsPos = [];
+        $headings.each(function() {
+          headingsPos.push(Math.floor($(this).position().top));
+        });
+      }
+      function setState(element, disabled) {
+        var scrollTop = $scrollTarget.scrollTop(), i;
+        if (disabled || !headingsPos || headingsPos.length < 1) { return; }
+        if (element) {
+          $activeCur = element;
+        } else {
+          for (i = 0; i < headingsPos.length; i++) {
+            if (scrollTop >= headingsPos[i]) {
+              $activeCur = $tocLi.eq(i);
+            } else {
+              $activeCur || ($activeCur = $tocLi.eq(i));
+              break;
+            }
+          }
+        }
+        $activeLast && $activeLast.removeClass('active');
+        ($activeLast = $activeCur).addClass('active');
+      }
+      function render() {
+        if(!hasRendered) {
+          $root.append($tocUl);
+          $headings.each(function() {
+            var $this = $(this);
+            $tocUl.append($('<li></li>').addClass('toc-' + $this.prop('tagName').toLowerCase())
+              .append($('<a></a>').text($this.text()).attr('href', '#' + $this.prop('id'))));
+          });
+          $tocLi = $tocUl.children('li');
+          $tocUl.on('click', 'a', function(e) {
+            e.preventDefault();
+            var $this = $(this);
+            scrolling = true;
+            setState($this.parent());
+            $scroller.scrollToAnchor($this.attr('href'), 400, function() {
+              scrolling = false;
+            });
+          });
+        }
+        hasRendered = true;
+      }
+      function init() {
+        var interval, timeout;
+        if(!hasInit) {
+          render(); calc(); setState(null, scrolling);
+          // run calc every 100 millisecond
+          interval = setInterval(function() {
+            calc();
+          }, 100);
+          timeout = setTimeout(function() {
+            clearInterval(interval);
+          }, 45000);
+          window.pageLoad.then(function() {
+            setTimeout(function() {
+              clearInterval(interval);
+              clearTimeout(timeout);
+            }, 3000);
+          });
+          $scrollTarget.on('scroll', function() {
+            disabled || setState(null, scrolling);
+          });
+          $window.on('resize', window.throttle(function() {
+            if (!disabled) {
+              render(); calc(); setState(null, scrolling);
+            }
+          }, 100));
+        }
+        hasInit = true;
+      }
+
+      setOptions(options);
+      if (!disabled) {
+        init();
+      }
+      $window.on('resize', window.throttle(function() {
+        init();
+      }, 200));
+      return {
+        setOptions: setOptions
+      };
+    }
+    $.fn.toc = toc;
+  });
+})();
+/*(function () {
+
+})();*/
+</script><script>
+  /* toc must before affix, since affix need to konw toc' height. */(function() {
+  var SOURCES = window.TEXT_VARIABLES.sources;
+  var TOC_SELECTOR = window.TEXT_VARIABLES.site.toc.selectors;
+  window.Lazyload.js(SOURCES.jquery, function() {
+    var $window = $(window);
+    var $articleContent = $('.js-article-content');
+    var $tocRoot = $('.js-toc-root'), $col2 = $('.js-col-aside');
+    var toc;
+    var tocDisabled = false;
+    var hasSidebar = $('.js-page-root').hasClass('layout--page--sidebar');
+    var hasToc = $articleContent.find(TOC_SELECTOR).length > 0;
+
+    function disabled() {
+      return $col2.css('display') === 'none' || !hasToc;
+    }
+
+    tocDisabled = disabled();
+
+    toc = $tocRoot.toc({
+      selectors: TOC_SELECTOR,
+      container: $articleContent,
+      scrollTarget: hasSidebar ? '.js-page-main' : null,
+      scroller: hasSidebar ? '.js-page-main' : null,
+      disabled: tocDisabled
+    });
+
+    $window.on('resize', window.throttle(function() {
+      tocDisabled = disabled();
+      toc && toc.setOptions({
+        disabled: tocDisabled
+      });
+    }, 100));
+
+  });
+})();
+(function() {
+  var SOURCES = window.TEXT_VARIABLES.sources;
+  window.Lazyload.js(SOURCES.jquery, function() {
+    var $window = $(window), $pageFooter = $('.js-page-footer');
+    var $pageAside = $('.js-page-aside');
+    var affix;
+    var tocDisabled = false;
+    var hasSidebar = $('.js-page-root').hasClass('layout--page--sidebar');
+
+    affix = $pageAside.affix({
+      offsetBottom: $pageFooter.outerHeight(),
+      scrollTarget: hasSidebar ? '.js-page-main' : null,
+      scroller: hasSidebar ? '.js-page-main' : null,
+      scroll: hasSidebar ? $('.js-page-main').children() : null,
+      disabled: tocDisabled
+    });
+
+    $window.on('resize', window.throttle(function() {
+      affix && affix.setOptions({
+        disabled: tocDisabled
+      });
+    }, 100));
+
+    window.pageAsideAffix = affix;
+  });
+})();
+</script>
+    </div>
+    <script>(function () {
+  var $root = document.getElementsByClassName('root')[0];
+  if (window.hasEvent('touchstart')) {
+    $root.dataset.isTouch = true;
+    document.addEventListener('touchstart', function(){}, false);
+  }
+})();
+</script>
+  </body>
+</html>
+

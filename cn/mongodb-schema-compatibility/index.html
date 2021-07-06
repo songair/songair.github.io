@@ -1,0 +1,1427 @@
+<!DOCTYPE html><html lang="zh">
+  <head><!-- Global site tag (gtag.js) - Google Analytics -->
+	<script async src="https://www.googletagmanager.com/gtag/js?id=UA-87129300-1"></script>
+	<script>
+		window.dataLayer = window.dataLayer || [];
+		function gtag(){dataLayer.push(arguments);}
+		gtag('js', new Date());
+
+		gtag('config', 'UA-87129300-1');
+		
+	</script><meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no"><title>在MongoDB中增删字段真的这么简单？ - Mincong Huang</title>
+
+<meta name="description" content="本文探讨如何在MongoDB中实现向后兼容的结构（schema）变化，也就是如何在保证生产环境安全的情况下从MongoDB集合中添加或删除字段？">
+
+<!-- Begin Jekyll SEO tag v2.7.1 -->
+<title>在MongoDB中增删字段真的这么简单？ | Mincong Huang</title>
+<meta name="generator" content="Jekyll v4.2.0" />
+<meta property="og:title" content="在MongoDB中增删字段真的这么简单？" />
+<meta name="author" content="Mincong Huang" />
+<meta property="og:locale" content="zh" />
+<meta name="description" content="本文探讨如何在MongoDB中实现向后兼容的结构（schema）变化，也就是如何在保证生产环境安全的情况下从MongoDB集合中添加或删除字段？" />
+<meta property="og:description" content="本文探讨如何在MongoDB中实现向后兼容的结构（schema）变化，也就是如何在保证生产环境安全的情况下从MongoDB集合中添加或删除字段？" />
+<link rel="canonical" href="https://mincong.io/cn/mongodb-schema-compatibility/" />
+<meta property="og:url" content="https://mincong.io/cn/mongodb-schema-compatibility/" />
+<meta property="og:site_name" content="Mincong Huang" />
+<meta property="og:image" content="https://mincong.io/assets/bg-bence-sandor-sztrecska-wIs-mjKMiw4-unsplash.jpg" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2021-04-30T17:09:38+02:00" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta property="twitter:image" content="https://mincong.io/assets/bg-bence-sandor-sztrecska-wIs-mjKMiw4-unsplash.jpg" />
+<meta property="twitter:title" content="在MongoDB中增删字段真的这么简单？" />
+<meta name="twitter:site" content="@mincong_h" />
+<meta name="twitter:creator" content="@mincong_h" />
+<script type="application/ld+json">
+{"author":{"@type":"Person","name":"Mincong Huang"},"description":"本文探讨如何在MongoDB中实现向后兼容的结构（schema）变化，也就是如何在保证生产环境安全的情况下从MongoDB集合中添加或删除字段？","@type":"BlogPosting","image":"https://mincong.io/assets/bg-bence-sandor-sztrecska-wIs-mjKMiw4-unsplash.jpg","url":"https://mincong.io/cn/mongodb-schema-compatibility/","dateModified":"2021-04-30T17:09:38+02:00","datePublished":"2021-04-30T17:09:38+02:00","headline":"在MongoDB中增删字段真的这么简单？","mainEntityOfPage":{"@type":"WebPage","@id":"https://mincong.io/cn/mongodb-schema-compatibility/"},"@context":"https://schema.org"}</script>
+<!-- End Jekyll SEO tag -->
+
+
+<!-- Extra Open Graph :: Start -->
+
+<meta property="og:image:width" content="1600"/>
+<meta property="og:image:height" content="2400"/>
+
+<!-- Extra Open Graph :: End -->
+
+<link rel="canonical" href="https://mincong.io/cn/mongodb-schema-compatibility/"><link rel="alternate" type="application/rss+xml" title="Mincong Huang" href="/feed.xml"><!-- start favicons snippet, use https://realfavicongenerator.net/ --><link rel="apple-touch-icon" sizes="180x180" href="/assets/apple-touch-icon.png"><link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon-32x32.png"><link rel="icon" type="image/png" sizes="16x16" href="/assets/favicon-16x16.png"><link rel="manifest" href="/assets/site.webmanifest"><link rel="mask-icon" href="/assets/safari-pinned-tab.svg" color="#fc4d50"><link rel="shortcut icon" href="/assets/favicon.ico">
+
+<meta name="msapplication-TileColor" content="#ffc40d"><meta name="msapplication-config" content="/assets/browserconfig.xml">
+
+<meta name="theme-color" content="#ffffff">
+<!-- end favicons snippet --><link rel="stylesheet" href="/assets/css/main.css"><link rel="stylesheet" href="https://cdn.bootcdn.net/ajax/libs/font-awesome/5.15.1/css/all.css" ><!-- start custom head snippets -->
+
+<!-- end custom head snippets -->
+<script>(function() {
+  window.isArray = function(val) {
+    return Object.prototype.toString.call(val) === '[object Array]';
+  };
+  window.isString = function(val) {
+    return typeof val === 'string';
+  };
+
+  window.hasEvent = function(event) {
+    return 'on'.concat(event) in window.document;
+  };
+
+  window.isOverallScroller = function(node) {
+    return node === document.documentElement || node === document.body || node === window;
+  };
+
+  window.isFormElement = function(node) {
+    var tagName = node.tagName;
+    return tagName === 'INPUT' || tagName === 'SELECT' || tagName === 'TEXTAREA';
+  };
+
+  window.pageLoad = (function () {
+    var loaded = false, cbs = [];
+    window.addEventListener('load', function () {
+      var i;
+      loaded = true;
+      if (cbs.length > 0) {
+        for (i = 0; i < cbs.length; i++) {
+          cbs[i]();
+        }
+      }
+    });
+    return {
+      then: function(cb) {
+        cb && (loaded ? cb() : (cbs.push(cb)));
+      }
+    };
+  })();
+})();
+(function() {
+  window.throttle = function(func, wait) {
+    var args, result, thisArg, timeoutId, lastCalled = 0;
+
+    function trailingCall() {
+      lastCalled = new Date;
+      timeoutId = null;
+      result = func.apply(thisArg, args);
+    }
+    return function() {
+      var now = new Date,
+        remaining = wait - (now - lastCalled);
+
+      args = arguments;
+      thisArg = this;
+
+      if (remaining <= 0) {
+        clearTimeout(timeoutId);
+        timeoutId = null;
+        lastCalled = now;
+        result = func.apply(thisArg, args);
+      } else if (!timeoutId) {
+        timeoutId = setTimeout(trailingCall, remaining);
+      }
+      return result;
+    };
+  };
+})();
+(function() {
+  var Set = (function() {
+    var add = function(item) {
+      var i, data = this._data;
+      for (i = 0; i < data.length; i++) {
+        if (data[i] === item) {
+          return;
+        }
+      }
+      this.size ++;
+      data.push(item);
+      return data;
+    };
+
+    var Set = function(data) {
+      this.size = 0;
+      this._data = [];
+      var i;
+      if (data.length > 0) {
+        for (i = 0; i < data.length; i++) {
+          add.call(this, data[i]);
+        }
+      }
+    };
+    Set.prototype.add = add;
+    Set.prototype.get = function(index) { return this._data[index]; };
+    Set.prototype.has = function(item) {
+      var i, data = this._data;
+      for (i = 0; i < data.length; i++) {
+        if (this.get(i) === item) {
+          return true;
+        }
+      }
+      return false;
+    };
+    Set.prototype.is = function(map) {
+      if (map._data.length !== this._data.length) { return false; }
+      var i, j, flag, tData = this._data, mData = map._data;
+      for (i = 0; i < tData.length; i++) {
+        for (flag = false, j = 0; j < mData.length; j++) {
+          if (tData[i] === mData[j]) {
+            flag = true;
+            break;
+          }
+        }
+        if (!flag) { return false; }
+      }
+      return true;
+    };
+    Set.prototype.values = function() {
+      return this._data;
+    };
+    return Set;
+  })();
+
+  window.Lazyload = (function(doc) {
+    var queue = {js: [], css: []}, sources = {js: {}, css: {}}, context = this;
+    var createNode = function(name, attrs) {
+      var node = doc.createElement(name), attr;
+      for (attr in attrs) {
+        if (attrs.hasOwnProperty(attr)) {
+          node.setAttribute(attr, attrs[attr]);
+        }
+      }
+      return node;
+    };
+    var end = function(type, url) {
+      var s, q, qi, cbs, i, j, cur, val, flag;
+      if (type === 'js' || type ==='css') {
+        s = sources[type], q = queue[type];
+        s[url] = true;
+        for (i = 0; i < q.length; i++) {
+          cur = q[i];
+          if (cur.urls.has(url)) {
+            qi = cur, val = qi.urls.values();
+            qi && (cbs = qi.callbacks);
+            for (flag = true, j = 0; j < val.length; j++) {
+              cur = val[j];
+              if (!s[cur]) {
+                flag = false;
+              }
+            }
+            if (flag && cbs && cbs.length > 0) {
+              for (j = 0; j < cbs.length; j++) {
+                cbs[j].call(context);
+              }
+              qi.load = true;
+            }
+          }
+        }
+      }
+    };
+    var load = function(type, urls, callback) {
+      var s, q, qi, node, i, cur,
+        _urls = typeof urls === 'string' ? new Set([urls]) : new Set(urls), val, url;
+      if (type === 'js' || type ==='css') {
+        s = sources[type], q = queue[type];
+        for (i = 0; i < q.length; i++) {
+          cur = q[i];
+          if (_urls.is(cur.urls)) {
+            qi = cur;
+            break;
+          }
+        }
+        val = _urls.values();
+        if (qi) {
+          callback && (qi.load || qi.callbacks.push(callback));
+          callback && (qi.load && callback());
+        } else {
+          q.push({
+            urls: _urls,
+            callbacks: callback ? [callback] : [],
+            load: false
+          });
+          for (i = 0; i < val.length; i++) {
+            node = null, url = val[i];
+            if (s[url] === undefined) {
+              (type === 'js' ) && (node = createNode('script', { src: url }));
+              (type === 'css') && (node = createNode('link', { rel: 'stylesheet', href: url }));
+              if (node) {
+                node.onload = (function(type, url) {
+                  return function() {
+                    end(type, url);
+                  };
+                })(type, url);
+                (doc.head || doc.body).appendChild(node);
+                s[url] = false;
+              }
+            }
+          }
+        }
+      }
+    };
+    return {
+      js: function(url, callback) {
+        load('js', url, callback);
+      },
+      css: function(url, callback) {
+        load('css', url, callback);
+      }
+    };
+  })(this.document);
+})();
+</script><script>
+  (function() {
+    var TEXT_VARIABLES = {
+      version: '2.2.6',
+      sources: {
+        font_awesome: 'https://cdn.bootcdn.net/ajax/libs/font-awesome/5.15.1/css/all.css',
+        jquery: 'https://cdn.bootcss.com/jquery/3.1.1/jquery.min.js',
+        leancloud_js_sdk: '//cdn.jsdelivr.net/npm/leancloud-storage@3.13.2/dist/av-min.js',
+        chart: 'https://cdn.bootcss.com/Chart.js/2.7.2/Chart.bundle.min.js',
+        gitalk: {
+          js: 'https://cdn.bootcss.com/gitalk/1.2.2/gitalk.min.js',
+          css: 'https://cdn.bootcss.com/gitalk/1.2.2/gitalk.min.css'
+        },
+        valine: 'https://unpkg.com/valine/dist/Valine.min.js',
+        mathjax: 'https://cdn.bootcss.com/mathjax/2.7.4/MathJax.js?config=TeX-MML-AM_CHTML',
+        mermaid: 'https://cdn.bootcss.com/mermaid/8.0.0-rc.8/mermaid.min.js'
+      },
+      site: {
+        toc: {
+          selectors: 'h1,h2,h3'
+        }
+      },
+      paths: {
+        search_js: '/assets/search.js'
+      }
+    };
+    window.TEXT_VARIABLES = TEXT_VARIABLES;
+  })();
+</script>
+</head>
+  <body>
+    <div class="root" data-is-touch="false">
+      <div class="layout--page js-page-root"><div class="page__main js-page-main page__viewport has-aside cell cell--auto">
+
+      <div class="page__main-inner"><div class="page__header d-print-none"><header class="header"><div class="main">
+      <div class="header__title">
+        <div class="header__brand"><svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
+	 width="24px" height="24px" viewBox="0 0 24 24">
+<style type="text/css">
+	.st0{fill:#515151;}
+</style>
+<path class="st0" d="M1.7,22.3c5.7-5.7,11.3-5.7,17,0c3.3-3.3,3.5-5.3,0.8-6c2.7,0.7,3.5-1.1,2.3-5.6s-3.3-5.2-6.3-2.1
+	c3-3,2.3-5.2-2.1-6.3S7,1.8,7.7,4.6C7,1.8,5,2.1,1.7,5.3C7.3,11,7.3,16.7,1.7,22.3"/>
+</svg>
+<a title="Hi, welcome to my blog! I'm a software engineer at Datadog. I write blog posts in my free time. My blogs are bits and pieces of my tech journey. Most of them are related to Java. Hope you enjoy them! My opinions are my own, not Datadog's. This blog is powered by Jekyll, a simple, blog-aware, static sites solution.
+" href="/">Mincong Huang</a></div><button class="button button--secondary button--circle search-button js-search-toggle"><i class="fas fa-search"></i></button></div><nav class="navigation">
+        <ul><li class="navigation__item"><a href="/categories">分类</a></li><li class="navigation__item"><a href="/series">系列</a></li><li class="navigation__item"><a href="/archive">归档</a></li><li class="navigation__item"><a href="/about">关于</a></li><li><button class="button button--secondary button--circle search-button js-search-toggle"><i class="fas fa-search"></i></button></li></ul>
+      </nav></div>
+  </header>
+</div><div class="page__content"><div class="article__header--overlay"><div class="hero hero--dark overlay" style="background-image:linear-gradient(135deg, rgba(0, 0, 0, .3), rgba(0, 0, 0, .2)),url(/assets/bg-bence-sandor-sztrecska-wIs-mjKMiw4-unsplash.jpg);background-color:#203028;"><div class="hero__content"><div class ="main"><div class="article__info clearfix"><ul class="left-col menu"><li>
+              <a class="button button--secondary button--pill button--sm"
+                href="/archive?tag=java">java</a>
+            </li><li>
+              <a class="button button--secondary button--pill button--sm"
+                href="/archive?tag=mongodb">mongodb</a>
+            </li><li>
+              <a class="button button--secondary button--pill button--sm"
+                href="/archive?tag=serialization">serialization</a>
+            </li><li>
+              <a class="button button--secondary button--pill button--sm"
+                href="/archive?tag=jackson">jackson</a>
+            </li><li>
+              <a class="button button--secondary button--pill button--sm"
+                href="/archive?tag=reliability">reliability</a>
+            </li></ul><ul class="right-col menu"><li><i class="far fa-calendar-alt"></i> <span>2021年 04月30日</span>
+            </li></ul></div><div class="article__header"><header><h1>在MongoDB中增删字段真的这么简单？</h1></header></div><div class="article__header">
+                        <p class="overlay__excerpt">在MongoDB中实现向后兼容的结构（schema）变化。</p>
+                      </div><div class="article__info clearfix">
+  <ul class="left-col menu">
+    <li>
+      <i class="fas fa-camera"></i>
+      Photo by
+      <a href="https://unsplash.com/@arpheus" target="_blank">
+        Bence Sandor Sztrecska
+      </a>
+      on
+      <a href="https://unsplash.com/license" target="_blank">
+        Unplash 
+      </a>
+    </li>
+  </ul>
+</div>
+</div></div>
+              </div>
+            </div><div class ="main"><div class="grid grid--reverse">
+
+              <div class="col-aside d-print-none js-col-aside"><aside class="page__aside js-page-aside"><div class="toc-aside js-toc-root"></div>
+</aside></div>
+
+              <div class="col-main cell cell--auto"><!-- start custom main top snippet -->
+
+<!-- end custom main top snippet -->
+<article itemscope itemtype="http://schema.org/Article"><meta itemprop="headline" content="在MongoDB中增删字段真的这么简单？"><meta itemprop="author" content="Mincong Huang"/><meta itemprop="datePublished" content="2021-04-30T17:09:38+02:00">
+    <meta itemprop="keywords" content="java,mongodb,serialization,jackson,reliability"><div class="js-article-content"><div class="layout--article"><!-- start custom article top snippet -->
+
+
+<!-- end custom article top snippet -->
+<div class="article__content" itemprop="articleBody"><h2 id="前言">前言</h2>
+
+<p>如果你使用 MongoDB 作为数据库的话，更改 MongoDB 的集合（collection）对你来说肯定是家常便饭。比如说，当业务发展时，我们需要添加新字段（field）到特定的集合中，或者从目标集合中删除现有字段，以支持更多的产品需求。这个操作看起来非常简单，只要往 Java 里面加个新的字段就行了。然而，它远比想象中复杂和危险。万一考虑不周，就有可能会触发线上事件，甚至导致服务中断。在这篇文章里，我们将会探讨哪些地方可能出错、如何安全地更改 schema，以及如何排查问题。本文假设你已经熟悉地掌握了 MongoDB 的基本概念，以及将 Jackson 用作你 Java 程序的序列化框架。</p>
+
+<p>阅读本文后，你会明白：</p>
+
+<ul>
+  <li>添加新字段时的潜在风险</li>
+  <li>如何用默认值填充缺失的数据</li>
+  <li>如何写单元测试</li>
+  <li>如何迁移现有的文档</li>
+  <li>如何给最坏的情况的情况作准备：撤销代码变更，恢复旧版</li>
+  <li>如果事故发生了，如何使用 Mongo 语句来解决问题？</li>
+  <li>如何从这篇文章拓展出去？</li>
+</ul>
+
+<p>这篇文章是用 MongoDB 4.2、Jackson 2.12、以及 Java 11 写的，但文章概念并不依赖这些新版本，应该对旧版本也有效。文章有点长，因为涉及到的知识点很多。希望大家不要嫌弃，读过以后应该会有新的收获！</p>
+
+<h2 id="潜在的风险">潜在的风险</h2>
+
+<p><em>增加一个新的字段（field）时，有可能出现什么问题？</em></p>
+
+<p>如果我们在 Java 类中添加了一个新字段而不更改 MongoDB 数据库中的现有文档，反序列化（deserialization）可能会出现严重的错误。这主要是由于 Java 类里面的字段声明和数据库实际存储文档的不一致导致的。这么说有点抽象。我们来看个例子吧，看看会有什么问题。比如我们在做一个电商网站，Java 中有一个代表订单的类，叫做<code class="language-plaintext highlighter-rouge">OrderV1</code>。这个订单的第一个版本 V1 包含 3 个字段：MongoDB 中的 Object ID、客户 ID 以及此订单的金额。然后最近产品经理希望添加“取消订单”这个功能，因此我们需要一个新的字段<code class="language-plaintext highlighter-rouge">isCanceled</code>来支持此这个新功能，它也成为了我们订单的 V2 版<code class="language-plaintext highlighter-rouge">OrderV2</code>。此外，产品经理还希望添加一个操作员（operator）来跟踪处理订单的人。整个更改看起来非常简单，实现起来就是：</p>
+
+<div class="language-diff highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="gd">-public class OrderV1 {
+</span><span class="gi">+public class OrderV2 {
+</span>
+   @JsonProperty("_id")
+   private final String id;
+
+   @JsonProperty("customerId")
+   private final String customerId;
+
+   @JsonProperty("amount")
+   private final double amount;
+
++  @JsonProperty("isCanceled")
+<span class="gi">+  private final boolean isCanceled;
+</span>
++  @JsonProperty("operator")
+<span class="gi">+  private final String operator;
+</span>
+   ...
+ }
+</code></pre></div></div>
+
+<p>但你马上会看到，这里有一些重大风险。根本不像想象中那么简单！</p>
+
+<h3 id="风险一nullpointerexception-异常">风险一：NullPointerException 异常</h3>
+
+<p>在不改变 MongoDB 现有文档的情况下，在 Java 类中加入的新字段以后，已有文档的相应字段可能被设定为 null，比如字段“操作员（operator）”。这是因为这些 Mongo 文档不存在“操作员”这个字段。在 Java 中，那些被设置为 null 被引用的时候，就会触发 NullPointerException 异常。我们需要额外小心地处理这种情况：要么在 Java 代码中的处理，有么在 MongoDB 中处理。我们将在下文详细讨论这些技巧。</p>
+
+<h3 id="风险二无法撤销代码变更">风险二：无法撤销代码变更</h3>
+
+<p>另一个风险是无法撤销（revert）代码变更。如果没有对 Jackson Object Mapper 或对 Java 类进行额外配置，那一旦将新版代码部署到生产线中，我们极有可能无法将其安全地回滚到上一个版本。因为一旦 Java 的代码被 revert，那些在新版本部署以后创建的 MongoDB 文档，它们的反序列化将完全失败并抛出“字段无法识别”的异常（UnrecognizedPropertyException）：</p>
+
+<blockquote>
+  <p>“java.io.UncheckedIOException:
+com.fasterxml.jackson.databind.exc.UnrecognizedPropertyException: Unrecognized field
+“isCanceled” (class io.mincong.mongodb.model_changes.OrderV1), not marked as ignorable (3
+known properties: “amount”, “customerId”, “_id”]) at …</p>
+</blockquote>
+
+<p>这是因为新文档中有字段”是否被取消（isCanceled）”，但旧订单类 OrderV1 不知道如何去反序列化它。试想一下在生产线上发生这样的事：我们发现部署的 V2 版本无法正常使用，想回到 V1 版本。结果撤销了代码，但服务器里面却不断地产生“字段无法识别”的异常。。。这是一起严重的事故，足以中断正常的服务使用！</p>
+
+<p>现在，我们更好地了解了添加新字段的两个风险，让我们看看如何使用不同的方案来改善它们，避免事故的发生。</p>
+
+<h2 id="处理-null-值">处理 null 值</h2>
+
+<p>为了防止 NullPointerException 异常的出现，我们可以通过提供默认值来应对 Java 中缺失的数据。有 4 种方法可以做到这一点：</p>
+
+<ul>
+  <li>使用 Java 的语言特性避免 null 值</li>
+  <li>在构造器中填充 null 值</li>
+  <li>在 getter 中填充 null 值</li>
+  <li>使用额外的 Jackson 模块填充 null 值</li>
+</ul>
+
+<h3 id="使用-java-的语言特性避免-null-值">使用 Java 的语言特性避免 null 值</h3>
+
+<p>当类属性（class attribute）为原始类型（primitive type）时，Jackson 会为我们选择默认值。对于 boolean，它默认为 false；对于 int，它默认为 0；对于 double，它默认为 0.0 等。因此，我们可以依靠此特性来避免在 Java 应用程序中出现 null 的情况。例如，为了表示订单是否被取消，我们可以对该字段使用 boolean。当 Mongo 文档中不存在此字段时，Java 会默认为“isCanceled=false”。这意味着此订单是有效订单，而不是被取消的订单。</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">public</span> <span class="kd">class</span> <span class="nc">OrderV2</span> <span class="o">{</span>
+
+  <span class="cm">/**
+   * This is a new boolean field.
+   *
+   * &lt;p&gt;For existing documents which do not contain this field, the
+   * deserialization defaults to `false`.
+   */</span>
+  <span class="nd">@JsonProperty</span><span class="o">(</span><span class="s">"isCanceled"</span><span class="o">)</span>
+  <span class="kd">private</span> <span class="kd">final</span> <span class="kt">boolean</span> <span class="n">isCanceled</span><span class="o">;</span>
+
+  <span class="o">...</span>
+<span class="o">}</span>
+</code></pre></div></div>
+
+<p>另外，我想强调一下在选择形容词时要小心敬慎。我们要确保 false 对于缺失字段的文档具有正确的含义。例如，如果我们要用一个字段以一个物品的可见性，有两种选择：是“isHidden”还是“isVisible”。这时候应该选哪一个呢？我们也许应该选择形容词是“isHidden”，而不是“isVisible”。因为对于现有的 Mongo 文档，它们没有关于可见性的字段。在这种情况下：</p>
+
+<ul>
+  <li>当字段不存在时，“isHidden”默认为 false，也就是“可见”</li>
+  <li>当字段不存在时，“isVisible”默认为 false，也就是“不可见”。</li>
+</ul>
+
+<p>通常情况下，我们可能更需要“默认可见”，而不是“默认隐藏”。所以“isHidden”是一个比“isVisible”更好的选择。</p>
+
+<h3 id="在构造器中填充-null-值">在构造器中填充 null 值</h3>
+
+<p>另一种方法是在 Java 类的构造器中处理 null 的问题。因为当反序列化（deserialization）发生时，Jackson 通过注解“@JsonCreator”找到需要使用的构造器，并用来创建 Java 实例。所以说，在构造器中填充 null 值也是处理的好时机。下面举个例子，一方面我们有个 Java 类：它的构造器含有一个处理可能为 null 的 operator 的 if 语句：</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">public</span> <span class="kd">class</span> <span class="nc">OrderV2</span> <span class="o">{</span>
+
+  <span class="nd">@JsonProperty</span><span class="o">(</span><span class="s">"operator"</span><span class="o">)</span>
+  <span class="kd">private</span> <span class="kd">final</span> <span class="nc">String</span> <span class="n">operator</span><span class="o">;</span>
+
+  <span class="o">...</span>
+
+  <span class="nd">@JsonCreator</span>
+  <span class="kd">public</span> <span class="nf">OrderV2</span><span class="o">(</span>
+      <span class="nd">@JsonProperty</span><span class="o">(</span><span class="s">"_id"</span><span class="o">)</span> <span class="nc">String</span> <span class="n">id</span><span class="o">,</span>
+      <span class="nd">@JsonProperty</span><span class="o">(</span><span class="s">"customerId"</span><span class="o">)</span> <span class="nc">String</span> <span class="n">customerId</span><span class="o">,</span>
+      <span class="nd">@JsonProperty</span><span class="o">(</span><span class="s">"amount"</span><span class="o">)</span> <span class="kt">double</span> <span class="n">amount</span><span class="o">,</span>
+      <span class="nd">@JsonProperty</span><span class="o">(</span><span class="s">"isCanceled"</span><span class="o">)</span> <span class="kt">boolean</span> <span class="n">isCancelled</span><span class="o">,</span>
+      <span class="nd">@JsonProperty</span><span class="o">(</span><span class="s">"operator"</span><span class="o">)</span> <span class="nc">String</span> <span class="n">operator</span><span class="o">,</span>
+      <span class="nd">@JsonProperty</span><span class="o">(</span><span class="s">"productIds"</span><span class="o">)</span> <span class="nc">List</span><span class="o">&lt;</span><span class="nc">String</span><span class="o">&gt;</span> <span class="n">productIds</span><span class="o">)</span> <span class="o">{</span>
+    <span class="o">...</span>
+
+    <span class="k">if</span> <span class="o">(</span><span class="n">operator</span> <span class="o">==</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+      <span class="k">this</span><span class="o">.</span><span class="na">operator</span> <span class="o">=</span> <span class="s">"support@example.com"</span><span class="o">;</span>
+    <span class="o">}</span> <span class="k">else</span> <span class="o">{</span>
+      <span class="k">this</span><span class="o">.</span><span class="na">operator</span> <span class="o">=</span> <span class="n">operator</span><span class="o">;</span>
+    <span class="o">}</span>
+  <span class="o">}</span>
+
+  <span class="o">...</span>
+<span class="o">}</span>
+</code></pre></div></div>
+
+<p>另一方面，我们有一个存储在 MongoDB 里面、需要被反序列化成 Java 的 JSON 文档，它并不含有字段 operator：</p>
+
+<div class="language-json highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">{</span><span class="w">
+  </span><span class="nl">"_id"</span><span class="p">:</span><span class="w"> </span><span class="s2">"1"</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"customerId"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Customer1"</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"amount"</span><span class="p">:</span><span class="w"> </span><span class="mf">100.0</span><span class="w">
+</span><span class="p">}</span><span class="w">
+</span></code></pre></div></div>
+
+<p>通过 IntelliJ 的 debug 我们可以看见，在反序列化的过程中，operator 这个字段被 Jackson 视为 null，传给 Java 的构造器。但是在构造器中，它被修改了，默认值为“support@example.com”。也就是说，null 被妥善地处理了：</p>
+
+<p><img src="/assets/20210227-handle-null-in-constructor.png" alt="Handle null in constructor" /></p>
+
+<h3 id="在-getter-中填充-null-值">在 getter 中填充 null 值</h3>
+
+<p>跟构造器相似的另一个方法是在 getter 中填充 null 值：</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">public</span> <span class="kd">class</span> <span class="nc">OrderV2</span> <span class="o">{</span>
+
+  <span class="nd">@JsonProperty</span><span class="o">(</span><span class="s">"operator"</span><span class="o">)</span>
+  <span class="kd">private</span> <span class="kd">final</span> <span class="nc">String</span> <span class="n">operator</span><span class="o">;</span>
+
+  <span class="o">...</span>
+
+  <span class="kd">public</span> <span class="nc">String</span> <span class="nf">getOperator</span><span class="o">()</span> <span class="o">{</span>
+    <span class="k">return</span> <span class="n">operator</span> <span class="o">==</span> <span class="kc">null</span> <span class="o">?</span> <span class="s">"support@example.com"</span> <span class="o">:</span> <span class="n">operator</span><span class="o">;</span>
+  <span class="o">}</span>
+
+<span class="o">}</span>
+</code></pre></div></div>
+
+<h3 id="jackson-jdk8module">Jackson Jdk8Module</h3>
+
+<p>还有一种解决方案是使用 Java 的“Optional”类，结合 Jackson 模块 Jdk8Module 来处理序列化和反序列化。你可以访问 GitHub 项目 <a href="https://github.com/FasterXML/jackson-modules-java8">FasterXML/jackson-modules-java8</a> 或阅读 Baeldung 上的文章 <a href="https://www.baeldung.com/jackson-optional">“Using
+Optional with Jackson”</a> 来了解具体的用法。</p>
+
+<h2 id="写单元测试">写单元测试</h2>
+
+<p>为了更好地模拟更改增删字段的影响，我们可以写一些单元测试来测试不同的行为。写这一个章节的目的并不是为了说服大家测试所有的行为、涵盖所有的情况，因为这是非常耗时的一件事情。我只是想通过这个章节，分享不同的测试技术角度，证明它们是可行的。至于具体测试哪个方面，大家可以根据自己的情况考虑。</p>
+
+<h3 id="测试序列化">测试序列化</h3>
+
+<p>我们可以写测试确保序列化的正确性。也就是说，一方面 Java 的实例可以被序列化成 MongoDB 里面的文档，然后另一方面它能够被反序列化成 Java 里面的实例，而且反序列化的结果等于原来的初始实例。用图表示就是：</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Java                 MongoDB
+---                  ---
+orignal (V2)  -----&gt; Mongo document
+restored (V2) &lt;-----
+</code></pre></div></div>
+
+<p>代码：</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">// Given</span>
+<span class="kt">var</span> <span class="n">result</span> <span class="o">=</span> <span class="n">orderCollection</span><span class="o">.</span><span class="na">insertOne</span><span class="o">(</span><span class="n">order1</span><span class="o">);</span>
+
+<span class="c1">// When</span>
+<span class="kt">var</span> <span class="n">results</span> <span class="o">=</span> <span class="n">orderCollection</span><span class="o">.</span><span class="na">find</span><span class="o">(</span><span class="nc">Filters</span><span class="o">.</span><span class="na">eq</span><span class="o">(</span><span class="s">"customerId"</span><span class="o">,</span> <span class="s">"BigCorp"</span><span class="o">));</span>
+
+<span class="c1">// Then</span>
+<span class="n">assertThat</span><span class="o">(</span><span class="n">results</span><span class="o">).</span><span class="na">containsExactly</span><span class="o">(</span><span class="n">order1</span><span class="o">);</span>
+</code></pre></div></div>
+
+<h3 id="测试向后兼容性">测试向后兼容性</h3>
+
+<p>我们也可以写测试确保向后兼容性（Backward-Compatibility），证明使用新的 Java 类（新的代码版本）是可以向后兼容的、不会出现异常或者被错误地反序列化。这么做是为了证明已经存在与数据库的数据不会因为 Java 那边的变化产生兼容性问题。因为我们修改了 Java 类（增加了新的字段），但是我们并没有做数据迁移。这个测试起来有点难，因为 Java 的版本已经改变了，在 Java 里面无法再创建出旧版本的那种结构。为了模拟这种情况，我们可以直接造一个原始的（raw）BSON 文档，嵌入数据库，然后再进行反序列化：</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nc">Document</span><span class="o">.</span><span class="na">parse</span><span class="o">(</span><span class="s">"{ \"_id\": \"1\", \"customerId\": \"Customer1\", \"amount\": 100.0 }"</span><span class="o">);</span>
+</code></pre></div></div>
+
+<p>把上面的话画成图来表示的话，应该是下面这样。我们先在测试中创建一个 BSON 文档并放入数据库，然后在测试中把文档反序列化，证明反序列化的结果是我们期待的样子。它跟“测试序列化”不同的点在于：上文的 BSON 文档是由当前版本的 Java 代码创建的，这里的 BSON 文档是由旧版本的 Java 代码创建的（模拟已经存在数据库的数据）。目的是为了测试向后兼容性。</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Java                 MongoDB
+---                  ---
+BSON (V1)     -----&gt; Mongo document
+restored (V2) &lt;-----
+</code></pre></div></div>
+
+<p>你可以看到在上面 raw 文档中，我们没有加入新的字段<code class="language-plaintext highlighter-rouge">isCanceled</code>，这样等于模仿了在 schema 改变之前，数据库中数据的模样。这样一来，我们就可以测试反序列化的正确性，保证反序列化的结果是我们期待的那样。</p>
+
+<h3 id="测试回滚rollback">测试回滚（rollback）</h3>
+
+<p>你也可以测试回滚到上一个代码版本是安全的。也就是说，把一个新版本的代码序列化到 Mongo 数据库里面以后，用旧版本的代码去反序列化也能够正确地实现。画个图来表示就是：</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Java                  MongoDB
+---                   ---
+original (V2)  -----&gt; Mongo document
+restored (V1) &lt;-----
+</code></pre></div></div>
+
+<p>这样做的目的主要是为了证明：当新版本被部署到生产线以后发生异常，我们至少可以安全地撤销这个变更，回到上一个版本。因为我们在上文中提到，撤销有可能导致“字段无法识别”的异常（UnrecognizedPropertyException）。</p>
+
+<h2 id="迁移已有文档">迁移已有文档</h2>
+
+<p>上文提到的避免 NullPointerException 主要是通过在 Java 代码中提供默认值实现的。除了提供默认值外，还有没有别的做法呢？另一种做法就是迁移数据。我们可以迁移 MongoDB 中的已存在文档来保证序列化的正确性。在执行 Mongo 语句之前，请考虑：</p>
+
+<ul>
+  <li>是否需要备份？理想情况下，备份是定期自动执行的。如果没有自动备份，那考虑使用导出工具 <a href="https://docs.mongodb.com/database-tools/mongoexport/">mongoexport</a> 来备份相关文档。</li>
+  <li>在生产线（production）实施迁移之前，有没有在本地或者 staging 环境中测试过要执行的语句？</li>
+  <li>在执行之前，有没有让至少一位同事去核对语句的正确性？</li>
+  <li>有没有在聊天工具中留下点记录，例如在 Slack 或 Microsoft Team，以跟踪操作？</li>
+  <li>有没有在批量修改多个文档之前，先试试修改一个文档？</li>
+</ul>
+
+<p>现在，回到 Mongo 语句本身。这可以很简单：</p>
+
+<div class="language-js highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nx">db</span><span class="p">.</span><span class="nx">orders</span><span class="p">.</span><span class="nx">update</span><span class="p">(</span>
+  <span class="p">{</span> <span class="na">isCanceled</span><span class="p">:</span> <span class="p">{</span> <span class="na">$exists</span><span class="p">:</span> <span class="kc">false</span> <span class="p">}</span> <span class="p">},</span>  <span class="c1">// 1</span>
+  <span class="p">{</span> <span class="na">$set</span><span class="p">:</span> <span class="p">{</span> <span class="na">isCanceled</span><span class="p">:</span> <span class="kc">false</span> <span class="p">}</span> <span class="p">},</span>  <span class="c1">// 2</span>
+  <span class="p">{</span> <span class="na">multi</span><span class="p">:</span> <span class="kc">true</span> <span class="p">}</span>  <span class="c1">// 3</span>
+<span class="p">)</span>
+</code></pre></div></div>
+
+<p>在这个语句里面：</p>
+
+<ol>
+  <li>我们找出集合“订单”（orders）中不包含字段“isCanceled”的文档。</li>
+  <li>然后，对于这些文档，我们设置字段值为“false”。</li>
+  <li>默认情况下，修改语句仅更新单个文档。我们将其设置为更新多个选择—所有匹配的文档（不含有字段“isCanceled”）都会被修改。注意，这里最好执行两次更新查询：第一次修改一个文档来测试更新语句是否有效（使用选项<code class="language-plaintext highlighter-rouge">{ multi: false }</code>）。然后第二次使用选项<code class="language-plaintext highlighter-rouge">{ multi: true }</code>，以更新与选择匹配的所有文档。这样的做法可以降低破坏整个集合的风险。</li>
+</ol>
+
+<p>更新结果会显示所涉及的文档数量：与查询匹配的文档数量、更新或插入的文档数量以及修改的文档数量。</p>
+
+<div class="language-js highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nx">WriteResult</span><span class="p">({</span> <span class="dl">"</span><span class="s2">nMatched</span><span class="dl">"</span> <span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="dl">"</span><span class="s2">nUpserted</span><span class="dl">"</span> <span class="p">:</span> <span class="mi">0</span><span class="p">,</span> <span class="dl">"</span><span class="s2">nModified</span><span class="dl">"</span> <span class="p">:</span> <span class="mi">1</span> <span class="p">})</span>
+</code></pre></div></div>
+
+<h2 id="准备回滚">准备回滚</h2>
+
+<p>在上文“潜在的风险”中，我们提到，回滚到 Java 程序的上一个版本可能是不可能的。回滚可能导致反序列化失败：</p>
+
+<blockquote>
+  <p>“java.io.UncheckedIOException:
+com.fasterxml.jackson.databind.exc.UnrecognizedPropertyException: Unrecognized field
+“isCanceled” (class io.mincong.mongodb.model_changes.OrderV1), not marked as ignorable (3
+known properties: “amount”, “customerId”, “_id”]) at [Source: (String)”{“_id”: “2”,
+“customerId”: “Customer2”, “amount”: 200.0, “isCanceled”: true, “operator”:
+“emea@example.com”, “productIds”: [“A”, “B”, “C”]}”; line: 1, column: 77] (through reference
+chain: io.mincong.mongodb.model_changes.OrderV1[“isCanceled”])”</p>
+</blockquote>
+
+<p>这是因为新文档有字段”isCanceled”，但旧值类订单不知道如何去反序列化它！下面，我们将看到如何在 Jackson 中正确处理这个“字段无法识别”的错误。</p>
+
+<h3 id="全局处理">全局处理</h3>
+
+<p>我们可以通过 Object Mapper 来对未知字段进行全局处理，让 Jackson 在面对所有的类都使用一样的处理方式。这个特性是”FAIL_ON_UNKNOWN_PROPERTIES”。我们可以让它不要抛出异常：</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">objectMapper</span><span class="o">.</span><span class="na">disable</span><span class="o">(</span><span class="nc">DeserializationFeature</span><span class="o">.</span><span class="na">FAIL_ON_UNKNOWN_PROPERTIES</span><span class="o">);</span>
+</code></pre></div></div>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">objectMapper</span><span class="o">.</span><span class="na">configure</span><span class="o">(</span><span class="nc">DeserializationFeature</span><span class="o">.</span><span class="na">FAIL_ON_UNKNOWN_PROPERTIES</span><span class="o">,</span> <span class="kc">false</span><span class="o">);</span>
+</code></pre></div></div>
+
+<p>这样处理的话，所有通过这个 object mapper 反序列的 JSON 都不会抛出异常。</p>
+
+<h3 id="局部处理">局部处理</h3>
+
+<p>我们也可以通过注解（annotation）来对未知字段进行局部处理，让 Jackson 在面对特定的类使用这个处理方式。</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nd">@JsonIgnoreProperties</span><span class="o">(</span><span class="n">ignoreUnknown</span> <span class="o">=</span> <span class="kc">true</span><span class="o">)</span>
+<span class="kd">public</span> <span class="kd">class</span> <span class="nc">OrderV1</span> <span class="o">{</span> <span class="o">...</span> <span class="o">}</span>
+</code></pre></div></div>
+
+<p>这样处理的话，所有被反序列成 OrderV1 的 JSON 都不会抛出异常。与全局配置相比，局部设置允许让我们对不同 Java 类的行为有更精细的控制，但它也容易使程序员忘记要添加此注释。这样做也可能导致不同类的反序列化行为不一致的问题。</p>
+
+<p>无论我们选择哪一种配置，全局或者局部，一旦配置好了，那么回滚就应该是安全的了！没有人希望自己的代码需要被回滚，但是为回滚的安全性做好准备，总是一件能让所有人感到安心的事情。</p>
+
+<h2 id="常用的-mongo-语句">常用的 Mongo 语句</h2>
+
+<p>在前几节中，我们主要关注如何保证向后兼容的问题，避免发生线上事故。但是，如果生产线已经出事故了呢？毕竟不是所有人都能意识到他的代码变动可能引发线上事故。因此，学习一些基本的 Mongo 语句，为最坏的情况做好准备也是一件好事。也就是，出事故时如何快速修复。以下是我为大家准备的一些语句。</p>
+
+<div class="language-js highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="o">&gt;</span> <span class="nx">db</span><span class="p">.</span><span class="nx">orders</span><span class="p">.</span><span class="nx">count</span><span class="p">()</span>
+<span class="mi">2</span>
+</code></pre></div></div>
+
+<p>计算订单的数量。看看有多少文档可能受牵连，以及出现问题时可能产生的影响。</p>
+
+<div class="language-js highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="o">&gt;</span> <span class="nx">db</span><span class="p">.</span><span class="nx">orders</span><span class="p">.</span><span class="nx">find</span><span class="p">({</span> <span class="na">isCanceled</span><span class="p">:</span> <span class="p">{</span> <span class="na">$exists</span><span class="p">:</span> <span class="kc">false</span> <span class="p">}</span> <span class="p">}).</span><span class="nx">limit</span><span class="p">(</span><span class="mi">10</span><span class="p">).</span><span class="nx">pretty</span><span class="p">()</span>
+<span class="p">{</span> <span class="dl">"</span><span class="s2">_id</span><span class="dl">"</span> <span class="p">:</span> <span class="dl">"</span><span class="s2">1</span><span class="dl">"</span><span class="p">,</span> <span class="dl">"</span><span class="s2">customerId</span><span class="dl">"</span> <span class="p">:</span> <span class="dl">"</span><span class="s2">Customer1</span><span class="dl">"</span><span class="p">,</span> <span class="dl">"</span><span class="s2">amount</span><span class="dl">"</span> <span class="p">:</span> <span class="mi">100</span> <span class="p">}</span>
+</code></pre></div></div>
+
+<p>找出前 10 个不含有新字段“isCanceled”的文档并以 pretty 格式显示。在实际更新之前文档或之后检查 JSON 的正确性。</p>
+
+<div class="language-js highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="o">&gt;</span> <span class="nx">db</span><span class="p">.</span><span class="nx">orders</span><span class="p">.</span><span class="nx">update</span><span class="p">(</span>
+  <span class="p">{</span> <span class="na">isCanceled</span><span class="p">:</span> <span class="p">{</span> <span class="na">$exists</span><span class="p">:</span> <span class="kc">true</span> <span class="p">}</span> <span class="p">},</span>
+  <span class="p">{</span> <span class="na">$unset</span><span class="p">:</span> <span class="p">{</span> <span class="na">isCanceled</span><span class="p">:</span> <span class="dl">""</span> <span class="p">}</span> <span class="p">}</span>
+  <span class="p">{</span> <span class="na">multi</span><span class="p">:</span> <span class="kc">true</span> <span class="p">}</span>
+<span class="p">)</span>
+</code></pre></div></div>
+
+<p>对于含有字段“isCanceled”的所有文档删除字段。主要用来回滚。当 Java 代码被回滚到以前的版本，但旧版代码缺乏对 Jackson 的配置的时候导致反序列化失败的时候，可以快速删除新添加的字段。</p>
+
+<h2 id="其他场景">其他场景</h2>
+
+<p>在上面的章节中，我们主要讨论了在向 MongoDB 添加新字段时发生的情况。但是有没有其他场景呢？</p>
+
+<ul>
+  <li>另一个常见情况是删除字段。删除字段可能也有问题，因为 Java 类可能不能正确地处理未知的字段。这正是我们在”准备回滚”部分讨论的内容。</li>
+  <li>另一种可能的情况是更改现有字段的类型。比如说把 int 改成 string。我建议避免这样做，我们完全可以使用其他名称创建新字段来避免序列化的错误。</li>
+  <li>在 Java 的 enum 中重命名或删除一个项。重命名 Java 类里面的 enum 是没问题的，但请确保 JSON 属性（JsonProperty）的命名不会随之改变。例如，通过将 enum 的一个项从 FOO 重命名为 BAR，默认的序列化也将从“FOO”更改为“BAR”，这可能产生严重的错误。删除一个项也是很危险的。在执行此操作之前，请确保此项不存在于 staging 和 production 任何数据库中。</li>
+</ul>
+
+<p>上面只是我想到的一些场景，肯定也有一些别的场景是我没有想到的。欢迎大家留言讨论你们的观点。</p>
+
+<h2 id="拓展">拓展</h2>
+
+<p>如何从这篇文章拓展出去？</p>
+
+<ul>
+  <li>本文假设你使用 Jackson Databind 来处理 Java 与 MongoDB 之间的序列化和反序列化。如果你没有使用它，并希望尝试一下，看看 StackOverflow 的这个问题：<a href="https://stackoverflow.com/a/47949886/4381330">Is there any way for creating Mongo codecs automatically?</a>。我的代码主要是受到 Kevin Day 答案写的。</li>
+  <li>想要了解更多关于 MongoDB 操作的信息，如<code class="language-plaintext highlighter-rouge">$set</code>、<code class="language-plaintext highlighter-rouge">$unset</code>，请访问 MongoDB 官方文档 <a href="https://docs.mongodb.com/manual/reference/operator/update/">“Update
+Operators”</a>。</li>
+  <li>要了解有关数据库工具 mongodump 的更多信息，请访问 MongoDB 文档 <a href="https://docs.mongodb.com/database-tools/mongodump/#mongodb-binary-bin.mongodump">mongodump</a>。</li>
+</ul>
+
+<p>你还可以在我的 GitHub 项目 <a href="https://github.com/mincong-h/java-examples/tree/blog/mongo-schema-compatibility/mongo">mincong-h/java-examples</a> 下找到本文的源代码。</p>
+
+<h2 id="结论">结论</h2>
+
+<p>在本文中，我们看到了在 Java 应用程序中添加新字段时的对于 MongoDB 产生的潜在风险（NullPointerException 和无法安全回滚的问题）、填充 null 值的不同技术、如何编写单位测试、如何迁移现有文档、如何通过配置 Object Mapper 或添加 Java 注解（annotation）来正确处理未知字段为准备回滚作准备，以及一些有用的 MongoDB 语句，以帮助大家在出现事故时快速排查和修复问题。最后，我们还简要讨论了其他的场景，并且分享了一些让大家拓展出去的资源。希望这篇文章能够给你带来一些思考，让你的系统变得更加稳健可靠。谢谢大家！</p>
+
+<h2 id="参考文献">参考文献</h2>
+
+<ul>
+  <li>MongoDB, “MongoDB Documentation”, 2021.
+<a href="https://docs.mongodb.com/">https://docs.mongodb.com/</a></li>
+  <li>Tatu Saloranta et al., “Jackson Databind”, 2021.
+<a href="https://github.com/FasterXML/jackson-databind">https://github.com/FasterXML/jackson-databind</a></li>
+</ul>
+</div><section class="article__sharing d-print-none"></section><div class="d-print-none"><footer class="article__footer"><meta itemprop="dateModified" content="2021-04-30T17:09:38+02:00"><!-- start custom article footer snippet -->
+
+<!-- end custom article footer snippet -->
+<div class="article__subscribe"><div class="subscribe">
+  <i class="fas fa-rss"></i>
+  <a type="application/rss+xml" href="/feed.xml">订阅</a>
+</div><div style="text-align: center">
+  <img
+    src="/assets/wechat-QR-code.jpg"
+    alt="WeChat QR Code"
+    width="400px"
+    style="max-width: 100%">
+</div></div><div class="article__license"><div class="license">
+    <p>本文遵守 <a itemprop="license" rel="license" href="https://creativecommons.org/licenses/by/4.0/">Attribution 4.0 International</a> 许可协议。
+      <a rel="license" href="https://creativecommons.org/licenses/by/4.0/">
+        <img alt="Attribution 4.0 International" src="https://i.creativecommons.org/l/by/4.0/88x31.png" />
+      </a>
+    </p>
+  </div></div></footer>
+<div class="article__section-navigator clearfix"><div class="previous"><span>上篇</span><a href="/cn/throttler/">用Java创建一个简单的节流阀</a></div><div class="next"><span>下篇</span><a href="/cn/packing-a-vue-js-project-using-docker-and-nginx/">用Docker和Nginx打包一个Vue.js项目</a></div></div></div>
+
+</div>
+
+<script>(function() {
+  var SOURCES = window.TEXT_VARIABLES.sources;
+  window.Lazyload.js(SOURCES.jquery, function() {
+    $(function() {
+      var $this ,$scroll;
+      var $articleContent = $('.js-article-content');
+      var hasSidebar = $('.js-page-root').hasClass('layout--page--sidebar');
+      var scroll = hasSidebar ? '.js-page-main' : 'html, body';
+      $scroll = $(scroll);
+
+      $articleContent.find('.highlight').each(function() {
+        $this = $(this);
+        $this.attr('data-lang', $this.find('code').attr('data-lang'));
+      });
+      $articleContent.find('h1[id], h2[id], h3[id], h4[id], h5[id], h6[id]').each(function() {
+        $this = $(this);
+        $this.append($('<a class="anchor d-print-none" aria-hidden="true"></a>').html('<i class="fas fa-anchor"></i>'));
+      });
+      $articleContent.on('click', '.anchor', function() {
+        $scroll.scrollToAnchor('#' + $(this).parent().attr('id'), 400);
+      });
+    });
+  });
+})();
+</script>
+</div><section class="page__comments d-print-none"><div id="disqus_thread"></div>
+  <script>
+  /**
+  *  RECOMMENDED CONFIGURATION VARIABLES: EDIT AND UNCOMMENT THE SECTION BELOW TO INSERT DYNAMIC VALUES FROM YOUR PLATFORM OR CMS.
+  *  LEARN WHY DEFINING THESE VARIABLES IS IMPORTANT: https://disqus.com/admin/universalcode/#configuration-variables*/
+  var disqus_config = function () {
+    this.page.url = 'https://mincong.io/cn/mongodb-schema-compatibility/';
+    this.page.identifier = '/cn/mongodb-schema-compatibility';
+  };
+  (function() { // DON'T EDIT BELOW THIS LINE
+    var d = document, s = d.createElement('script');
+    s.src = 'https://mincong-h.disqus.com/embed.js';
+    s.setAttribute('data-timestamp', +new Date());
+    (d.head || d.body).appendChild(s);
+  })();
+  </script>
+  <noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript></section></article><!-- start custom main bottom snippet -->
+
+<!-- end custom main bottom snippet -->
+</div>
+            </div></div></div><div class="page__footer d-print-none">
+<footer class="footer py-4 js-page-footer">
+  <div class="main"><div itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Mincong Huang"><meta itemprop="url" content="/"><meta itemprop="description" content="I am an amazing person."><div class="footer__author-links"><div class="author-links">
+  <ul class="menu menu--nowrap menu--inline"><li title="给我发邮件。">
+      <a class="button button--circle mail-button" itemprop="email" href="mailto:mincong.h@gmail.com" target="_blank">
+        <i class="fas fa-envelope"></i>
+      </a><li title="在 Twitter 上关注我。">
+        <a class="button button--circle twitter-button" itemprop="sameAs" href="https://twitter.com/mincong_h" target="_blank">
+          <div class="icon"><svg fill="#000000" width="24px" height="24px" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg">
+  <path d="M1024.032 194.432c-37.664 16.704-78.176 28-120.672 33.088 43.36-26.016 76.672-67.168 92.384-116.224-40.608 24.064-85.568 41.568-133.408 50.976-38.336-40.832-92.928-66.336-153.344-66.336-116.032 0-210.08 94.048-210.08 210.08 0 16.48 1.856 32.512 5.44 47.872-174.592-8.768-329.408-92.416-433.024-219.52-18.08 31.04-28.448 67.104-28.448 105.632 0 72.896 37.088 137.184 93.472 174.88-34.432-1.088-66.816-10.528-95.168-26.272-0.032 0.864-0.032 1.76-0.032 2.656 0 101.792 72.416 186.688 168.512 205.984-17.632 4.8-36.192 7.36-55.36 7.36-13.536 0-26.688-1.312-39.52-3.776 26.72 83.456 104.32 144.192 196.256 145.888-71.904 56.352-162.496 89.92-260.928 89.92-16.96 0-33.664-0.992-50.112-2.944 92.96 59.616 203.392 94.4 322.048 94.4 386.432 0 597.728-320.128 597.728-597.76 0-9.12-0.192-18.176-0.608-27.168 41.056-29.632 76.672-66.624 104.832-108.736z" />
+</svg>
+</div>
+        </a>
+      </li><li title="在 Linkedin 上关注我。">
+        <a class="button button--circle linkedin-button" itemprop="sameAs" href="https://www.linkedin.com/in/mincong-huang" target="_blank">
+          <div class="icon"><svg fill="#000000" width="24px" height="24px" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg">
+  <path d="M260.096 155.648c0 27.307008-9.899008 50.516992-29.696 69.632-19.796992 19.115008-45.396992 28.672-76.8 28.672-30.036992 0-54.612992-9.556992-73.728-28.672-19.115008-19.115008-28.672-42.324992-28.672-69.632 0-28.672 9.556992-52.224 28.672-70.656 19.115008-18.432 44.372992-27.648 75.776-27.648 31.403008 0 56.32 9.216 74.752 27.648 18.432 18.432 28.331008 41.984 29.696 70.656 0 0 0 0 0 0m-202.752 808.96c0 0 0-632.832 0-632.832 0 0 196.608 0 196.608 0 0 0 0 632.832 0 632.832 0 0-196.608 0-196.608 0 0 0 0 0 0 0m313.344-430.08c0-58.708992-1.364992-126.292992-4.096-202.752 0 0 169.984 0 169.984 0 0 0 10.24 88.064 10.24 88.064 0 0 4.096 0 4.096 0 40.96-68.267008 105.812992-102.4 194.56-102.4 68.267008 0 123.220992 22.868992 164.864 68.608 41.643008 45.739008 62.464 113.664 62.464 203.776 0 0 0 374.784 0 374.784 0 0-196.608 0-196.608 0 0 0 0-350.208 0-350.208 0-91.476992-33.451008-137.216-100.352-137.216-47.787008 0-81.236992 24.576-100.352 73.728-4.096 8.192-6.144 24.576-6.144 49.152 0 0 0 364.544 0 364.544 0 0-198.656 0-198.656 0 0 0 0-430.08 0-430.08 0 0 0 0 0 0" />
+</svg>
+</div>
+        </a>
+      </li><li title="在 Github 上关注我。">
+        <a class="button button--circle github-button" itemprop="sameAs" href="https://github.com/mincong-h" target="_blank">
+          <div class="icon"><svg fill="#000000" width="24px" height="24px" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg">
+  <path class="svgpath" data-index="path_0" fill="#272636" d="M0 525.2c0 223.6 143.3 413.7 343 483.5 26.9 6.8 22.8-12.4 22.8-25.4l0-88.7c-155.3 18.2-161.5-84.6-172-101.7-21.1-36-70.8-45.2-56-62.3 35.4-18.2 71.4 4.6 113.1 66.3 30.2 44.7 89.1 37.2 119 29.7 6.5-26.9 20.5-50.9 39.7-69.6C248.8 728.2 181.7 630 181.7 513.2c0-56.6 18.7-108.7 55.3-150.7-23.3-69.3 2.2-128.5 5.6-137.3 66.5-6 135.5 47.6 140.9 51.8 37.8-10.2 80.9-15.6 129.1-15.6 48.5 0 91.8 5.6 129.8 15.9 12.9-9.8 77-55.8 138.8-50.2 3.3 8.8 28.2 66.7 6.3 135 37.1 42.1 56 94.6 56 151.4 0 117-67.5 215.3-228.8 243.7 26.9 26.6 43.6 63.4 43.6 104.2l0 128.8c0.9 10.3 0 20.5 17.2 20.5C878.1 942.4 1024 750.9 1024 525.3c0-282.9-229.3-512-512-512C229.1 13.2 0 242.3 0 525.2L0 525.2z" />
+</svg>
+</div>
+        </a>
+      </li></ul>
+</div>
+</div>
+    </div><div class="site-info mt-2">
+      <div>© Mincong Huang 2021,
+        Powered by <a title="Jekyll is a simple, blog-aware, static site generator." href="http://jekyllrb.com/">Jekyll</a> & <a
+        title="TeXt is a super customizable Jekyll theme." href="https://github.com/kitian616/jekyll-TeXt-theme">TeXt Theme</a>.
+      </div>
+    </div>
+  </div>
+</footer>
+</div></div>
+    </div><script>(function() {
+  var SOURCES = window.TEXT_VARIABLES.sources;
+  window.Lazyload.js(SOURCES.jquery, function() {
+    var $body = $('body'), $window = $(window);
+    var $pageRoot = $('.js-page-root'), $pageMain = $('.js-page-main');
+    var activeCount = 0;
+    function modal(options) {
+      var $root = this, visible, onChange, hideWhenWindowScroll = false;
+      var scrollTop;
+      function setOptions(options) {
+        var _options = options || {};
+        visible = _options.initialVisible === undefined ? false : show;
+        onChange = _options.onChange;
+        hideWhenWindowScroll = _options.hideWhenWindowScroll;
+      }
+      function init() {
+        setState(visible);
+      }
+      function setState(isShow) {
+        if (isShow === visible) {
+          return;
+        }
+        visible = isShow;
+        if (visible) {
+          activeCount++;
+          scrollTop = $(window).scrollTop() || $pageMain.scrollTop();
+          $root.addClass('modal--show');
+          $pageMain.scrollTop(scrollTop);
+          activeCount === 1 && ($pageRoot.addClass('show-modal'), $body.addClass('of-hidden'));
+          hideWhenWindowScroll && window.hasEvent('touchstart') && $window.on('scroll', hide);
+          $window.on('keyup', handleKeyup);
+        } else {
+          activeCount > 0 && activeCount--;
+          $root.removeClass('modal--show');
+          $window.scrollTop(scrollTop);
+          activeCount === 0 && ($pageRoot.removeClass('show-modal'), $body.removeClass('of-hidden'));
+          hideWhenWindowScroll && window.hasEvent('touchstart') && $window.off('scroll', hide);
+          $window.off('keyup', handleKeyup);
+        }
+        onChange && onChange(visible);
+      }
+      function show() {
+        setState(true);
+      }
+      function hide() {
+        setState(false);
+      }
+      function handleKeyup(e) {
+        // Char Code: 27  ESC
+        if (e.which ===  27) {
+          hide();
+        }
+      }
+      setOptions(options);
+      init();
+      return {
+        show: show,
+        hide: hide,
+        $el: $root
+      };
+    }
+    $.fn.modal = modal;
+  });
+})();
+</script><div class="modal modal--overflow page__search-modal d-print-none js-page-search-modal"><script>
+(function () {
+  var SOURCES = window.TEXT_VARIABLES.sources;
+  window.Lazyload.js(SOURCES.jquery, function() {
+    // search panel
+    var search = (window.search || (window.search = {}));
+    var useDefaultSearchBox = window.useDefaultSearchBox === undefined ?
+      true : window.useDefaultSearchBox ;
+
+    var $searchModal = $('.js-page-search-modal');
+    var $searchToggle = $('.js-search-toggle');
+    var searchModal = $searchModal.modal({ onChange: handleModalChange, hideWhenWindowScroll: true });
+    var modalVisible = false;
+    search.searchModal = searchModal;
+
+    var $searchBox = null;
+    var $searchInput = null;
+    var $searchClear = null;
+
+    function getModalVisible() {
+      return modalVisible;
+    }
+    search.getModalVisible = getModalVisible;
+
+    function handleModalChange(visible) {
+      modalVisible = visible;
+      if (visible) {
+        search.onShow && search.onShow();
+        useDefaultSearchBox && $searchInput[0] && $searchInput[0].focus();
+      } else {
+        search.onShow && search.onHide();
+        useDefaultSearchBox && $searchInput[0] && $searchInput[0].blur();
+        setTimeout(function() {
+          useDefaultSearchBox && ($searchInput.val(''), $searchBox.removeClass('not-empty'));
+          search.clear && search.clear();
+          window.pageAsideAffix && window.pageAsideAffix.refresh();
+        }, 400);
+      }
+    }
+
+    $searchToggle.on('click', function() {
+      modalVisible ? searchModal.hide() : searchModal.show();
+    });
+    // Char Code: 83  S, 191 /
+    $(window).on('keyup', function(e) {
+      if (!modalVisible && !window.isFormElement(e.target || e.srcElement) && (e.which === 83 || e.which === 191)) {
+        modalVisible || searchModal.show();
+      }
+    });
+
+    if (useDefaultSearchBox) {
+      $searchBox = $('.js-search-box');
+      $searchInput = $searchBox.children('input');
+      $searchClear = $searchBox.children('.js-icon-clear');
+      search.getSearchInput = function() {
+        return $searchInput.get(0);
+      };
+      search.getVal = function() {
+        return $searchInput.val();
+      };
+      search.setVal = function(val) {
+        $searchInput.val(val);
+      };
+
+      $searchInput.on('focus', function() {
+        $(this).addClass('focus');
+      });
+      $searchInput.on('blur', function() {
+        $(this).removeClass('focus');
+      });
+      $searchInput.on('input', window.throttle(function() {
+        var val = $(this).val();
+        if (val === '' || typeof val !== 'string') {
+          search.clear && search.clear();
+        } else {
+          $searchBox.addClass('not-empty');
+          search.onInputNotEmpty && search.onInputNotEmpty(val);
+        }
+      }, 400));
+      $searchClear.on('click', function() {
+        $searchInput.val(''); $searchBox.removeClass('not-empty');
+        search.clear && search.clear();
+      });
+    }
+  });
+})();
+</script><div class="search search--dark">
+  <div class="main">
+    <div class="search__header">搜索</div>
+    <div class="search-bar">
+      <div class="search-box js-search-box">
+        <div class="search-box__icon-search"><i class="fas fa-search"></i></div>
+        <input type="text" />
+        <div class="search-box__icon-clear js-icon-clear">
+          <a><i class="fas fa-times"></i></a>
+        </div>
+      </div>
+      <button class="button button--theme-dark button--pill search__cancel js-search-toggle">
+        取消</button>
+    </div>
+    <div class="search-result js-search-result"></div>
+  </div>
+</div>
+<script>var SOURCES = window.TEXT_VARIABLES.sources;
+var PAHTS = window.TEXT_VARIABLES.paths;
+window.Lazyload.js([SOURCES.jquery, PAHTS.search_js], function() {
+  var search = (window.search || (window.search = {}));
+  var searchData = window.TEXT_SEARCH_DATA || {};
+
+  function memorize(f) {
+    var cache = {};
+    return function () {
+      var key = Array.prototype.join.call(arguments, ',');
+      if (key in cache) return cache[key];
+      else return cache[key] = f.apply(this, arguments);
+    };
+  }
+
+  /// search
+  function searchByQuery(query) {
+    var i, j, key, keys, cur, _title, result = {};
+    keys = Object.keys(searchData);
+    for (i = 0; i < keys.length; i++) {
+      key = keys[i];
+      for (j = 0; j < searchData[key].length; j++) {
+        cur = searchData[key][j], _title = cur.title;
+        if ((result[key] === undefined || result[key] && result[key].length < 4 )
+          && _title.toLowerCase().indexOf(query.toLowerCase()) >= 0) {
+          if (result[key] === undefined) {
+            result[key] = [];
+          }
+          result[key].push(cur);
+        }
+      }
+    }
+    return result;
+  }
+
+  var renderHeader = memorize(function(header) {
+    return $('<p class="search-result__header">' + header + '</p>');
+  });
+
+  var renderItem = function(index, title, url) {
+    return $('<li class="search-result__item" data-index="' + index + '"><a class="button" href="' + url + '">' + title + '</a></li>');
+  };
+
+  function render(data) {
+    if (!data) { return null; }
+    var $root = $('<ul></ul>'), i, j, key, keys, cur, itemIndex = 0;
+    keys = Object.keys(data);
+    for (i = 0; i < keys.length; i++) {
+      key = keys[i];
+      $root.append(renderHeader(key));
+      for (j = 0; j < data[key].length; j++) {
+        cur = data[key][j];
+        $root.append(renderItem(itemIndex++, cur.title, cur.url));
+      }
+    }
+    return $root;
+  }
+
+  // search box
+  var $result = $('.js-search-result'), $resultItems;
+  var lastActiveIndex, activeIndex;
+
+  function clear() {
+    $result.html(null);
+    $resultItems = $('.search-result__item'); activeIndex = 0;
+  }
+  function onInputNotEmpty(val) {
+    $result.html(render(searchByQuery(val)));
+    $resultItems = $('.search-result__item'); activeIndex = 0;
+    $resultItems.eq(0).addClass('active');
+  }
+
+  search.clear = clear;
+  search.onInputNotEmpty = onInputNotEmpty;
+
+  function updateResultItems() {
+    lastActiveIndex >= 0 && $resultItems.eq(lastActiveIndex).removeClass('active');
+    activeIndex >= 0 && $resultItems.eq(activeIndex).addClass('active');
+  }
+
+  function moveActiveIndex(direction) {
+    var itemsCount = $resultItems ? $resultItems.length : 0;
+    if (itemsCount > 1) {
+      lastActiveIndex = activeIndex;
+      if (direction === 'up') {
+        activeIndex = (activeIndex - 1 + itemsCount) % itemsCount;
+      } else if (direction === 'down') {
+        activeIndex = (activeIndex + 1 + itemsCount) % itemsCount;
+      }
+      updateResultItems();
+    }
+  }
+
+  // Char Code: 13  Enter, 37  ⬅, 38  ⬆, 39  ➡, 40  ⬇
+  $(window).on('keyup', function(e) {
+    var modalVisible = search.getModalVisible && search.getModalVisible();
+    if (modalVisible) {
+      if (e.which === 38) {
+        modalVisible && moveActiveIndex('up');
+      } else if (e.which === 40) {
+        modalVisible && moveActiveIndex('down');
+      } else if (e.which === 13) {
+        modalVisible && $resultItems && activeIndex >= 0 && $resultItems.eq(activeIndex).children('a')[0].click();
+      }
+    }
+  });
+
+  $result.on('mouseover', '.search-result__item > a', function() {
+    var itemIndex = $(this).parent().data('index');
+    itemIndex >= 0 && (lastActiveIndex = activeIndex, activeIndex = itemIndex, updateResultItems());
+  });
+});
+</script>
+</div></div>
+
+
+<script>(function() {
+  var SOURCES = window.TEXT_VARIABLES.sources;
+  window.Lazyload.js(SOURCES.jquery, function() {
+    function scrollToAnchor(anchor, duration, callback) {
+      var $root = this;
+      $root.animate({ scrollTop: $(anchor).position().top }, duration, function() {
+        window.history.replaceState(null, '', window.location.href.split('#')[0] + anchor);
+        callback && callback();
+      });
+    }
+    $.fn.scrollToAnchor = scrollToAnchor;
+  });
+})();
+(function() {
+  var SOURCES = window.TEXT_VARIABLES.sources;
+  window.Lazyload.js(SOURCES.jquery, function() {
+    function affix(options) {
+      var $root = this, $window = $(window), $scrollTarget, $scroll,
+        offsetBottom = 0, scrollTarget = window, scroll = window.document, disabled = false, isOverallScroller = true,
+        rootTop, rootLeft, rootHeight, scrollBottom, rootBottomTop,
+        hasInit = false, curState;
+
+      function setOptions(options) {
+        var _options = options || {};
+        _options.offsetBottom && (offsetBottom = _options.offsetBottom);
+        _options.scrollTarget && (scrollTarget = _options.scrollTarget);
+        _options.scroll && (scroll = _options.scroll);
+        _options.disabled !== undefined && (disabled = _options.disabled);
+        $scrollTarget = $(scrollTarget);
+        isOverallScroller = window.isOverallScroller($scrollTarget[0]);
+        $scroll = $(scroll);
+      }
+      function preCalc() {
+        top();
+        rootHeight = $root.outerHeight();
+        rootTop = $root.offset().top + (isOverallScroller ? 0 :  $scrollTarget.scrollTop());
+        rootLeft = $root.offset().left;
+      }
+      function calc(needPreCalc) {
+        needPreCalc && preCalc();
+        scrollBottom = $scroll.outerHeight() - offsetBottom - rootHeight;
+        rootBottomTop = scrollBottom - rootTop;
+      }
+      function top() {
+        if (curState !== 'top') {
+          $root.removeClass('fixed').css({
+            left: 0,
+            top: 0
+          });
+          curState = 'top';
+        }
+      }
+      function fixed() {
+        if (curState !== 'fixed') {
+          $root.addClass('fixed').css({
+            left: rootLeft + 'px',
+            top: 0
+          });
+          curState = 'fixed';
+        }
+      }
+      function bottom() {
+        if (curState !== 'bottom') {
+          $root.removeClass('fixed').css({
+            left: 0,
+            top: rootBottomTop + 'px'
+          });
+          curState = 'bottom';
+        }
+      }
+      function setState() {
+        var scrollTop = $scrollTarget.scrollTop();
+        if (scrollTop >= rootTop && scrollTop <= scrollBottom) {
+          fixed();
+        } else if (scrollTop < rootTop) {
+          top();
+        } else {
+          bottom();
+        }
+      }
+      function init() {
+        if(!hasInit) {
+          var interval, timeout;
+          calc(true); setState();
+          // run calc every 100 millisecond
+          interval = setInterval(function() {
+            calc();
+          }, 100);
+          timeout = setTimeout(function() {
+            clearInterval(interval);
+          }, 45000);
+          window.pageLoad.then(function() {
+            setTimeout(function() {
+              clearInterval(interval);
+              clearTimeout(timeout);
+            }, 3000);
+          });
+          $scrollTarget.on('scroll', function() {
+            disabled || setState();
+          });
+          $window.on('resize', function() {
+            disabled || (calc(true), setState());
+          });
+          hasInit = true;
+        }
+      }
+
+      setOptions(options);
+      if (!disabled) {
+        init();
+      }
+      $window.on('resize', window.throttle(function() {
+        init();
+      }, 200));
+      return {
+        setOptions: setOptions,
+        refresh: function() {
+          calc(true, { animation: false }); setState();
+        }
+      };
+    }
+    $.fn.affix = affix;
+  });
+})();
+(function() {
+  var SOURCES = window.TEXT_VARIABLES.sources;
+  window.Lazyload.js(SOURCES.jquery, function() {
+    function toc(options) {
+      var $root = this, $window = $(window), $scrollTarget, $scroller, $tocUl = $('<ul class="toc toc--ellipsis"></ul>'), $tocLi, $headings, $activeLast, $activeCur,
+        selectors = 'h1,h2,h3', container = 'body', scrollTarget = window, scroller = 'html, body', disabled = false,
+        headingsPos, scrolling = false, hasRendered = false, hasInit = false;
+
+      function setOptions(options) {
+        var _options = options || {};
+        _options.selectors && (selectors = _options.selectors);
+        _options.container && (container = _options.container);
+        _options.scrollTarget && (scrollTarget = _options.scrollTarget);
+        _options.scroller && (scroller = _options.scroller);
+        _options.disabled !== undefined && (disabled = _options.disabled);
+        $headings = $(container).find(selectors).filter('[id]');
+        $scrollTarget = $(scrollTarget);
+        $scroller = $(scroller);
+      }
+      function calc() {
+        headingsPos = [];
+        $headings.each(function() {
+          headingsPos.push(Math.floor($(this).position().top));
+        });
+      }
+      function setState(element, disabled) {
+        var scrollTop = $scrollTarget.scrollTop(), i;
+        if (disabled || !headingsPos || headingsPos.length < 1) { return; }
+        if (element) {
+          $activeCur = element;
+        } else {
+          for (i = 0; i < headingsPos.length; i++) {
+            if (scrollTop >= headingsPos[i]) {
+              $activeCur = $tocLi.eq(i);
+            } else {
+              $activeCur || ($activeCur = $tocLi.eq(i));
+              break;
+            }
+          }
+        }
+        $activeLast && $activeLast.removeClass('active');
+        ($activeLast = $activeCur).addClass('active');
+      }
+      function render() {
+        if(!hasRendered) {
+          $root.append($tocUl);
+          $headings.each(function() {
+            var $this = $(this);
+            $tocUl.append($('<li></li>').addClass('toc-' + $this.prop('tagName').toLowerCase())
+              .append($('<a></a>').text($this.text()).attr('href', '#' + $this.prop('id'))));
+          });
+          $tocLi = $tocUl.children('li');
+          $tocUl.on('click', 'a', function(e) {
+            e.preventDefault();
+            var $this = $(this);
+            scrolling = true;
+            setState($this.parent());
+            $scroller.scrollToAnchor($this.attr('href'), 400, function() {
+              scrolling = false;
+            });
+          });
+        }
+        hasRendered = true;
+      }
+      function init() {
+        var interval, timeout;
+        if(!hasInit) {
+          render(); calc(); setState(null, scrolling);
+          // run calc every 100 millisecond
+          interval = setInterval(function() {
+            calc();
+          }, 100);
+          timeout = setTimeout(function() {
+            clearInterval(interval);
+          }, 45000);
+          window.pageLoad.then(function() {
+            setTimeout(function() {
+              clearInterval(interval);
+              clearTimeout(timeout);
+            }, 3000);
+          });
+          $scrollTarget.on('scroll', function() {
+            disabled || setState(null, scrolling);
+          });
+          $window.on('resize', window.throttle(function() {
+            if (!disabled) {
+              render(); calc(); setState(null, scrolling);
+            }
+          }, 100));
+        }
+        hasInit = true;
+      }
+
+      setOptions(options);
+      if (!disabled) {
+        init();
+      }
+      $window.on('resize', window.throttle(function() {
+        init();
+      }, 200));
+      return {
+        setOptions: setOptions
+      };
+    }
+    $.fn.toc = toc;
+  });
+})();
+/*(function () {
+
+})();*/
+</script><script>
+  /* toc must before affix, since affix need to konw toc' height. */(function() {
+  var SOURCES = window.TEXT_VARIABLES.sources;
+  var TOC_SELECTOR = window.TEXT_VARIABLES.site.toc.selectors;
+  window.Lazyload.js(SOURCES.jquery, function() {
+    var $window = $(window);
+    var $articleContent = $('.js-article-content');
+    var $tocRoot = $('.js-toc-root'), $col2 = $('.js-col-aside');
+    var toc;
+    var tocDisabled = false;
+    var hasSidebar = $('.js-page-root').hasClass('layout--page--sidebar');
+    var hasToc = $articleContent.find(TOC_SELECTOR).length > 0;
+
+    function disabled() {
+      return $col2.css('display') === 'none' || !hasToc;
+    }
+
+    tocDisabled = disabled();
+
+    toc = $tocRoot.toc({
+      selectors: TOC_SELECTOR,
+      container: $articleContent,
+      scrollTarget: hasSidebar ? '.js-page-main' : null,
+      scroller: hasSidebar ? '.js-page-main' : null,
+      disabled: tocDisabled
+    });
+
+    $window.on('resize', window.throttle(function() {
+      tocDisabled = disabled();
+      toc && toc.setOptions({
+        disabled: tocDisabled
+      });
+    }, 100));
+
+  });
+})();
+(function() {
+  var SOURCES = window.TEXT_VARIABLES.sources;
+  window.Lazyload.js(SOURCES.jquery, function() {
+    var $window = $(window), $pageFooter = $('.js-page-footer');
+    var $pageAside = $('.js-page-aside');
+    var affix;
+    var tocDisabled = false;
+    var hasSidebar = $('.js-page-root').hasClass('layout--page--sidebar');
+
+    affix = $pageAside.affix({
+      offsetBottom: $pageFooter.outerHeight(),
+      scrollTarget: hasSidebar ? '.js-page-main' : null,
+      scroller: hasSidebar ? '.js-page-main' : null,
+      scroll: hasSidebar ? $('.js-page-main').children() : null,
+      disabled: tocDisabled
+    });
+
+    $window.on('resize', window.throttle(function() {
+      affix && affix.setOptions({
+        disabled: tocDisabled
+      });
+    }, 100));
+
+    window.pageAsideAffix = affix;
+  });
+})();
+</script>
+    </div>
+    <script>(function () {
+  var $root = document.getElementsByClassName('root')[0];
+  if (window.hasEvent('touchstart')) {
+    $root.dataset.isTouch = true;
+    document.addEventListener('touchstart', function(){}, false);
+  }
+})();
+</script>
+  </body>
+</html>
+

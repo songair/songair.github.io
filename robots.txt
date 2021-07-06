@@ -1,0 +1,4 @@
+User-agent: Googlebot-Image
+Disallow: /
+
+sitemap: https://mincong.io/sitemap.xml

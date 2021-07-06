@@ -1,0 +1,2290 @@
+<!DOCTYPE html><html lang="en">
+  <head><!-- Global site tag (gtag.js) - Google Analytics -->
+	<script async src="https://www.googletagmanager.com/gtag/js?id=UA-87129300-1"></script>
+	<script>
+		window.dataLayer = window.dataLayer || [];
+		function gtag(){dataLayer.push(arguments);}
+		gtag('js', new Date());
+
+		gtag('config', 'UA-87129300-1');
+		
+	</script><meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no"><title>DVF: Aggregations - Mincong Huang</title>
+
+<meta name="description" content="How to write and execute metric and bucket aggregations in Elasticsearch for dataset: Demandes de valeurs foncières (DVF) for data analytics. Also, how to ex...">
+
+<!-- Begin Jekyll SEO tag v2.7.1 -->
+<title>DVF: Aggregations | Mincong Huang</title>
+<meta name="generator" content="Jekyll v4.2.0" />
+<meta property="og:title" content="DVF: Aggregations" />
+<meta name="author" content="Mincong Huang" />
+<meta property="og:locale" content="en" />
+<meta name="description" content="How to write and execute metric and bucket aggregations in Elasticsearch for dataset: Demandes de valeurs foncières (DVF) for data analytics. Also, how to execute aggregations that contain sub-aggregations." />
+<meta property="og:description" content="How to write and execute metric and bucket aggregations in Elasticsearch for dataset: Demandes de valeurs foncières (DVF) for data analytics. Also, how to execute aggregations that contain sub-aggregations." />
+<link rel="canonical" href="https://mincong.io/2021/04/12/dvf-aggregations/" />
+<meta property="og:url" content="https://mincong.io/2021/04/12/dvf-aggregations/" />
+<meta property="og:site_name" content="Mincong Huang" />
+<meta property="og:image" content="https://mincong.io/assets/bg-henrique-ferreira-ZyYsY0ez2D4-unsplash.jpg" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2021-04-12T01:34:30+02:00" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta property="twitter:image" content="https://mincong.io/assets/bg-henrique-ferreira-ZyYsY0ez2D4-unsplash.jpg" />
+<meta property="twitter:title" content="DVF: Aggregations" />
+<meta name="twitter:site" content="@mincong_h" />
+<meta name="twitter:creator" content="@mincong_h" />
+<script type="application/ld+json">
+{"author":{"@type":"Person","name":"Mincong Huang"},"description":"How to write and execute metric and bucket aggregations in Elasticsearch for dataset: Demandes de valeurs foncières (DVF) for data analytics. Also, how to execute aggregations that contain sub-aggregations.","@type":"BlogPosting","image":"https://mincong.io/assets/bg-henrique-ferreira-ZyYsY0ez2D4-unsplash.jpg","url":"https://mincong.io/2021/04/12/dvf-aggregations/","dateModified":"2021-04-12T01:34:30+02:00","datePublished":"2021-04-12T01:34:30+02:00","headline":"DVF: Aggregations","mainEntityOfPage":{"@type":"WebPage","@id":"https://mincong.io/2021/04/12/dvf-aggregations/"},"@context":"https://schema.org"}</script>
+<!-- End Jekyll SEO tag -->
+
+
+<!-- Extra Open Graph :: Start -->
+
+<meta property="og:image:width" content="1280"/>
+<meta property="og:image:height" content="1920"/>
+
+<!-- Extra Open Graph :: End -->
+
+<link rel="canonical" href="https://mincong.io/2021/04/12/dvf-aggregations/"><link rel="alternate" type="application/rss+xml" title="Mincong Huang" href="/feed.xml"><!-- start favicons snippet, use https://realfavicongenerator.net/ --><link rel="apple-touch-icon" sizes="180x180" href="/assets/apple-touch-icon.png"><link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon-32x32.png"><link rel="icon" type="image/png" sizes="16x16" href="/assets/favicon-16x16.png"><link rel="manifest" href="/assets/site.webmanifest"><link rel="mask-icon" href="/assets/safari-pinned-tab.svg" color="#fc4d50"><link rel="shortcut icon" href="/assets/favicon.ico">
+
+<meta name="msapplication-TileColor" content="#ffc40d"><meta name="msapplication-config" content="/assets/browserconfig.xml">
+
+<meta name="theme-color" content="#ffffff">
+<!-- end favicons snippet --><link rel="stylesheet" href="/assets/css/main.css"><link rel="stylesheet" href="https://cdn.bootcdn.net/ajax/libs/font-awesome/5.15.1/css/all.css" ><!-- start custom head snippets -->
+
+<!-- end custom head snippets -->
+<script>(function() {
+  window.isArray = function(val) {
+    return Object.prototype.toString.call(val) === '[object Array]';
+  };
+  window.isString = function(val) {
+    return typeof val === 'string';
+  };
+
+  window.hasEvent = function(event) {
+    return 'on'.concat(event) in window.document;
+  };
+
+  window.isOverallScroller = function(node) {
+    return node === document.documentElement || node === document.body || node === window;
+  };
+
+  window.isFormElement = function(node) {
+    var tagName = node.tagName;
+    return tagName === 'INPUT' || tagName === 'SELECT' || tagName === 'TEXTAREA';
+  };
+
+  window.pageLoad = (function () {
+    var loaded = false, cbs = [];
+    window.addEventListener('load', function () {
+      var i;
+      loaded = true;
+      if (cbs.length > 0) {
+        for (i = 0; i < cbs.length; i++) {
+          cbs[i]();
+        }
+      }
+    });
+    return {
+      then: function(cb) {
+        cb && (loaded ? cb() : (cbs.push(cb)));
+      }
+    };
+  })();
+})();
+(function() {
+  window.throttle = function(func, wait) {
+    var args, result, thisArg, timeoutId, lastCalled = 0;
+
+    function trailingCall() {
+      lastCalled = new Date;
+      timeoutId = null;
+      result = func.apply(thisArg, args);
+    }
+    return function() {
+      var now = new Date,
+        remaining = wait - (now - lastCalled);
+
+      args = arguments;
+      thisArg = this;
+
+      if (remaining <= 0) {
+        clearTimeout(timeoutId);
+        timeoutId = null;
+        lastCalled = now;
+        result = func.apply(thisArg, args);
+      } else if (!timeoutId) {
+        timeoutId = setTimeout(trailingCall, remaining);
+      }
+      return result;
+    };
+  };
+})();
+(function() {
+  var Set = (function() {
+    var add = function(item) {
+      var i, data = this._data;
+      for (i = 0; i < data.length; i++) {
+        if (data[i] === item) {
+          return;
+        }
+      }
+      this.size ++;
+      data.push(item);
+      return data;
+    };
+
+    var Set = function(data) {
+      this.size = 0;
+      this._data = [];
+      var i;
+      if (data.length > 0) {
+        for (i = 0; i < data.length; i++) {
+          add.call(this, data[i]);
+        }
+      }
+    };
+    Set.prototype.add = add;
+    Set.prototype.get = function(index) { return this._data[index]; };
+    Set.prototype.has = function(item) {
+      var i, data = this._data;
+      for (i = 0; i < data.length; i++) {
+        if (this.get(i) === item) {
+          return true;
+        }
+      }
+      return false;
+    };
+    Set.prototype.is = function(map) {
+      if (map._data.length !== this._data.length) { return false; }
+      var i, j, flag, tData = this._data, mData = map._data;
+      for (i = 0; i < tData.length; i++) {
+        for (flag = false, j = 0; j < mData.length; j++) {
+          if (tData[i] === mData[j]) {
+            flag = true;
+            break;
+          }
+        }
+        if (!flag) { return false; }
+      }
+      return true;
+    };
+    Set.prototype.values = function() {
+      return this._data;
+    };
+    return Set;
+  })();
+
+  window.Lazyload = (function(doc) {
+    var queue = {js: [], css: []}, sources = {js: {}, css: {}}, context = this;
+    var createNode = function(name, attrs) {
+      var node = doc.createElement(name), attr;
+      for (attr in attrs) {
+        if (attrs.hasOwnProperty(attr)) {
+          node.setAttribute(attr, attrs[attr]);
+        }
+      }
+      return node;
+    };
+    var end = function(type, url) {
+      var s, q, qi, cbs, i, j, cur, val, flag;
+      if (type === 'js' || type ==='css') {
+        s = sources[type], q = queue[type];
+        s[url] = true;
+        for (i = 0; i < q.length; i++) {
+          cur = q[i];
+          if (cur.urls.has(url)) {
+            qi = cur, val = qi.urls.values();
+            qi && (cbs = qi.callbacks);
+            for (flag = true, j = 0; j < val.length; j++) {
+              cur = val[j];
+              if (!s[cur]) {
+                flag = false;
+              }
+            }
+            if (flag && cbs && cbs.length > 0) {
+              for (j = 0; j < cbs.length; j++) {
+                cbs[j].call(context);
+              }
+              qi.load = true;
+            }
+          }
+        }
+      }
+    };
+    var load = function(type, urls, callback) {
+      var s, q, qi, node, i, cur,
+        _urls = typeof urls === 'string' ? new Set([urls]) : new Set(urls), val, url;
+      if (type === 'js' || type ==='css') {
+        s = sources[type], q = queue[type];
+        for (i = 0; i < q.length; i++) {
+          cur = q[i];
+          if (_urls.is(cur.urls)) {
+            qi = cur;
+            break;
+          }
+        }
+        val = _urls.values();
+        if (qi) {
+          callback && (qi.load || qi.callbacks.push(callback));
+          callback && (qi.load && callback());
+        } else {
+          q.push({
+            urls: _urls,
+            callbacks: callback ? [callback] : [],
+            load: false
+          });
+          for (i = 0; i < val.length; i++) {
+            node = null, url = val[i];
+            if (s[url] === undefined) {
+              (type === 'js' ) && (node = createNode('script', { src: url }));
+              (type === 'css') && (node = createNode('link', { rel: 'stylesheet', href: url }));
+              if (node) {
+                node.onload = (function(type, url) {
+                  return function() {
+                    end(type, url);
+                  };
+                })(type, url);
+                (doc.head || doc.body).appendChild(node);
+                s[url] = false;
+              }
+            }
+          }
+        }
+      }
+    };
+    return {
+      js: function(url, callback) {
+        load('js', url, callback);
+      },
+      css: function(url, callback) {
+        load('css', url, callback);
+      }
+    };
+  })(this.document);
+})();
+</script><script>
+  (function() {
+    var TEXT_VARIABLES = {
+      version: '2.2.6',
+      sources: {
+        font_awesome: 'https://cdn.bootcdn.net/ajax/libs/font-awesome/5.15.1/css/all.css',
+        jquery: 'https://cdn.bootcss.com/jquery/3.1.1/jquery.min.js',
+        leancloud_js_sdk: '//cdn.jsdelivr.net/npm/leancloud-storage@3.13.2/dist/av-min.js',
+        chart: 'https://cdn.bootcss.com/Chart.js/2.7.2/Chart.bundle.min.js',
+        gitalk: {
+          js: 'https://cdn.bootcss.com/gitalk/1.2.2/gitalk.min.js',
+          css: 'https://cdn.bootcss.com/gitalk/1.2.2/gitalk.min.css'
+        },
+        valine: 'https://unpkg.com/valine/dist/Valine.min.js',
+        mathjax: 'https://cdn.bootcss.com/mathjax/2.7.4/MathJax.js?config=TeX-MML-AM_CHTML',
+        mermaid: 'https://cdn.bootcss.com/mermaid/8.0.0-rc.8/mermaid.min.js'
+      },
+      site: {
+        toc: {
+          selectors: 'h1,h2,h3'
+        }
+      },
+      paths: {
+        search_js: '/assets/search.js'
+      }
+    };
+    window.TEXT_VARIABLES = TEXT_VARIABLES;
+  })();
+</script>
+</head>
+  <body>
+    <div class="root" data-is-touch="false">
+      <div class="layout--page js-page-root"><div class="page__main js-page-main page__viewport has-aside cell cell--auto">
+
+      <div class="page__main-inner"><div class="page__header d-print-none"><header class="header"><div class="main">
+      <div class="header__title">
+        <div class="header__brand"><svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
+	 width="24px" height="24px" viewBox="0 0 24 24">
+<style type="text/css">
+	.st0{fill:#515151;}
+</style>
+<path class="st0" d="M1.7,22.3c5.7-5.7,11.3-5.7,17,0c3.3-3.3,3.5-5.3,0.8-6c2.7,0.7,3.5-1.1,2.3-5.6s-3.3-5.2-6.3-2.1
+	c3-3,2.3-5.2-2.1-6.3S7,1.8,7.7,4.6C7,1.8,5,2.1,1.7,5.3C7.3,11,7.3,16.7,1.7,22.3"/>
+</svg>
+<a title="Hi, welcome to my blog! I'm a software engineer at Datadog. I write blog posts in my free time. My blogs are bits and pieces of my tech journey. Most of them are related to Java. Hope you enjoy them! My opinions are my own, not Datadog's. This blog is powered by Jekyll, a simple, blog-aware, static sites solution.
+" href="/">Mincong Huang</a></div><button class="button button--secondary button--circle search-button js-search-toggle"><i class="fas fa-search"></i></button></div><nav class="navigation">
+        <ul><li class="navigation__item"><a href="/categories">Categories</a></li><li class="navigation__item"><a href="/series">Series</a></li><li class="navigation__item"><a href="/archive">Archive</a></li><li class="navigation__item"><a href="/about">About</a></li><li><button class="button button--secondary button--circle search-button js-search-toggle"><i class="fas fa-search"></i></button></li></ul>
+      </nav></div>
+  </header>
+</div><div class="page__content"><div class="article__header--overlay"><div class="hero hero--dark overlay" style="background-image:linear-gradient(135deg, rgba(0, 0, 0, .6), rgba(0, 0, 0, .4)),url(/assets/bg-henrique-ferreira-ZyYsY0ez2D4-unsplash.jpg);background-color:#203028;"><div class="hero__content"><div class ="main"><div class="article__info clearfix"><ul class="left-col menu"><li>
+              <a class="button button--secondary button--pill button--sm"
+                href="/archive?tag=elasticsearch">elasticsearch</a>
+            </li><li>
+              <a class="button button--secondary button--pill button--sm"
+                href="/archive?tag=java">java</a>
+            </li></ul><ul class="right-col menu"><li><i class="far fa-calendar-alt"></i> <span>Apr 12, 2021</span>
+            </li></ul></div><div class="article__header"><header><h1>DVF: Aggregations</h1></header></div><div class="article__header">
+                        <p class="overlay__excerpt">Metric aggregations, bucket aggregations, scripted aggregation, and sub-aggregations in Elasticsearch.</p>
+                      </div><div class="article__info clearfix">
+  <ul class="left-col menu">
+    <li>
+      <i class="fas fa-camera"></i>
+      Photo by
+      <a href="https://unsplash.com/@rickpsd" target="_blank">
+        Henrique Ferreira
+      </a>
+      on
+      <a href="https://unsplash.com/license" target="_blank">
+        Unplash 
+      </a>
+    </li>
+  </ul>
+</div>
+</div></div>
+              </div>
+            </div><div class ="main"><div class="grid grid--reverse">
+
+              <div class="col-aside d-print-none js-col-aside"><aside class="page__aside js-page-aside"><div class="toc-aside js-toc-root"></div>
+</aside></div>
+
+              <div class="col-main cell cell--auto"><!-- start custom main top snippet -->
+
+<!-- end custom main top snippet -->
+<article itemscope itemtype="http://schema.org/Article"><meta itemprop="headline" content="DVF: Aggregations"><meta itemprop="author" content="Mincong Huang"/><meta itemprop="datePublished" content="2021-04-12T01:34:30+02:00">
+    <meta itemprop="keywords" content="elasticsearch,java"><div class="js-article-content"><div class="layout--article"><!-- start custom article top snippet -->
+
+
+<!-- end custom article top snippet -->
+<div class="article__content" itemprop="articleBody"><h2 id="introduction">Introduction</h2>
+
+<p>Open data “Demande de valeurs foncières (DVF)” is an open dataset provided by
+the French government which collects all the real-estate transactions since
+January 2014, in mainland France and the overseas departments and territories.
+In the previous DVF articles, we talked about the write path: how to index new
+documents, how to optimize storage, and how to perform snapshots and restores.
+Starting from this article, we are going to focus on the read path: how to
+perform different search actions on this dataset.</p>
+
+<p>This article will focus on aggregations. Aggregations are important for your
+application because it provides an overview to your users without showing any
+documents in detail. It also provides information about the selection range, such
+as the min/max value of a given field. This topic is also part of the <a href="https://www.elastic.co/training/elastic-certified-engineer-exam">Elastic
+Certified Engineer
+Exam</a>. After
+reading this article, you will understand:</p>
+
+<ul>
+  <li>How to write and execute metric aggregation?</li>
+  <li>How to write and execute bucket aggregation?</li>
+  <li>How to write and execute aggregations that contain sub-aggregations?</li>
+</ul>
+
+<p>To better demonstrate the importance of aggregations in real-world scenarios, I am going to use
+different examples from the DVF dataset.
+This article is written in Elasticsearch 7.12 and Java 11, but most of the
+concepts should be appliable to any Elasticsearch 7.x cluster. Most of the
+examples are written in two formats: HTTP requests with JSON content and Java. The goal is
+to let you better understand how it works even if you are not familiar with
+Java.</p>
+
+<h2 id="prerequisite">Prerequisite</h2>
+
+<p>Before writing any aggregation, we need to index the dataset into Elasticsearch.
+This has been done in the previous articles so I am not going to go into detail
+about it in this article. If you were interested in how to do it, you can
+find the previous articles under the category “Elasticsearch” of my blog, they
+are prefixed by “DVF”. Once the index is ready, you can find it in the
+Elasticsearch cluster via the <code class="language-plaintext highlighter-rouge">_cat</code> indices API as “transactions”:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>$ curl localhost:9200/_cat/indices
+yellow open transactions xMLeTfvwTYW1mdz5P85JsA 1 1 827105 0 207.3mb 207.3mb
+</code></pre></div></div>
+
+<h2 id="metric-aggregation">Metric Aggregation</h2>
+
+<p>According to Elasticsearch documentation <a href="https://www.elastic.co/guide/en/elasticsearch/reference/7.x/search-aggregations-metrics.html">Metrics Aggregation
+(7.x)</a>,
+the aggregations in this family compute metrics based on values extracted in one
+way or another from the documents that are being aggregated. The values are
+typically extracted from the fields of the document (using the field data), but
+can also be generated using scripts.</p>
+
+<p>Here I am going to take a simple one: the metric <a href="https://www.elastic.co/guide/en/elasticsearch/reference/7.x/search-aggregations-metrics-valuecount-aggregation.html">value
+count</a>. As the name indicated,
+metric <code class="language-plaintext highlighter-rouge">value_count</code> shows how many documents are extracted from the aggregated
+documents. To do that via REST API, we can use the <code class="language-plaintext highlighter-rouge">_search</code> endpoint as
+follows:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>GET /transactions/_search
+</code></pre></div></div>
+
+<div class="language-js highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">{</span>
+  <span class="dl">"</span><span class="s2">query</span><span class="dl">"</span><span class="p">:</span> <span class="p">{</span>
+    <span class="dl">"</span><span class="s2">match_all</span><span class="dl">"</span><span class="p">:</span> <span class="p">{}</span>  <span class="c1">// 1</span>
+  <span class="p">},</span>
+  <span class="dl">"</span><span class="s2">size</span><span class="dl">"</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>  <span class="c1">// 2</span>
+  <span class="dl">"</span><span class="s2">aggs</span><span class="dl">"</span><span class="p">:</span> <span class="p">{</span>
+    <span class="dl">"</span><span class="s2">mutation_id/value_count</span><span class="dl">"</span><span class="p">:</span> <span class="p">{</span>  <span class="c1">// 3</span>
+      <span class="dl">"</span><span class="s2">value_count</span><span class="dl">"</span><span class="p">:</span> <span class="p">{</span>  <span class="c1">// 4</span>
+        <span class="dl">"</span><span class="s2">field</span><span class="dl">"</span><span class="p">:</span> <span class="dl">"</span><span class="s2">mutation_id</span><span class="dl">"</span>  <span class="c1">// 5</span>
+      <span class="p">}</span>
+    <span class="p">}</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>If we take a quick look into the HTTP request, you will see that:</p>
+
+<ol>
+  <li>We use a <code class="language-plaintext highlighter-rouge">match_all</code> query, which matches all the documents of the index
+“transactions” without filtering.</li>
+  <li>The number of search hits to return is set to 0. The default value is 10.
+Since we don’t care about those documents, setting it to 0 simplifies the
+HTTP response.</li>
+  <li>
+    <p>We use one single-value metric aggregation and name it as
+<code class="language-plaintext highlighter-rouge">mutation_id/value_count</code>. I name it using the naming convention:</p>
+
+    <div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>${field_name}/${metric_type}
+</code></pre></div>    </div>
+
+    <p>so that I can understand the target field name to be aggregated and the type
+of metric. But this is just a personal preference. You are free to choose the name you
+want.</p>
+  </li>
+  <li>The type of metric is <code class="language-plaintext highlighter-rouge">value_count</code>.</li>
+  <li>The metric applies to field <code class="language-plaintext highlighter-rouge">mutation_id</code>. I use this field because it is the
+key of the mutation (transaction), so it is always non-null.</li>
+</ol>
+
+<p>Sending the request above will return:</p>
+
+<div class="language-js highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">{</span>
+  <span class="dl">"</span><span class="s2">took</span><span class="dl">"</span><span class="p">:</span> <span class="mi">100</span><span class="p">,</span>
+  <span class="dl">"</span><span class="s2">timed_out</span><span class="dl">"</span><span class="p">:</span> <span class="kc">false</span><span class="p">,</span>
+  <span class="dl">"</span><span class="s2">_shards</span><span class="dl">"</span><span class="p">:</span> <span class="p">{</span>
+    <span class="dl">"</span><span class="s2">total</span><span class="dl">"</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>
+    <span class="dl">"</span><span class="s2">successful</span><span class="dl">"</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>
+    <span class="dl">"</span><span class="s2">skipped</span><span class="dl">"</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
+    <span class="dl">"</span><span class="s2">failed</span><span class="dl">"</span><span class="p">:</span> <span class="mi">0</span>
+  <span class="p">},</span>
+  <span class="dl">"</span><span class="s2">hits</span><span class="dl">"</span><span class="p">:</span> <span class="p">{</span>
+    <span class="dl">"</span><span class="s2">total</span><span class="dl">"</span><span class="p">:</span> <span class="p">{</span>
+      <span class="dl">"</span><span class="s2">value</span><span class="dl">"</span><span class="p">:</span> <span class="mi">10000</span><span class="p">,</span>
+      <span class="dl">"</span><span class="s2">relation</span><span class="dl">"</span><span class="p">:</span> <span class="dl">"</span><span class="s2">gte</span><span class="dl">"</span>
+    <span class="p">},</span>
+    <span class="dl">"</span><span class="s2">max_score</span><span class="dl">"</span><span class="p">:</span> <span class="kc">null</span><span class="p">,</span>
+    <span class="dl">"</span><span class="s2">hits</span><span class="dl">"</span><span class="p">:</span> <span class="p">[]</span>
+  <span class="p">},</span>
+  <span class="dl">"</span><span class="s2">aggregations</span><span class="dl">"</span><span class="p">:</span> <span class="p">{</span>
+    <span class="dl">"</span><span class="s2">mutation_id/count</span><span class="dl">"</span><span class="p">:</span> <span class="p">{</span>
+      <span class="dl">"</span><span class="s2">value</span><span class="dl">"</span><span class="p">:</span> <span class="mi">827105</span>
+    <span class="p">}</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>It means that there were 827105 transactions in 2020 according to
+the dataset. It matches the number of lines in the CSV file.
+There is a difference of 1 line because the CSV file includes the header.</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>➜  dvf git:(master u=) wc -l downloads/full.2020.csv
+  827106 downloads/full.2020.csv
+</code></pre></div></div>
+
+<p>Now, let’s see how to do the same thing in Java:</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kt">var</span> <span class="n">sourceBuilder</span> <span class="o">=</span>
+    <span class="k">new</span> <span class="nf">SearchSourceBuilder</span><span class="o">()</span>
+        <span class="o">.</span><span class="na">size</span><span class="o">(</span><span class="mi">0</span><span class="o">)</span>  <span class="c1">// 1</span>
+        <span class="o">.</span><span class="na">aggregation</span><span class="o">(</span><span class="nc">AggregationBuilders</span><span class="o">.</span><span class="na">count</span><span class="o">(</span><span class="s">"mutation_id/value_count"</span><span class="o">).</span><span class="na">field</span><span class="o">(</span><span class="s">"mutation_id"</span><span class="o">))</span>  <span class="c1">// 2</span>
+        <span class="o">.</span><span class="na">query</span><span class="o">(</span><span class="nc">QueryBuilders</span><span class="o">.</span><span class="na">matchAllQuery</span><span class="o">());</span>  <span class="c1">// 3</span>
+
+<span class="kt">var</span> <span class="n">request</span> <span class="o">=</span> <span class="k">new</span> <span class="nc">SearchRequest</span><span class="o">()</span>  <span class="c1">// 4</span>
+    <span class="o">.</span><span class="na">indices</span><span class="o">(</span><span class="s">"transactions"</span><span class="o">)</span>
+    <span class="o">.</span><span class="na">source</span><span class="o">(</span><span class="n">sourceBuilder</span><span class="o">);</span>
+
+<span class="kt">var</span> <span class="n">response</span> <span class="o">=</span> <span class="n">restClient</span><span class="o">.</span><span class="na">search</span><span class="o">(</span><span class="n">request</span><span class="o">,</span> <span class="nc">RequestOptions</span><span class="o">.</span><span class="na">DEFAULT</span><span class="o">);</span>  <span class="c1">// 5</span>
+<span class="kt">var</span> <span class="n">valueCount</span> <span class="o">=</span> <span class="o">(</span><span class="nc">ValueCount</span><span class="o">)</span> <span class="n">response</span><span class="o">.</span><span class="na">getAggregations</span><span class="o">().</span><span class="na">get</span><span class="o">(</span><span class="s">"mutation_id/value_count"</span><span class="o">);</span>  <span class="c1">// 6</span>
+<span class="o">...</span>
+</code></pre></div></div>
+
+<p>It is almost the same thing as the HTTP request. Here we:</p>
+
+<ol>
+  <li>Create an HTTP request with a search source. The hit size is set to 0 to avoid
+returning hits.</li>
+  <li>The aggregation used is the value count (<code class="language-plaintext highlighter-rouge">value_count</code>), named as <code class="language-plaintext highlighter-rouge">mutation_id/value_count</code>,
+targeting field <code class="language-plaintext highlighter-rouge">mutation_id</code>.</li>
+  <li>On the query side, it matches all documents without filtering.</li>
+  <li>Combining the index name and the search source, we create a search request.</li>
+  <li>We use the Java REST High Level Client to send the search request and get the
+search response.</li>
+  <li>We can retrieve the aggregation from the response using the name of the
+aggregation, i.e. using “mutation_id/value_count”.</li>
+</ol>
+
+<p>In this section, we discussed how metric aggregation works: we need to provide
+the index names to be searched, the query to filter the document, and the
+metrics aggregations to be performed. Now, let’s go to the next part: bucket
+aggregations.</p>
+
+<h2 id="bucket-aggregation">Bucket Aggregation</h2>
+
+<p>Bucket aggregations that group documents into buckets, also called bins, based
+on field values, ranges, or other criteria. In this section, we are going to use
+postal code as an example: let’s see which postal code in France contains the
+highest number of transactions?</p>
+
+<p>To answer this question, we need to prepare an HTTP request for bucket
+aggregation:</p>
+
+<div class="language-js highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">{</span>
+  <span class="dl">"</span><span class="s2">query</span><span class="dl">"</span><span class="p">:</span> <span class="p">{</span>
+    <span class="dl">"</span><span class="s2">match_all</span><span class="dl">"</span><span class="p">:</span> <span class="p">{}</span>  <span class="c1">// 1</span>
+  <span class="p">},</span>
+  <span class="dl">"</span><span class="s2">size</span><span class="dl">"</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>  <span class="c1">// 2</span>
+  <span class="dl">"</span><span class="s2">aggs</span><span class="dl">"</span><span class="p">:</span> <span class="p">{</span>
+    <span class="dl">"</span><span class="s2">postal_code/terms</span><span class="dl">"</span><span class="p">:</span> <span class="p">{</span>
+      <span class="dl">"</span><span class="s2">terms</span><span class="dl">"</span><span class="p">:</span> <span class="p">{</span>  <span class="c1">// 3</span>
+        <span class="dl">"</span><span class="s2">field</span><span class="dl">"</span><span class="p">:</span> <span class="dl">"</span><span class="s2">postal_code</span><span class="dl">"</span><span class="p">,</span>
+        <span class="dl">"</span><span class="s2">size</span><span class="dl">"</span><span class="p">:</span> <span class="mi">3</span>  <span class="c1">// 4</span>
+      <span class="p">}</span>
+    <span class="p">}</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>If we take a quick look into the HTTP request, you will see the same concept as
+above for the metric aggregation. This time, the bucket aggregation <code class="language-plaintext highlighter-rouge">term</code> does
+the following things:</p>
+
+<ol>
+  <li>It queries all the documents in the target index.</li>
+  <li>It sets the size to 0 to avoid returning documents (hits) because we don’t need them.</li>
+  <li>This is the key of the request. It specifies the type of aggregation to
+<code class="language-plaintext highlighter-rouge">terms</code> on field <code class="language-plaintext highlighter-rouge">postal_code</code>. Therefore, we can obtain a result grouped by
+postal code.</li>
+  <li>It only takes the top 3 results. More precisely, there are two notions: size
+and order. Here we specified the size, which means the aggregation will return 3
+results. As for the order, terms aggregation returns results in descending
+order by default. So the terms having the most occurrences will be returned (defaults to 10).
+Therefore, combined together (size and order), this setting returns the top 3 results.</li>
+</ol>
+
+<p>Sending the request above will return:</p>
+
+<div class="language-js highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">{</span>
+  <span class="dl">"</span><span class="s2">took</span><span class="dl">"</span><span class="p">:</span> <span class="mi">97</span><span class="p">,</span>
+  <span class="dl">"</span><span class="s2">timed_out</span><span class="dl">"</span><span class="p">:</span> <span class="kc">false</span><span class="p">,</span>
+  <span class="dl">"</span><span class="s2">_shards</span><span class="dl">"</span><span class="p">:</span> <span class="p">{</span>
+    <span class="dl">"</span><span class="s2">total</span><span class="dl">"</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>
+    <span class="dl">"</span><span class="s2">successful</span><span class="dl">"</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>
+    <span class="dl">"</span><span class="s2">skipped</span><span class="dl">"</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
+    <span class="dl">"</span><span class="s2">failed</span><span class="dl">"</span><span class="p">:</span> <span class="mi">0</span>
+  <span class="p">},</span>
+  <span class="dl">"</span><span class="s2">hits</span><span class="dl">"</span><span class="p">:</span> <span class="p">{</span>
+    <span class="dl">"</span><span class="s2">total</span><span class="dl">"</span><span class="p">:</span> <span class="p">{</span>
+      <span class="dl">"</span><span class="s2">value</span><span class="dl">"</span><span class="p">:</span> <span class="mi">10000</span><span class="p">,</span>
+      <span class="dl">"</span><span class="s2">relation</span><span class="dl">"</span><span class="p">:</span> <span class="dl">"</span><span class="s2">gte</span><span class="dl">"</span>
+    <span class="p">},</span>
+    <span class="dl">"</span><span class="s2">max_score</span><span class="dl">"</span><span class="p">:</span> <span class="kc">null</span><span class="p">,</span>
+    <span class="dl">"</span><span class="s2">hits</span><span class="dl">"</span><span class="p">:</span> <span class="p">[]</span>
+  <span class="p">},</span>
+  <span class="dl">"</span><span class="s2">aggregations</span><span class="dl">"</span><span class="p">:</span> <span class="p">{</span>
+    <span class="dl">"</span><span class="s2">postal_code/terms</span><span class="dl">"</span><span class="p">:</span> <span class="p">{</span>
+      <span class="dl">"</span><span class="s2">doc_count_error_upper_bound</span><span class="dl">"</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
+      <span class="dl">"</span><span class="s2">sum_other_doc_count</span><span class="dl">"</span><span class="p">:</span> <span class="mi">812333</span><span class="p">,</span>
+      <span class="dl">"</span><span class="s2">buckets</span><span class="dl">"</span><span class="p">:</span> <span class="p">[</span>
+        <span class="p">{</span>
+          <span class="dl">"</span><span class="s2">key</span><span class="dl">"</span><span class="p">:</span> <span class="dl">""</span><span class="p">,</span>
+          <span class="dl">"</span><span class="s2">doc_count</span><span class="dl">"</span><span class="p">:</span> <span class="mi">9392</span>
+        <span class="p">},</span>
+        <span class="p">{</span>
+          <span class="dl">"</span><span class="s2">key</span><span class="dl">"</span><span class="p">:</span> <span class="dl">"</span><span class="s2">51100</span><span class="dl">"</span><span class="p">,</span>
+          <span class="dl">"</span><span class="s2">doc_count</span><span class="dl">"</span><span class="p">:</span> <span class="mi">2859</span>
+        <span class="p">},</span>
+        <span class="p">{</span>
+          <span class="dl">"</span><span class="s2">key</span><span class="dl">"</span><span class="p">:</span> <span class="dl">"</span><span class="s2">75016</span><span class="dl">"</span><span class="p">,</span>
+          <span class="dl">"</span><span class="s2">doc_count</span><span class="dl">"</span><span class="p">:</span> <span class="mi">2521</span>
+        <span class="p">}</span>
+      <span class="p">]</span>
+    <span class="p">}</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>So the top 1 result is… missing value. Oh my god 😅 But this is the forever
+pain for data scientists or whoever doing data analytics, isn’t it? If
+we filter out that result, then the top 1 goes to Reims (51100) and the top 2
+goes to Paris 16e district (75016).</p>
+
+<p>And here is the implementation in Java. I am not going to explain this code
+block because it’s pretty straightforward:</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kt">var</span> <span class="n">sourceBuilder</span> <span class="o">=</span>
+    <span class="k">new</span> <span class="nf">SearchSourceBuilder</span><span class="o">()</span>
+        <span class="o">.</span><span class="na">size</span><span class="o">(</span><span class="mi">0</span><span class="o">)</span>
+        <span class="o">.</span><span class="na">aggregation</span><span class="o">(</span><span class="nc">AggregationBuilders</span><span class="o">.</span><span class="na">terms</span><span class="o">(</span><span class="s">"postal_code/terms"</span><span class="o">).</span><span class="na">field</span><span class="o">(</span><span class="s">"postal_code"</span><span class="o">).</span><span class="na">size</span><span class="o">(</span><span class="mi">3</span><span class="o">))</span>
+        <span class="o">.</span><span class="na">query</span><span class="o">(</span><span class="nc">QueryBuilders</span><span class="o">.</span><span class="na">matchAllQuery</span><span class="o">());</span>
+
+<span class="kt">var</span> <span class="n">request</span> <span class="o">=</span> <span class="k">new</span> <span class="nc">SearchRequest</span><span class="o">().</span><span class="na">indices</span><span class="o">(</span><span class="s">"transactions"</span><span class="o">).</span><span class="na">source</span><span class="o">(</span><span class="n">sourceBuilder</span><span class="o">);</span>
+
+<span class="kt">var</span> <span class="n">response</span> <span class="o">=</span> <span class="n">restClient</span><span class="o">.</span><span class="na">search</span><span class="o">(</span><span class="n">request</span><span class="o">,</span> <span class="nc">RequestOptions</span><span class="o">.</span><span class="na">DEFAULT</span><span class="o">);</span>
+<span class="kt">var</span> <span class="n">terms</span> <span class="o">=</span> <span class="o">(</span><span class="nc">ParsedStringTerms</span><span class="o">)</span> <span class="n">response</span><span class="o">.</span><span class="na">getAggregations</span><span class="o">().</span><span class="na">get</span><span class="o">(</span><span class="s">"postal_code/terms"</span><span class="o">);</span>
+<span class="kt">var</span> <span class="n">countPerPostalCode</span> <span class="o">=</span> <span class="n">terms</span><span class="o">.</span><span class="na">getBuckets</span><span class="o">().</span><span class="na">stream</span><span class="o">()</span>
+    <span class="o">.</span><span class="na">map</span><span class="o">(</span><span class="n">b</span> <span class="o">-&gt;</span> <span class="o">(</span><span class="nc">ParsedBucket</span><span class="o">)</span> <span class="n">b</span><span class="o">)</span>
+    <span class="o">.</span><span class="na">collect</span><span class="o">(</span>
+        <span class="nc">Collectors</span><span class="o">.</span><span class="na">toMap</span><span class="o">(</span>
+            <span class="nl">ParsedBucket:</span><span class="o">:</span><span class="n">getKeyAsString</span><span class="o">,</span>
+            <span class="nl">ParsedBucket:</span><span class="o">:</span><span class="n">getDocCount</span><span class="o">));</span>
+</code></pre></div></div>
+
+<p>In this section, we saw how to create a bucket aggregation using terms
+aggregations and field <code class="language-plaintext highlighter-rouge">postal_code</code>. But all we saw are very primitive examples and they
+didn’t provide much added value for data analytics. In the following sections, I
+want to share something more interesting with you, such as: <mark>what is the average
+price of a second-hand apartment in Paris?</mark> Before answering this question, we will
+need to compute the price per square meter (€/m2). I will show you how to do
+that in the next section. And then, we will do the analysis for Paris.</p>
+
+<h2 id="scripted-metric-aggregation">Scripted Metric Aggregation</h2>
+
+<p><em>How to compute the price per square meter (€/m2)?</em></p>
+
+<p>Our current goal is to compute the price per square meter for each apartment sold.
+We can do that by doing simple math:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>price_m2 = total_price / built-up area
+</code></pre></div></div>
+
+<p>There are mainly 3 choices to compute this field:</p>
+
+<ol>
+  <li>Do it at index-time: when we create the new document in Elasticsearch, we can
+compute a field in our value class in Java. This is useful when we know
+exactly what we need in advance.</li>
+  <li>Do it at runtime: update the index mapping to include a new scripted field.
+This will apply to all the documents. This is useful when we don’t know what
+additional fields we need when indexing documents. It provides flexibility to modify documents
+at runtime. Especially useful for end-users.</li>
+  <li>Do it at query-time: create the field when running the query. This is probably
+the most expensive one but it fits the on-demand requirement. Sometimes we
+don’t want to keep one additional field forever because it’s only useful for
+some queries.</li>
+</ol>
+
+<p>For now, I am going to use choice 3 because it fits the current article
+which is about search. To prepare the scripted metric aggregation, we need to
+provide a runtime mapping <code class="language-plaintext highlighter-rouge">price_m2</code>, which is computed by two existing fields:
+<code class="language-plaintext highlighter-rouge">property_value</code> and the <code class="language-plaintext highlighter-rouge">real_built_un_area</code>. It looks like this:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>GET /transactions/_search
+</code></pre></div></div>
+
+<div class="language-js highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">{</span>
+  <span class="dl">"</span><span class="s2">runtime_mappings</span><span class="dl">"</span><span class="p">:</span> <span class="p">{</span>
+    <span class="dl">"</span><span class="s2">price_m2</span><span class="dl">"</span><span class="p">:</span> <span class="p">{</span>
+      <span class="dl">"</span><span class="s2">type</span><span class="dl">"</span><span class="p">:</span> <span class="dl">"</span><span class="s2">double</span><span class="dl">"</span><span class="p">,</span>
+      <span class="dl">"</span><span class="s2">script</span><span class="dl">"</span><span class="p">:</span> <span class="dl">"</span><span class="s2">emit(doc['property_value'].value / doc['real_built_up_area'].value)</span><span class="dl">"</span>
+    <span class="p">}</span>
+  <span class="p">},</span>
+  <span class="p">...</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>The script is written in “Painless Script”. Be careful about the logic that you
+are going to add to this script because it is easy to change from painless to
+painful 🙂. If you want to know more about Painless, visit Elasticsearch
+documentation: <a href="https://www.elastic.co/guide/en/elasticsearch/painless/master/painless-lang-spec.html">Painless Language
+Specification</a>.</p>
+
+<p>Now, going back to our scripted metric, we will need to handle some corner cases
+because the property value or real built-up area may be missing or equal to 0. I
+filtered them out in the “query” section of the aggregation. Also, we need to
+filter the nature of the transaction (mutation) to select only the sales. Other
+types like expropriation, exchange, judgement are not what we want. To simplify a
+bit, I also excluded the category “sales under construction”. The final HTTP
+request looks like this:</p>
+
+<div class="language-js highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">{</span>
+  <span class="dl">"</span><span class="s2">query</span><span class="dl">"</span><span class="p">:</span> <span class="p">{</span>  <span class="c1">// 1</span>
+    <span class="dl">"</span><span class="s2">bool</span><span class="dl">"</span><span class="p">:</span> <span class="p">{</span>
+      <span class="dl">"</span><span class="s2">filter</span><span class="dl">"</span><span class="p">:</span> <span class="p">[</span>
+        <span class="p">{</span> <span class="dl">"</span><span class="s2">match</span><span class="dl">"</span><span class="p">:</span> <span class="p">{</span> <span class="dl">"</span><span class="s2">mutation_nature</span><span class="dl">"</span><span class="p">:</span> <span class="p">{</span> <span class="dl">"</span><span class="s2">query</span><span class="dl">"</span><span class="p">:</span> <span class="dl">"</span><span class="s2">Vente</span><span class="dl">"</span> <span class="p">}</span> <span class="p">}</span> <span class="p">},</span>
+        <span class="p">{</span> <span class="dl">"</span><span class="s2">match</span><span class="dl">"</span><span class="p">:</span> <span class="p">{</span> <span class="dl">"</span><span class="s2">local_type</span><span class="dl">"</span><span class="p">:</span> <span class="p">{</span> <span class="dl">"</span><span class="s2">query</span><span class="dl">"</span><span class="p">:</span> <span class="dl">"</span><span class="s2">Appartement</span><span class="dl">"</span> <span class="p">}</span> <span class="p">}</span> <span class="p">},</span>
+        <span class="p">{</span> <span class="dl">"</span><span class="s2">range</span><span class="dl">"</span><span class="p">:</span> <span class="p">{</span> <span class="dl">"</span><span class="s2">property_value</span><span class="dl">"</span><span class="p">:</span> <span class="p">{</span> <span class="dl">"</span><span class="s2">gt</span><span class="dl">"</span><span class="p">:</span> <span class="mi">0</span> <span class="p">}</span> <span class="p">}</span> <span class="p">},</span>
+        <span class="p">{</span> <span class="dl">"</span><span class="s2">range</span><span class="dl">"</span><span class="p">:</span> <span class="p">{</span> <span class="dl">"</span><span class="s2">real_built_up_area</span><span class="dl">"</span><span class="p">:</span> <span class="p">{</span> <span class="dl">"</span><span class="s2">gt</span><span class="dl">"</span><span class="p">:</span> <span class="mi">0</span> <span class="p">}</span> <span class="p">}</span> <span class="p">}</span>
+      <span class="p">]</span>
+    <span class="p">}</span>
+  <span class="p">},</span>
+  <span class="dl">"</span><span class="s2">runtime_mappings</span><span class="dl">"</span><span class="p">:</span> <span class="p">{</span>  <span class="c1">// 2</span>
+    <span class="dl">"</span><span class="s2">price_m2</span><span class="dl">"</span><span class="p">:</span> <span class="p">{</span>
+      <span class="dl">"</span><span class="s2">type</span><span class="dl">"</span><span class="p">:</span> <span class="dl">"</span><span class="s2">double</span><span class="dl">"</span><span class="p">,</span>
+      <span class="dl">"</span><span class="s2">script</span><span class="dl">"</span><span class="p">:</span> <span class="dl">"</span><span class="s2">emit(doc['property_value'].value / doc['real_built_up_area'].value)</span><span class="dl">"</span>
+    <span class="p">}</span>
+  <span class="p">},</span>
+  <span class="dl">"</span><span class="s2">size</span><span class="dl">"</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>  <span class="c1">// 3</span>
+  <span class="dl">"</span><span class="s2">aggs</span><span class="dl">"</span><span class="p">:</span> <span class="p">{</span>   <span class="c1">// 4</span>
+    <span class="dl">"</span><span class="s2">price_m2/stats</span><span class="dl">"</span><span class="p">:</span> <span class="p">{</span>
+      <span class="dl">"</span><span class="s2">stats</span><span class="dl">"</span><span class="p">:</span> <span class="p">{</span>
+        <span class="dl">"</span><span class="s2">field</span><span class="dl">"</span><span class="p">:</span> <span class="dl">"</span><span class="s2">price_m2</span><span class="dl">"</span>
+      <span class="p">}</span>
+    <span class="p">}</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>If we take a quick look into the HTTP request, you will see the same concept
+again, as above for the metric aggregation and bucket aggregation. This time,
+the metric aggregation term does the following things:</p>
+
+<ol>
+  <li>It does not query all the documents anymore. It contains multiple filters,
+encapsulated in a boolean query.</li>
+  <li>It defines a runtime mapping for field <code class="language-plaintext highlighter-rouge">price_m2</code>, computed from property
+value and real built-up area.</li>
+  <li>It sets the size to 0 to avoid returning documents (hits) because we don’t need them.</li>
+  <li>This is the key of the request. It specifies the type of aggregation. We use
+multi-valued metric aggregation <code class="language-plaintext highlighter-rouge">stats</code>, which returns the min, max, average,
+sum, and count of the field <code class="language-plaintext highlighter-rouge">price_m2</code> in the selected documents.</li>
+</ol>
+
+<p>Sending the request above will return:</p>
+
+<div class="language-js highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">{</span>
+  <span class="dl">"</span><span class="s2">took</span><span class="dl">"</span><span class="p">:</span> <span class="mi">14</span><span class="p">,</span>
+  <span class="dl">"</span><span class="s2">timed_out</span><span class="dl">"</span><span class="p">:</span> <span class="kc">false</span><span class="p">,</span>
+  <span class="dl">"</span><span class="s2">_shards</span><span class="dl">"</span><span class="p">:</span> <span class="p">{</span>
+    <span class="dl">"</span><span class="s2">total</span><span class="dl">"</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>
+    <span class="dl">"</span><span class="s2">successful</span><span class="dl">"</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>
+    <span class="dl">"</span><span class="s2">skipped</span><span class="dl">"</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
+    <span class="dl">"</span><span class="s2">failed</span><span class="dl">"</span><span class="p">:</span> <span class="mi">0</span>
+  <span class="p">},</span>
+  <span class="dl">"</span><span class="s2">hits</span><span class="dl">"</span><span class="p">:</span> <span class="p">{</span>
+    <span class="dl">"</span><span class="s2">total</span><span class="dl">"</span><span class="p">:</span> <span class="p">{</span>
+      <span class="dl">"</span><span class="s2">value</span><span class="dl">"</span><span class="p">:</span> <span class="mi">10000</span><span class="p">,</span>
+      <span class="dl">"</span><span class="s2">relation</span><span class="dl">"</span><span class="p">:</span> <span class="dl">"</span><span class="s2">gte</span><span class="dl">"</span>
+    <span class="p">},</span>
+    <span class="dl">"</span><span class="s2">max_score</span><span class="dl">"</span><span class="p">:</span> <span class="kc">null</span><span class="p">,</span>
+    <span class="dl">"</span><span class="s2">hits</span><span class="dl">"</span><span class="p">:</span> <span class="p">[]</span>
+  <span class="p">},</span>
+  <span class="dl">"</span><span class="s2">aggregations</span><span class="dl">"</span><span class="p">:</span> <span class="p">{</span>
+    <span class="dl">"</span><span class="s2">price_m2/stats</span><span class="dl">"</span><span class="p">:</span> <span class="p">{</span>
+      <span class="dl">"</span><span class="s2">count</span><span class="dl">"</span><span class="p">:</span> <span class="mi">147763</span><span class="p">,</span>
+      <span class="dl">"</span><span class="s2">min</span><span class="dl">"</span><span class="p">:</span> <span class="mf">0.003750000149011612</span><span class="p">,</span>
+      <span class="dl">"</span><span class="s2">max</span><span class="dl">"</span><span class="p">:</span> <span class="mf">8166666.666666667</span><span class="p">,</span>
+      <span class="dl">"</span><span class="s2">avg</span><span class="dl">"</span><span class="p">:</span> <span class="mf">26941.800127837614</span><span class="p">,</span>
+      <span class="dl">"</span><span class="s2">sum</span><span class="dl">"</span><span class="p">:</span> <span class="mf">3981001212.2896695</span>
+    <span class="p">}</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<h2 id="transactions-in-paris">Transactions In Paris</h2>
+
+<p>Now we have all the elements that we need, it’s time to do something fun! We
+know how to execute a multi-valued metric aggregation, e.g. stats. We know how
+to execute a bucket aggregation, e.g. per postal code. We know how to compute a
+scripted metric for the price per meter square (m2). Now, let’s
+use them to do a quick case study for Paris. This section aims to answer two questions:</p>
+
+<ol>
+  <li>What is the price for second-hand apartments in Paris per district
+(arrondissement)?</li>
+  <li>What is the price for second-hand apartments in Paris per type of apartment (T1,
+T2, T3, …)?</li>
+</ol>
+
+<p>To answer the first question, we need to use sub-aggregations with 2 levels. The first
+level is a terms aggregation per postal code and the second level is a list of
+multi-valued metric aggregations: <code class="language-plaintext highlighter-rouge">percentiles</code> and <code class="language-plaintext highlighter-rouge">stats</code>. <code class="language-plaintext highlighter-rouge">percentiles</code> for
+price per square meter and
+<code class="language-plaintext highlighter-rouge">stats</code> for the total property value.</p>
+
+<div class="language-js highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">{</span>
+  <span class="dl">"</span><span class="s2">query</span><span class="dl">"</span><span class="p">:</span> <span class="p">{</span>
+    <span class="dl">"</span><span class="s2">bool</span><span class="dl">"</span><span class="p">:</span> <span class="p">{</span>
+      <span class="dl">"</span><span class="s2">must</span><span class="dl">"</span><span class="p">:</span> <span class="p">[</span>
+        <span class="p">{</span> <span class="dl">"</span><span class="s2">wildcard</span><span class="dl">"</span><span class="p">:</span> <span class="p">{</span> <span class="dl">"</span><span class="s2">postal_code</span><span class="dl">"</span><span class="p">:</span> <span class="p">{</span> <span class="dl">"</span><span class="s2">value</span><span class="dl">"</span><span class="p">:</span> <span class="dl">"</span><span class="s2">75*</span><span class="dl">"</span> <span class="p">}</span> <span class="p">}</span> <span class="p">}</span>
+      <span class="p">],</span>
+      <span class="dl">"</span><span class="s2">filter</span><span class="dl">"</span><span class="p">:</span> <span class="p">[</span>
+        <span class="p">{</span> <span class="dl">"</span><span class="s2">match</span><span class="dl">"</span><span class="p">:</span> <span class="p">{</span> <span class="dl">"</span><span class="s2">mutation_nature</span><span class="dl">"</span><span class="p">:</span> <span class="p">{</span> <span class="dl">"</span><span class="s2">query</span><span class="dl">"</span><span class="p">:</span> <span class="dl">"</span><span class="s2">Vente</span><span class="dl">"</span> <span class="p">}</span> <span class="p">}</span> <span class="p">},</span>
+        <span class="p">{</span> <span class="dl">"</span><span class="s2">match</span><span class="dl">"</span><span class="p">:</span> <span class="p">{</span> <span class="dl">"</span><span class="s2">local_type</span><span class="dl">"</span><span class="p">:</span> <span class="p">{</span> <span class="dl">"</span><span class="s2">query</span><span class="dl">"</span><span class="p">:</span> <span class="dl">"</span><span class="s2">Appartement</span><span class="dl">"</span> <span class="p">}</span> <span class="p">}</span> <span class="p">},</span>
+        <span class="p">{</span> <span class="dl">"</span><span class="s2">range</span><span class="dl">"</span><span class="p">:</span> <span class="p">{</span> <span class="dl">"</span><span class="s2">property_value</span><span class="dl">"</span><span class="p">:</span> <span class="p">{</span> <span class="dl">"</span><span class="s2">gt</span><span class="dl">"</span><span class="p">:</span> <span class="mi">0</span> <span class="p">}</span> <span class="p">}</span> <span class="p">},</span>
+        <span class="p">{</span> <span class="dl">"</span><span class="s2">range</span><span class="dl">"</span><span class="p">:</span> <span class="p">{</span> <span class="dl">"</span><span class="s2">real_built_up_area</span><span class="dl">"</span><span class="p">:</span> <span class="p">{</span> <span class="dl">"</span><span class="s2">gt</span><span class="dl">"</span><span class="p">:</span> <span class="mi">0</span> <span class="p">}</span> <span class="p">}</span> <span class="p">}</span>
+      <span class="p">]</span>
+    <span class="p">}</span>
+  <span class="p">},</span>
+  <span class="dl">"</span><span class="s2">runtime_mappings</span><span class="dl">"</span><span class="p">:</span> <span class="p">{</span>
+    <span class="dl">"</span><span class="s2">price_m2</span><span class="dl">"</span><span class="p">:</span> <span class="p">{</span>
+      <span class="dl">"</span><span class="s2">type</span><span class="dl">"</span><span class="p">:</span> <span class="dl">"</span><span class="s2">double</span><span class="dl">"</span><span class="p">,</span>
+      <span class="dl">"</span><span class="s2">script</span><span class="dl">"</span><span class="p">:</span> <span class="dl">"</span><span class="s2">emit(doc['property_value'].value / doc['real_built_up_area'].value)</span><span class="dl">"</span>
+    <span class="p">}</span>
+  <span class="p">},</span>
+  <span class="dl">"</span><span class="s2">size</span><span class="dl">"</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
+  <span class="dl">"</span><span class="s2">aggs</span><span class="dl">"</span><span class="p">:</span> <span class="p">{</span>
+    <span class="dl">"</span><span class="s2">postal-code-aggregation</span><span class="dl">"</span><span class="p">:</span> <span class="p">{</span>
+      <span class="dl">"</span><span class="s2">terms</span><span class="dl">"</span><span class="p">:</span> <span class="p">{</span>
+        <span class="dl">"</span><span class="s2">field</span><span class="dl">"</span><span class="p">:</span> <span class="dl">"</span><span class="s2">postal_code</span><span class="dl">"</span><span class="p">,</span>
+        <span class="dl">"</span><span class="s2">size</span><span class="dl">"</span><span class="p">:</span> <span class="mi">20</span>
+      <span class="p">},</span>
+      <span class="dl">"</span><span class="s2">aggs</span><span class="dl">"</span><span class="p">:</span> <span class="p">{</span>
+        <span class="dl">"</span><span class="s2">price_m2/percentiles</span><span class="dl">"</span><span class="p">:</span> <span class="p">{</span>
+          <span class="dl">"</span><span class="s2">percentiles</span><span class="dl">"</span><span class="p">:</span> <span class="p">{</span>
+            <span class="dl">"</span><span class="s2">field</span><span class="dl">"</span><span class="p">:</span> <span class="dl">"</span><span class="s2">price_m2</span><span class="dl">"</span>
+          <span class="p">}</span>
+        <span class="p">},</span>
+        <span class="dl">"</span><span class="s2">property_value/percentiles</span><span class="dl">"</span><span class="p">:</span> <span class="p">{</span>
+          <span class="dl">"</span><span class="s2">stats</span><span class="dl">"</span><span class="p">:</span> <span class="p">{</span>
+            <span class="dl">"</span><span class="s2">field</span><span class="dl">"</span><span class="p">:</span> <span class="dl">"</span><span class="s2">property_value</span><span class="dl">"</span>
+          <span class="p">}</span>
+        <span class="p">}</span>
+      <span class="p">}</span>
+    <span class="p">}</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>Sending the request above will return:</p>
+
+<div class="language-js highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">{</span>
+  <span class="p">...</span>
+  <span class="dl">"</span><span class="s2">aggregations</span><span class="dl">"</span><span class="p">:</span> <span class="p">{</span>
+    <span class="dl">"</span><span class="s2">postal-code-aggregation</span><span class="dl">"</span><span class="p">:</span> <span class="p">{</span>
+      <span class="dl">"</span><span class="s2">doc_count_error_upper_bound</span><span class="dl">"</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
+      <span class="dl">"</span><span class="s2">sum_other_doc_count</span><span class="dl">"</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
+      <span class="dl">"</span><span class="s2">buckets</span><span class="dl">"</span><span class="p">:</span> <span class="p">[</span>
+        <span class="p">{</span>
+          <span class="dl">"</span><span class="s2">key</span><span class="dl">"</span><span class="p">:</span> <span class="dl">"</span><span class="s2">75018</span><span class="dl">"</span><span class="p">,</span>
+          <span class="dl">"</span><span class="s2">doc_count</span><span class="dl">"</span><span class="p">:</span> <span class="mi">1740</span><span class="p">,</span>
+          <span class="dl">"</span><span class="s2">property_value/stats</span><span class="dl">"</span><span class="p">:</span> <span class="p">{</span>
+            <span class="dl">"</span><span class="s2">count</span><span class="dl">"</span><span class="p">:</span> <span class="mi">1740</span><span class="p">,</span>
+            <span class="dl">"</span><span class="s2">min</span><span class="dl">"</span><span class="p">:</span> <span class="mf">0.15000000596046448</span><span class="p">,</span>
+            <span class="dl">"</span><span class="s2">max</span><span class="dl">"</span><span class="p">:</span> <span class="mi">9278000</span><span class="p">,</span>
+            <span class="dl">"</span><span class="s2">avg</span><span class="dl">"</span><span class="p">:</span> <span class="mf">685657.4655678796</span><span class="p">,</span>
+            <span class="dl">"</span><span class="s2">sum</span><span class="dl">"</span><span class="p">:</span> <span class="mf">1193043990.0881104</span>
+          <span class="p">},</span>
+          <span class="dl">"</span><span class="s2">price_m2/percentiles</span><span class="dl">"</span><span class="p">:</span> <span class="p">{</span>
+            <span class="dl">"</span><span class="s2">values</span><span class="dl">"</span><span class="p">:</span> <span class="p">{</span>
+              <span class="dl">"</span><span class="s2">1.0</span><span class="dl">"</span><span class="p">:</span> <span class="mf">38.31908831908832</span><span class="p">,</span>
+              <span class="dl">"</span><span class="s2">5.0</span><span class="dl">"</span><span class="p">:</span> <span class="mf">4263.305322128852</span><span class="p">,</span>
+              <span class="dl">"</span><span class="s2">25.0</span><span class="dl">"</span><span class="p">:</span> <span class="mf">8581.576948155804</span><span class="p">,</span>
+              <span class="dl">"</span><span class="s2">50.0</span><span class="dl">"</span><span class="p">:</span> <span class="mf">10221.628370766353</span><span class="p">,</span>
+              <span class="dl">"</span><span class="s2">75.0</span><span class="dl">"</span><span class="p">:</span> <span class="mf">12191.63493555511</span><span class="p">,</span>
+              <span class="dl">"</span><span class="s2">95.0</span><span class="dl">"</span><span class="p">:</span> <span class="mf">62619.36339522546</span><span class="p">,</span>
+              <span class="dl">"</span><span class="s2">99.0</span><span class="dl">"</span><span class="p">:</span> <span class="mf">205629.62962962964</span>
+            <span class="p">}</span>
+          <span class="p">}</span>
+        <span class="p">},</span>
+        <span class="p">{</span>
+          <span class="dl">"</span><span class="s2">key</span><span class="dl">"</span><span class="p">:</span> <span class="dl">"</span><span class="s2">75017</span><span class="dl">"</span><span class="p">,</span>
+          <span class="dl">"</span><span class="s2">doc_count</span><span class="dl">"</span><span class="p">:</span> <span class="mi">1411</span><span class="p">,</span>
+          <span class="dl">"</span><span class="s2">property_value/stats</span><span class="dl">"</span><span class="p">:</span> <span class="p">{</span> <span class="p">...</span> <span class="p">},</span>
+          <span class="dl">"</span><span class="s2">price_m2/percentiles</span><span class="dl">"</span><span class="p">:</span> <span class="p">{</span> <span class="p">...</span> <span class="p">}</span>
+        <span class="p">},</span>
+        <span class="p">...</span>
+      <span class="p">]</span>
+    <span class="p">}</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>If we transform the response a bit, we can obtain the following tables.</p>
+
+<h3 id="total-price-per-district">Total Price Per District</h3>
+
+<p>Here is the total price per district in Paris in percentiles: p5, p25, p50, p75,
+p95. You can see that the 8th district (<mark>75008</mark>) is the most
+expensive for most of the percentiles. 50% of the apartments are more expensive
+than 1.3M€ 🤯.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th style="text-align: center">Postal Code</th>
+      <th style="text-align: right">p5 (€)</th>
+      <th style="text-align: right">p25 (€)</th>
+      <th style="text-align: right">p50 (€)</th>
+      <th style="text-align: right">p75 (€)</th>
+      <th style="text-align: right">p95 (€)</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td style="text-align: center">75001</td>
+      <td style="text-align: right">41,000</td>
+      <td style="text-align: right">404,794</td>
+      <td style="text-align: right">691,666</td>
+      <td style="text-align: right">1,740,000</td>
+      <td style="text-align: right">7,005,000</td>
+    </tr>
+    <tr>
+      <td style="text-align: center">75002</td>
+      <td style="text-align: right">45,000</td>
+      <td style="text-align: right">278,350</td>
+      <td style="text-align: right">496,075</td>
+      <td style="text-align: right">970,392</td>
+      <td style="text-align: right">18,500,000</td>
+    </tr>
+    <tr>
+      <td style="text-align: center">75003</td>
+      <td style="text-align: right">610</td>
+      <td style="text-align: right">319,583</td>
+      <td style="text-align: right">541,163</td>
+      <td style="text-align: right">1,095,193</td>
+      <td style="text-align: right">12,550,000</td>
+    </tr>
+    <tr>
+      <td style="text-align: center">75004</td>
+      <td style="text-align: right">16,100</td>
+      <td style="text-align: right">350,000</td>
+      <td style="text-align: right">595,000</td>
+      <td style="text-align: right">1,030,000</td>
+      <td style="text-align: right">2,171,100</td>
+    </tr>
+    <tr>
+      <td style="text-align: center">75005</td>
+      <td style="text-align: right">86,722</td>
+      <td style="text-align: right">303,805</td>
+      <td style="text-align: right">500,000</td>
+      <td style="text-align: right">852,500</td>
+      <td style="text-align: right">1,746,600</td>
+    </tr>
+    <tr>
+      <td style="text-align: center">75006</td>
+      <td style="text-align: right">103,500</td>
+      <td style="text-align: right">389,867</td>
+      <td style="text-align: right">729,260</td>
+      <td style="text-align: right">1,504,999</td>
+      <td style="text-align: right">3,408,400</td>
+    </tr>
+    <tr>
+      <td style="text-align: center">75007</td>
+      <td style="text-align: right">146,600</td>
+      <td style="text-align: right">452,985</td>
+      <td style="text-align: right">845,000</td>
+      <td style="text-align: right">1,854,400</td>
+      <td style="text-align: right">6,000,000</td>
+    </tr>
+    <tr>
+      <td style="text-align: center"><mark>75008</mark></td>
+      <td style="text-align: right">19,310</td>
+      <td style="text-align: right">433,250</td>
+      <td style="text-align: right"><mark>1,299,950</mark></td>
+      <td style="text-align: right">3,323,542</td>
+      <td style="text-align: right">33,100,000</td>
+    </tr>
+    <tr>
+      <td style="text-align: center">75009</td>
+      <td style="text-align: right">80,000</td>
+      <td style="text-align: right">301,325</td>
+      <td style="text-align: right">551,894</td>
+      <td style="text-align: right">1,148,000</td>
+      <td style="text-align: right">6,300,000</td>
+    </tr>
+    <tr>
+      <td style="text-align: center">75010</td>
+      <td style="text-align: right">106,499</td>
+      <td style="text-align: right">295,000</td>
+      <td style="text-align: right">486,668</td>
+      <td style="text-align: right">837,383</td>
+      <td style="text-align: right">3,716,667</td>
+    </tr>
+    <tr>
+      <td style="text-align: center">75011</td>
+      <td style="text-align: right">122,505</td>
+      <td style="text-align: right">272,264</td>
+      <td style="text-align: right">436,082</td>
+      <td style="text-align: right">719,349</td>
+      <td style="text-align: right">9,320,000</td>
+    </tr>
+    <tr>
+      <td style="text-align: center">75012</td>
+      <td style="text-align: right">124,172</td>
+      <td style="text-align: right">290,000</td>
+      <td style="text-align: right">432,585</td>
+      <td style="text-align: right">680,481</td>
+      <td style="text-align: right">3,150,000</td>
+    </tr>
+    <tr>
+      <td style="text-align: center">75013</td>
+      <td style="text-align: right">148,800</td>
+      <td style="text-align: right">280,867</td>
+      <td style="text-align: right">424,521</td>
+      <td style="text-align: right">609,400</td>
+      <td style="text-align: right">1,378,005</td>
+    </tr>
+    <tr>
+      <td style="text-align: center">75014</td>
+      <td style="text-align: right">149,250</td>
+      <td style="text-align: right">310,500</td>
+      <td style="text-align: right">494,981</td>
+      <td style="text-align: right">770,160</td>
+      <td style="text-align: right">12,104,743</td>
+    </tr>
+    <tr>
+      <td style="text-align: center">75015</td>
+      <td style="text-align: right">154,400</td>
+      <td style="text-align: right">316,764</td>
+      <td style="text-align: right">471,024</td>
+      <td style="text-align: right">699,333</td>
+      <td style="text-align: right">1,280,571</td>
+    </tr>
+    <tr>
+      <td style="text-align: center">75016</td>
+      <td style="text-align: right">118,915</td>
+      <td style="text-align: right">395,990</td>
+      <td style="text-align: right">781,012</td>
+      <td style="text-align: right">1,400,268</td>
+      <td style="text-align: right">3,500,000</td>
+    </tr>
+    <tr>
+      <td style="text-align: center">75017</td>
+      <td style="text-align: right">97,013</td>
+      <td style="text-align: right">312,448</td>
+      <td style="text-align: right">562,425</td>
+      <td style="text-align: right">1,199,034</td>
+      <td style="text-align: right">13,230,000</td>
+    </tr>
+    <tr>
+      <td style="text-align: center">75018</td>
+      <td style="text-align: right">87,000</td>
+      <td style="text-align: right">237,636</td>
+      <td style="text-align: right">371,317</td>
+      <td style="text-align: right">586,359</td>
+      <td style="text-align: right">2,800,000</td>
+    </tr>
+    <tr>
+      <td style="text-align: center">75019</td>
+      <td style="text-align: right">117,750</td>
+      <td style="text-align: right">262,500</td>
+      <td style="text-align: right">353,613</td>
+      <td style="text-align: right">540,250</td>
+      <td style="text-align: right">1,018,594</td>
+    </tr>
+    <tr>
+      <td style="text-align: center">75020</td>
+      <td style="text-align: right">134,060</td>
+      <td style="text-align: right">248,990</td>
+      <td style="text-align: right">407,585</td>
+      <td style="text-align: right">636,100</td>
+      <td style="text-align: right">8,500,000</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3 id="price-per-m2-per-district">Price Per M2 Per District</h3>
+
+<p>But using the total price of the apartment is not objective for judging whether
+the appartment is expensive because they don’t have the same real built-in area
+(m2). So we should normalize it. We can normalize it by calculating the price per meter square (€/m2). It
+gives another table:</p>
+
+<table>
+  <thead>
+    <tr>
+      <th style="text-align: center">Postal Code</th>
+      <th style="text-align: right">p5 (€/m2)</th>
+      <th style="text-align: right">p25 (€/m2)</th>
+      <th style="text-align: right">p50 (€/m2)</th>
+      <th style="text-align: right">p75 (€/m2)</th>
+      <th style="text-align: right">p95 (€/m2)</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td style="text-align: center">75001</td>
+      <td style="text-align: right">729</td>
+      <td style="text-align: right">11,591</td>
+      <td style="text-align: right">14,208</td>
+      <td style="text-align: right">26,602</td>
+      <td style="text-align: right">231,818</td>
+    </tr>
+    <tr>
+      <td style="text-align: center">75002</td>
+      <td style="text-align: right">3,492</td>
+      <td style="text-align: right">10,853</td>
+      <td style="text-align: right">12,505</td>
+      <td style="text-align: right">15,586</td>
+      <td style="text-align: right">391,045</td>
+    </tr>
+    <tr>
+      <td style="text-align: center">75003</td>
+      <td style="text-align: right">14</td>
+      <td style="text-align: right">11,144</td>
+      <td style="text-align: right">13,308</td>
+      <td style="text-align: right">17,131</td>
+      <td style="text-align: right">167,899</td>
+    </tr>
+    <tr>
+      <td style="text-align: center">75004</td>
+      <td style="text-align: right">343</td>
+      <td style="text-align: right">11,405</td>
+      <td style="text-align: right">13,077</td>
+      <td style="text-align: right">15,448</td>
+      <td style="text-align: right">32,767</td>
+    </tr>
+    <tr>
+      <td style="text-align: center">75005</td>
+      <td style="text-align: right">2,616</td>
+      <td style="text-align: right">11,004</td>
+      <td style="text-align: right">12,679</td>
+      <td style="text-align: right">15,000</td>
+      <td style="text-align: right">30,905</td>
+    </tr>
+    <tr>
+      <td style="text-align: center"><mark>75006</mark></td>
+      <td style="text-align: right">3,348</td>
+      <td style="text-align: right">12,679</td>
+      <td style="text-align: right"><mark>15,492</mark></td>
+      <td style="text-align: right">19,666</td>
+      <td style="text-align: right">49,035</td>
+    </tr>
+    <tr>
+      <td style="text-align: center"><mark>75007</mark></td>
+      <td style="text-align: right">7,114</td>
+      <td style="text-align: right">12,857</td>
+      <td style="text-align: right"><mark>15,236</mark></td>
+      <td style="text-align: right">20,179</td>
+      <td style="text-align: right">130,105</td>
+    </tr>
+    <tr>
+      <td style="text-align: center">75008</td>
+      <td style="text-align: right">260</td>
+      <td style="text-align: right">10,715</td>
+      <td style="text-align: right">13,301</td>
+      <td style="text-align: right">39,951</td>
+      <td style="text-align: right">919,444</td>
+    </tr>
+    <tr>
+      <td style="text-align: center">75009</td>
+      <td style="text-align: right">2,925</td>
+      <td style="text-align: right">10,208</td>
+      <td style="text-align: right">12,207</td>
+      <td style="text-align: right">14,734</td>
+      <td style="text-align: right">342,463</td>
+    </tr>
+    <tr>
+      <td style="text-align: center">75010</td>
+      <td style="text-align: right">5,331</td>
+      <td style="text-align: right">9,570</td>
+      <td style="text-align: right">11,174</td>
+      <td style="text-align: right">13,747</td>
+      <td style="text-align: right">128,161</td>
+    </tr>
+    <tr>
+      <td style="text-align: center">75011</td>
+      <td style="text-align: right">6,140</td>
+      <td style="text-align: right">9,787</td>
+      <td style="text-align: right">11,167</td>
+      <td style="text-align: right">13,078</td>
+      <td style="text-align: right">198,674</td>
+    </tr>
+    <tr>
+      <td style="text-align: center">75012</td>
+      <td style="text-align: right">5,222</td>
+      <td style="text-align: right">9,015</td>
+      <td style="text-align: right">10,264</td>
+      <td style="text-align: right">11,669</td>
+      <td style="text-align: right">84,290</td>
+    </tr>
+    <tr>
+      <td style="text-align: center">75013</td>
+      <td style="text-align: right">5,010</td>
+      <td style="text-align: right">8,345</td>
+      <td style="text-align: right">9,769</td>
+      <td style="text-align: right">11,386</td>
+      <td style="text-align: right">56,522</td>
+    </tr>
+    <tr>
+      <td style="text-align: center">75014</td>
+      <td style="text-align: right">6,389</td>
+      <td style="text-align: right">9,378</td>
+      <td style="text-align: right">10,805</td>
+      <td style="text-align: right">12,948</td>
+      <td style="text-align: right">318,546</td>
+    </tr>
+    <tr>
+      <td style="text-align: center">75015</td>
+      <td style="text-align: right">6,994</td>
+      <td style="text-align: right">9,546</td>
+      <td style="text-align: right">10,762</td>
+      <td style="text-align: right">12,066</td>
+      <td style="text-align: right">17,901</td>
+    </tr>
+    <tr>
+      <td style="text-align: center">75016</td>
+      <td style="text-align: right">4,000</td>
+      <td style="text-align: right">9,910</td>
+      <td style="text-align: right">11,504</td>
+      <td style="text-align: right">13,810</td>
+      <td style="text-align: right">28,489</td>
+    </tr>
+    <tr>
+      <td style="text-align: center">75017</td>
+      <td style="text-align: right">4,152</td>
+      <td style="text-align: right">9,967</td>
+      <td style="text-align: right">11,700</td>
+      <td style="text-align: right">14,165</td>
+      <td style="text-align: right">181,150</td>
+    </tr>
+    <tr>
+      <td style="text-align: center">75018</td>
+      <td style="text-align: right">4,263</td>
+      <td style="text-align: right">8,582</td>
+      <td style="text-align: right">10,222</td>
+      <td style="text-align: right">12,192</td>
+      <td style="text-align: right">62,619</td>
+    </tr>
+    <tr>
+      <td style="text-align: center">75019</td>
+      <td style="text-align: right">5,204</td>
+      <td style="text-align: right">7,294</td>
+      <td style="text-align: right">9,060</td>
+      <td style="text-align: right">10,579</td>
+      <td style="text-align: right">30,095</td>
+    </tr>
+    <tr>
+      <td style="text-align: center">75020</td>
+      <td style="text-align: right">5,390</td>
+      <td style="text-align: right">8,347</td>
+      <td style="text-align: right">9,664</td>
+      <td style="text-align: right">11,538</td>
+      <td style="text-align: right">234,160</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>You can see that not only the 8th district (75008), but all the districts from
+1th to 8th are very expensive. In particular, the median (percentile 50) of 6th
+district (<mark>75006</mark>) and 7th district (<mark>75007</mark>) are higher
+than 15k€/m2.</p>
+
+<h3 id="prices-per-lot-type">Prices Per Lot Type</h3>
+
+<p>In the previous tables, we use bucket aggregation on postal code. But we can
+also analyze from another angle: the lot type (T1, T2, T3, T4, …). T1 means
+there is only 1 piece in the apartment, T2 means there are 2 pieces, etc.
+This type of analysis is useful because different people have different needs in
+their lives. Young people probably want
+to save some money and buy a small apartment, but a family probably wants a better
+one (T3+) because they need more room for the babies, etc. Using the runtime
+mappings (painless script) we saw before, we can compute the lot type as part
+of the search aggregation request
+and obtain the following tables.</p>
+
+<div class="language-js highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">{</span>
+  <span class="dl">"</span><span class="s2">runtime_mappings</span><span class="dl">"</span><span class="p">:</span> <span class="p">{</span>
+    <span class="dl">"</span><span class="s2">price_m2</span><span class="dl">"</span><span class="p">:</span> <span class="p">{</span>
+      <span class="dl">"</span><span class="s2">type</span><span class="dl">"</span><span class="p">:</span> <span class="dl">"</span><span class="s2">double</span><span class="dl">"</span><span class="p">,</span>
+      <span class="dl">"</span><span class="s2">script</span><span class="dl">"</span><span class="p">:</span> <span class="dl">"</span><span class="s2">emit(doc['property_value'].value / doc['real_built_up_area'].value)</span><span class="dl">"</span>
+    <span class="p">},</span>
+    <span class="dl">"</span><span class="s2">lot_type</span><span class="dl">"</span><span class="p">:</span> <span class="p">{</span>
+      <span class="dl">"</span><span class="s2">type</span><span class="dl">"</span><span class="p">:</span> <span class="dl">"</span><span class="s2">keyword</span><span class="dl">"</span><span class="p">,</span>
+      <span class="dl">"</span><span class="s2">script</span><span class="dl">"</span><span class="p">:</span> <span class="dl">"</span><span class="s2">if (0 &lt; doc['lots_count'].value &amp;&amp; doc['lots_count'].value &lt; 6) { emit('T' + doc['lots_count'].value) } else { emit('Others') }</span><span class="dl">"</span>
+    <span class="p">}</span>
+  <span class="p">},</span>
+  <span class="p">...</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>The prices per lot type in Paris in percentiles:</p>
+
+<table>
+  <thead>
+    <tr>
+      <th style="text-align: center">Lot Type</th>
+      <th style="text-align: right">p5 (€)</th>
+      <th style="text-align: right">p25 (€)</th>
+      <th style="text-align: right">p50 (€)</th>
+      <th style="text-align: right">p75 (€)</th>
+      <th style="text-align: right">p95 (€)</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td style="text-align: center">T1</td>
+      <td style="text-align: right">31,264</td>
+      <td style="text-align: right">210,041</td>
+      <td style="text-align: right">358,500</td>
+      <td style="text-align: right">600,600</td>
+      <td style="text-align: right">1,565,087</td>
+    </tr>
+    <tr>
+      <td style="text-align: center">T2</td>
+      <td style="text-align: right">179,993</td>
+      <td style="text-align: right">338,870</td>
+      <td style="text-align: right"><mark>517,788</mark></td>
+      <td style="text-align: right">792,894</td>
+      <td style="text-align: right">1,702,597</td>
+    </tr>
+    <tr>
+      <td style="text-align: center">T3</td>
+      <td style="text-align: right">162,000</td>
+      <td style="text-align: right">372,188</td>
+      <td style="text-align: right">618,806</td>
+      <td style="text-align: right">1,232,125</td>
+      <td style="text-align: right">2,740,950</td>
+    </tr>
+    <tr>
+      <td style="text-align: center">T4</td>
+      <td style="text-align: right">147,470</td>
+      <td style="text-align: right"><mark>414,250</mark></td>
+      <td style="text-align: right">699,413</td>
+      <td style="text-align: right">1,222,750</td>
+      <td style="text-align: right">3,173,845</td>
+    </tr>
+    <tr>
+      <td style="text-align: center">T5</td>
+      <td style="text-align: right">331,108</td>
+      <td style="text-align: right">530,791</td>
+      <td style="text-align: right">809,000</td>
+      <td style="text-align: right">1,275,048</td>
+      <td style="text-align: right">3,220,000</td>
+    </tr>
+    <tr>
+      <td style="text-align: center">Others</td>
+      <td style="text-align: right">262,500</td>
+      <td style="text-align: right">2,880,000</td>
+      <td style="text-align: right">5,712,857</td>
+      <td style="text-align: right">12,572,222</td>
+      <td style="text-align: right">33,100,000</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>From the table above, we can see that it will be very hard to find an apartment if
+your budget is below <mark>400,000€</mark>. It means that either you have a wonderful job or
+you will have to the house with your partner. Or maybe with some luck you won the
+loto 😉. Anyway it’s very expensive.</p>
+
+<p>We can also normalize the price as we did before. Here is the price per meter square (€/m2) in Paris per lot type in percentiles:</p>
+
+<table>
+  <thead>
+    <tr>
+      <th style="text-align: center">Lot Type</th>
+      <th style="text-align: right">p5 (€/m2)</th>
+      <th style="text-align: right">p25 (€/m2)</th>
+      <th style="text-align: right">p50 (€/m2)</th>
+      <th style="text-align: right">p75 (€/m2)</th>
+      <th style="text-align: right">p95 (€/m2)</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td style="text-align: center">T1</td>
+      <td style="text-align: right">840</td>
+      <td style="text-align: right">8,936</td>
+      <td style="text-align: right">10,857</td>
+      <td style="text-align: right">13,118</td>
+      <td style="text-align: right">31,321</td>
+    </tr>
+    <tr>
+      <td style="text-align: center">T2</td>
+      <td style="text-align: right">6,235</td>
+      <td style="text-align: right">9,246</td>
+      <td style="text-align: right">10,742</td>
+      <td style="text-align: right">12,545</td>
+      <td style="text-align: right">19,277</td>
+    </tr>
+    <tr>
+      <td style="text-align: center">T3</td>
+      <td style="text-align: right">5,763</td>
+      <td style="text-align: right">9,679</td>
+      <td style="text-align: right">11,488</td>
+      <td style="text-align: right">13,572</td>
+      <td style="text-align: right">23,407</td>
+    </tr>
+    <tr>
+      <td style="text-align: center">T4</td>
+      <td style="text-align: right">3,047</td>
+      <td style="text-align: right">9,251</td>
+      <td style="text-align: right">11,021</td>
+      <td style="text-align: right">13,586</td>
+      <td style="text-align: right">22,644</td>
+    </tr>
+    <tr>
+      <td style="text-align: center">T5</td>
+      <td style="text-align: right">8,169</td>
+      <td style="text-align: right">10,498</td>
+      <td style="text-align: right">12,649</td>
+      <td style="text-align: right">15,878</td>
+      <td style="text-align: right">37,168</td>
+    </tr>
+    <tr>
+      <td style="text-align: center">Others</td>
+      <td style="text-align: right">6,250</td>
+      <td style="text-align: right">63,372</td>
+      <td style="text-align: right">147,957</td>
+      <td style="text-align: right">300,013</td>
+      <td style="text-align: right">916,866</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>From this table, we can see that regardless the number of pieces you want (the
+lot type), the price per meter square (m2) does not change much. The lot type is
+not an important factor for the price. The district is probably more important
+as we saw in the previous sections.</p>
+
+<p>Alright, we go far enough into the Paris real-estate market. It’s
+crazy and it’s not for us right now. Let’s come back to the aggregations
+of Elasticsearch and we are reaching the end of this article.</p>
+
+<h2 id="recapitulation">Recapitulation</h2>
+
+<p>We saw several metric and bucket aggregations in this article, but we didn’t
+see all of them. There are so many metrics in Elasticsearch that we cannot
+remember everything. For me, the takeover is the syntax of the aggregation API.
+Once you remember this, it’s easy to search on the internet and complete the rest:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>GET /{index_name_expression}/_search
+</code></pre></div></div>
+
+<div class="language-js highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">{</span>
+  <span class="dl">"</span><span class="s2">query</span><span class="dl">"</span><span class="p">:</span> <span class="p">{</span>
+    <span class="dl">"</span><span class="s2">{query_type}</span><span class="dl">"</span><span class="p">:</span> <span class="p">{</span> <span class="p">...</span> <span class="p">}</span>
+  <span class="p">},</span>
+  <span class="dl">"</span><span class="s2">size</span><span class="dl">"</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
+  <span class="dl">"</span><span class="s2">runtime_mappings</span><span class="dl">"</span><span class="p">:</span> <span class="p">{</span>
+    <span class="dl">"</span><span class="s2">{mapping_name}</span><span class="dl">"</span><span class="p">:</span> <span class="p">{</span> <span class="p">...</span> <span class="p">}</span>
+  <span class="p">},</span>
+  <span class="dl">"</span><span class="s2">aggs</span><span class="dl">"</span><span class="p">:</span> <span class="p">{</span>
+    <span class="dl">"</span><span class="s2">{aggregation_name}</span><span class="dl">"</span><span class="p">:</span> <span class="p">{</span>
+      <span class="dl">"</span><span class="s2">{aggregation_type}</span><span class="dl">"</span><span class="p">:</span> <span class="p">{</span>
+        <span class="dl">"</span><span class="s2">field</span><span class="dl">"</span><span class="p">:</span> <span class="dl">"</span><span class="s2">{field_name}</span><span class="dl">"</span>
+        <span class="p">...</span>
+      <span class="p">}</span>
+    <span class="p">}</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>The API path contains the name of the index to be searched. It can also be multiple
+indices separated by comma (<code class="language-plaintext highlighter-rouge">,</code>) or <code class="language-plaintext highlighter-rouge">_all</code> indices. As for the API request body,
+it consists of multiple parts: the query part where you can specify the criteria
+of the selection; the size part where you can specify the number of search hits
+returned (actual documents found in Elasticsearch); the runtime mappings part
+to define one or multiple computed fields at query time; and finally the
+aggregations part where you can define your metric or bucket aggregation. You
+can also provide sub-aggregations under a given aggregation.</p>
+
+<p>As for the response:</p>
+
+<div class="language-js highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">{</span>
+  <span class="dl">"</span><span class="s2">took</span><span class="dl">"</span><span class="p">:</span> <span class="mi">14</span><span class="p">,</span>
+  <span class="dl">"</span><span class="s2">timed_out</span><span class="dl">"</span><span class="p">:</span> <span class="kc">false</span><span class="p">,</span>
+  <span class="dl">"</span><span class="s2">_shards</span><span class="dl">"</span><span class="p">:</span> <span class="p">{</span> <span class="p">...</span> <span class="p">},</span>
+  <span class="dl">"</span><span class="s2">hits</span><span class="dl">"</span><span class="p">:</span> <span class="p">{</span> <span class="p">...</span> <span class="p">},</span>
+  <span class="dl">"</span><span class="s2">aggregations</span><span class="dl">"</span><span class="p">:</span> <span class="p">{</span>
+    <span class="dl">"</span><span class="s2">price_m2/stats</span><span class="dl">"</span><span class="p">:</span> <span class="p">{</span>
+      <span class="dl">"</span><span class="s2">count</span><span class="dl">"</span><span class="p">:</span> <span class="mi">147763</span><span class="p">,</span>
+      <span class="dl">"</span><span class="s2">min</span><span class="dl">"</span><span class="p">:</span> <span class="mf">0.003750000149011612</span><span class="p">,</span>
+      <span class="dl">"</span><span class="s2">max</span><span class="dl">"</span><span class="p">:</span> <span class="mf">8166666.666666667</span><span class="p">,</span>
+      <span class="dl">"</span><span class="s2">avg</span><span class="dl">"</span><span class="p">:</span> <span class="mf">26941.800127837614</span><span class="p">,</span>
+      <span class="dl">"</span><span class="s2">sum</span><span class="dl">"</span><span class="p">:</span> <span class="mf">3981001212.2896695</span>
+    <span class="p">}</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>It contains some metadata about the search settings and performance, such as the
+execution time, the timeout, the number of shards reached. Then, it contains the
+number of hits and the actual documents. And finally the aggregations, each
+aggregation is a key-value pair in the JSON response, where the key is the name
+of the aggregation we specified and the value is the actual result of the
+aggregation. As for the structure of the aggregation result:</p>
+
+<ul>
+  <li>For metric aggregation, the actual result is the metric. There is one metric
+if this is a single-valued metric; there are multiple metrics if this is a
+multi-valued metric.</li>
+  <li>For bucket aggregation, the actual results are shown under entry <code class="language-plaintext highlighter-rouge">buckets</code>.
+Each bucket contains the key, the number of documents found, and the actual
+metric(s) requested.</li>
+</ul>
+
+<p>We can also see it from another angle by comparing the syntax of Elasticsearch
+Aggregations API to SQL. They are
+not exactly equivalent, but I believe this comparison is helpful for
+understanding:</p>
+
+<table>
+  <thead>
+    <tr>
+      <th style="text-align: left">Item</th>
+      <th style="text-align: left">SQL</th>
+      <th style="text-align: left">Elasticsearch</th>
+      <th style="text-align: left">Comment</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td style="text-align: left">Source</td>
+      <td style="text-align: left"><code class="language-plaintext highlighter-rouge">FROM {source_table}</code></td>
+      <td style="text-align: left">Index name</td>
+      <td style="text-align: left">You can select multiple indices in Elasticsearch but you cannot do that in SQL without JOIN.</td>
+    </tr>
+    <tr>
+      <td style="text-align: left">Metric</td>
+      <td style="text-align: left"><code class="language-plaintext highlighter-rouge">SELECT my_func(my_field)</code></td>
+      <td style="text-align: left">Name of the aggregation</td>
+      <td style="text-align: left"> </td>
+    </tr>
+    <tr>
+      <td style="text-align: left">Aggregation</td>
+      <td style="text-align: left"><code class="language-plaintext highlighter-rouge">GROUP BY my_field</code></td>
+      <td style="text-align: left"><code class="language-plaintext highlighter-rouge">"field": {my_field}</code></td>
+      <td style="text-align: left"> </td>
+    </tr>
+    <tr>
+      <td style="text-align: left">Query</td>
+      <td style="text-align: left"><code class="language-plaintext highlighter-rouge">WHERE {clause}</code></td>
+      <td style="text-align: left"><code class="language-plaintext highlighter-rouge">"query": {clause}</code></td>
+      <td style="text-align: left"> </td>
+    </tr>
+    <tr>
+      <td style="text-align: left">Size</td>
+      <td style="text-align: left">-</td>
+      <td style="text-align: left"><code class="language-plaintext highlighter-rouge">"size": {size}</code></td>
+      <td style="text-align: left">There are no equivalent. In SQL, you cannot GROUP BY and select all the fields of some documents at the same time.</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2 id="going-further">Going Further</h2>
+
+<p>How to go further from here?</p>
+
+<ul>
+  <li>To learn more about aggregations for Elasticsearch 7, visit official
+documentation <a href="https://www.elastic.co/guide/en/elasticsearch/reference/7.x/search-aggregations.html">“Aggregations
+(7.x)”</a></li>
+  <li>To learn more about boolean query for Elasticsearch 7, visit official
+documentation <a href="https://www.elastic.co/guide/en/elasticsearch/reference/7.x/query-dsl-bool-query.html">“Boolean query (7.x)”</a></li>
+  <li>To learn more about dataset “Demandes de valeurs foncières géolocalisées”,
+visit the website of the French government
+<a href="https://www.data.gouv.fr/fr/datasets/demandes-de-valeurs-foncieres-geolocalisees/">etalab</a>.</li>
+  <li>To learn how to earn 1M€ and buy an apartment in Paris? Well, I want to know
+as well. Please let me know if you have an answer by leaving a comment below. 😬</li>
+</ul>
+
+<p>If you are interested to see the source code, you can also find it on my GitHub
+under project
+<a href="https://github.com/mincong-h/learning-elasticsearch/tree/blog-dvf-aggregations/demo-dvf">mincong-h/learning-elasticsearch</a>.</p>
+
+<h2 id="conclusion">Conclusion</h2>
+
+<p>In this article, we saw how to use metric aggregation using an example of
+value-count aggregation, how to use bucket aggregation for postal code via
+terms aggregation, and how to use
+scripted aggregation by computing the metric of price per square meter (m2). We
+also saw how to perform an aggregation that contains sub-aggregations (stats and
+percentiles) using Paris real-estate market as a demo. Finally, we saw how to
+remember the syntax efficiently and how to go further from here.
+Interested to know more? You can subscribe to <a href="/feed.xml">the feed of my blog</a>, follow me
+on <a href="https://twitter.com/mincong_h">Twitter</a> or
+<a href="https://github.com/mincong-h/">GitHub</a>. Hope you enjoy this article, see you the next time!</p>
+
+<h2 id="references">References</h2>
+
+<ul>
+  <li>Elasticsearch, “Value count aggregation”, <em>elastic.co</em>, 2021.
+<a href="https://www.elastic.co/guide/en/elasticsearch/reference/7.x/search-aggregations-metrics-valuecount-aggregation.html">https://www.elastic.co/guide/en/elasticsearch/reference/7.x/search-aggregations-metrics-valuecount-aggregation.html</a></li>
+  <li>Elasticsearch, “Elastic Certified Engineer Exam”, <em>elastic.co</em>, 2021.
+<a href="https://www.elastic.co/training/elastic-certified-engineer-exam">https://www.elastic.co/training/elastic-certified-engineer-exam</a></li>
+  <li>Jingwen Zheng, “Second-hand apartments transactions in Paris (01/2014 -
+06/2020)”, <em>jingwen.github.io</em>, 2021. <a href="https://jingwen-z.github.io/second-hand-apartments-transactions-in-paris-1420/">https://jingwen-z.github.io/second-hand-apartments-transactions-in-paris-1420/</a></li>
+</ul>
+</div><section class="article__sharing d-print-none"></section><div class="d-print-none"><footer class="article__footer"><meta itemprop="dateModified" content="2021-04-12T01:34:30+02:00"><!-- start custom article footer snippet -->
+
+<!-- end custom article footer snippet -->
+<div class="article__subscribe"><div class="subscribe">
+  <i class="fas fa-rss"></i>
+  <a type="application/rss+xml" href="/feed.xml">Subscribe</a>
+</div></div><div class="article__license"><div class="license">
+    <p>This work is licensed under a <a itemprop="license" rel="license" href="https://creativecommons.org/licenses/by/4.0/">Attribution 4.0 International</a> license.
+      <a rel="license" href="https://creativecommons.org/licenses/by/4.0/">
+        <img alt="Attribution 4.0 International" src="https://i.creativecommons.org/l/by/4.0/88x31.png" />
+      </a>
+    </p>
+  </div></div></footer>
+<div class="article__section-navigator clearfix"><div class="previous"><span>PREVIOUS</span><a href="/2021/04/11/elasticsearch-generate-configuration-with-python-jinja2/">Elasticsearch: Generate Configuration With Python Jinja 2</a></div><div class="next"><span>NEXT</span><a href="/2021/04/16/dvf-real-estate-analysis-idf-2020/">DVF: Real Estate Analysis For Île-de-France in 2020</a></div></div></div>
+
+</div>
+
+<script>(function() {
+  var SOURCES = window.TEXT_VARIABLES.sources;
+  window.Lazyload.js(SOURCES.jquery, function() {
+    $(function() {
+      var $this ,$scroll;
+      var $articleContent = $('.js-article-content');
+      var hasSidebar = $('.js-page-root').hasClass('layout--page--sidebar');
+      var scroll = hasSidebar ? '.js-page-main' : 'html, body';
+      $scroll = $(scroll);
+
+      $articleContent.find('.highlight').each(function() {
+        $this = $(this);
+        $this.attr('data-lang', $this.find('code').attr('data-lang'));
+      });
+      $articleContent.find('h1[id], h2[id], h3[id], h4[id], h5[id], h6[id]').each(function() {
+        $this = $(this);
+        $this.append($('<a class="anchor d-print-none" aria-hidden="true"></a>').html('<i class="fas fa-anchor"></i>'));
+      });
+      $articleContent.on('click', '.anchor', function() {
+        $scroll.scrollToAnchor('#' + $(this).parent().attr('id'), 400);
+      });
+    });
+  });
+})();
+</script>
+</div><section class="page__comments d-print-none"><div id="disqus_thread"></div>
+  <script>
+  /**
+  *  RECOMMENDED CONFIGURATION VARIABLES: EDIT AND UNCOMMENT THE SECTION BELOW TO INSERT DYNAMIC VALUES FROM YOUR PLATFORM OR CMS.
+  *  LEARN WHY DEFINING THESE VARIABLES IS IMPORTANT: https://disqus.com/admin/universalcode/#configuration-variables*/
+  var disqus_config = function () {
+    this.page.url = 'https://mincong.io/2021/04/12/dvf-aggregations/';
+    this.page.identifier = '/2021/04/12/dvf-aggregations';
+  };
+  (function() { // DON'T EDIT BELOW THIS LINE
+    var d = document, s = d.createElement('script');
+    s.src = 'https://mincong-h.disqus.com/embed.js';
+    s.setAttribute('data-timestamp', +new Date());
+    (d.head || d.body).appendChild(s);
+  })();
+  </script>
+  <noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript></section></article><!-- start custom main bottom snippet -->
+
+<!-- end custom main bottom snippet -->
+</div>
+            </div></div></div><div class="page__footer d-print-none">
+<footer class="footer py-4 js-page-footer">
+  <div class="main"><div itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Mincong Huang"><meta itemprop="url" content="/"><meta itemprop="description" content="I am an amazing person."><div class="footer__author-links"><div class="author-links">
+  <ul class="menu menu--nowrap menu--inline"><li title="Send me an Email.">
+      <a class="button button--circle mail-button" itemprop="email" href="mailto:mincong.h@gmail.com" target="_blank">
+        <i class="fas fa-envelope"></i>
+      </a><li title="Follow me on Twitter.">
+        <a class="button button--circle twitter-button" itemprop="sameAs" href="https://twitter.com/mincong_h" target="_blank">
+          <div class="icon"><svg fill="#000000" width="24px" height="24px" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg">
+  <path d="M1024.032 194.432c-37.664 16.704-78.176 28-120.672 33.088 43.36-26.016 76.672-67.168 92.384-116.224-40.608 24.064-85.568 41.568-133.408 50.976-38.336-40.832-92.928-66.336-153.344-66.336-116.032 0-210.08 94.048-210.08 210.08 0 16.48 1.856 32.512 5.44 47.872-174.592-8.768-329.408-92.416-433.024-219.52-18.08 31.04-28.448 67.104-28.448 105.632 0 72.896 37.088 137.184 93.472 174.88-34.432-1.088-66.816-10.528-95.168-26.272-0.032 0.864-0.032 1.76-0.032 2.656 0 101.792 72.416 186.688 168.512 205.984-17.632 4.8-36.192 7.36-55.36 7.36-13.536 0-26.688-1.312-39.52-3.776 26.72 83.456 104.32 144.192 196.256 145.888-71.904 56.352-162.496 89.92-260.928 89.92-16.96 0-33.664-0.992-50.112-2.944 92.96 59.616 203.392 94.4 322.048 94.4 386.432 0 597.728-320.128 597.728-597.76 0-9.12-0.192-18.176-0.608-27.168 41.056-29.632 76.672-66.624 104.832-108.736z" />
+</svg>
+</div>
+        </a>
+      </li><li title="Follow me on Linkedin.">
+        <a class="button button--circle linkedin-button" itemprop="sameAs" href="https://www.linkedin.com/in/mincong-huang" target="_blank">
+          <div class="icon"><svg fill="#000000" width="24px" height="24px" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg">
+  <path d="M260.096 155.648c0 27.307008-9.899008 50.516992-29.696 69.632-19.796992 19.115008-45.396992 28.672-76.8 28.672-30.036992 0-54.612992-9.556992-73.728-28.672-19.115008-19.115008-28.672-42.324992-28.672-69.632 0-28.672 9.556992-52.224 28.672-70.656 19.115008-18.432 44.372992-27.648 75.776-27.648 31.403008 0 56.32 9.216 74.752 27.648 18.432 18.432 28.331008 41.984 29.696 70.656 0 0 0 0 0 0m-202.752 808.96c0 0 0-632.832 0-632.832 0 0 196.608 0 196.608 0 0 0 0 632.832 0 632.832 0 0-196.608 0-196.608 0 0 0 0 0 0 0m313.344-430.08c0-58.708992-1.364992-126.292992-4.096-202.752 0 0 169.984 0 169.984 0 0 0 10.24 88.064 10.24 88.064 0 0 4.096 0 4.096 0 40.96-68.267008 105.812992-102.4 194.56-102.4 68.267008 0 123.220992 22.868992 164.864 68.608 41.643008 45.739008 62.464 113.664 62.464 203.776 0 0 0 374.784 0 374.784 0 0-196.608 0-196.608 0 0 0 0-350.208 0-350.208 0-91.476992-33.451008-137.216-100.352-137.216-47.787008 0-81.236992 24.576-100.352 73.728-4.096 8.192-6.144 24.576-6.144 49.152 0 0 0 364.544 0 364.544 0 0-198.656 0-198.656 0 0 0 0-430.08 0-430.08 0 0 0 0 0 0" />
+</svg>
+</div>
+        </a>
+      </li><li title="Follow me on Github.">
+        <a class="button button--circle github-button" itemprop="sameAs" href="https://github.com/mincong-h" target="_blank">
+          <div class="icon"><svg fill="#000000" width="24px" height="24px" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg">
+  <path class="svgpath" data-index="path_0" fill="#272636" d="M0 525.2c0 223.6 143.3 413.7 343 483.5 26.9 6.8 22.8-12.4 22.8-25.4l0-88.7c-155.3 18.2-161.5-84.6-172-101.7-21.1-36-70.8-45.2-56-62.3 35.4-18.2 71.4 4.6 113.1 66.3 30.2 44.7 89.1 37.2 119 29.7 6.5-26.9 20.5-50.9 39.7-69.6C248.8 728.2 181.7 630 181.7 513.2c0-56.6 18.7-108.7 55.3-150.7-23.3-69.3 2.2-128.5 5.6-137.3 66.5-6 135.5 47.6 140.9 51.8 37.8-10.2 80.9-15.6 129.1-15.6 48.5 0 91.8 5.6 129.8 15.9 12.9-9.8 77-55.8 138.8-50.2 3.3 8.8 28.2 66.7 6.3 135 37.1 42.1 56 94.6 56 151.4 0 117-67.5 215.3-228.8 243.7 26.9 26.6 43.6 63.4 43.6 104.2l0 128.8c0.9 10.3 0 20.5 17.2 20.5C878.1 942.4 1024 750.9 1024 525.3c0-282.9-229.3-512-512-512C229.1 13.2 0 242.3 0 525.2L0 525.2z" />
+</svg>
+</div>
+        </a>
+      </li></ul>
+</div>
+</div>
+    </div><div class="site-info mt-2">
+      <div>© Mincong Huang 2021,
+        Powered by <a title="Jekyll is a simple, blog-aware, static site generator." href="http://jekyllrb.com/">Jekyll</a> & <a
+        title="TeXt is a super customizable Jekyll theme." href="https://github.com/kitian616/jekyll-TeXt-theme">TeXt Theme</a>.
+      </div>
+    </div>
+  </div>
+</footer>
+</div></div>
+    </div><script>(function() {
+  var SOURCES = window.TEXT_VARIABLES.sources;
+  window.Lazyload.js(SOURCES.jquery, function() {
+    var $body = $('body'), $window = $(window);
+    var $pageRoot = $('.js-page-root'), $pageMain = $('.js-page-main');
+    var activeCount = 0;
+    function modal(options) {
+      var $root = this, visible, onChange, hideWhenWindowScroll = false;
+      var scrollTop;
+      function setOptions(options) {
+        var _options = options || {};
+        visible = _options.initialVisible === undefined ? false : show;
+        onChange = _options.onChange;
+        hideWhenWindowScroll = _options.hideWhenWindowScroll;
+      }
+      function init() {
+        setState(visible);
+      }
+      function setState(isShow) {
+        if (isShow === visible) {
+          return;
+        }
+        visible = isShow;
+        if (visible) {
+          activeCount++;
+          scrollTop = $(window).scrollTop() || $pageMain.scrollTop();
+          $root.addClass('modal--show');
+          $pageMain.scrollTop(scrollTop);
+          activeCount === 1 && ($pageRoot.addClass('show-modal'), $body.addClass('of-hidden'));
+          hideWhenWindowScroll && window.hasEvent('touchstart') && $window.on('scroll', hide);
+          $window.on('keyup', handleKeyup);
+        } else {
+          activeCount > 0 && activeCount--;
+          $root.removeClass('modal--show');
+          $window.scrollTop(scrollTop);
+          activeCount === 0 && ($pageRoot.removeClass('show-modal'), $body.removeClass('of-hidden'));
+          hideWhenWindowScroll && window.hasEvent('touchstart') && $window.off('scroll', hide);
+          $window.off('keyup', handleKeyup);
+        }
+        onChange && onChange(visible);
+      }
+      function show() {
+        setState(true);
+      }
+      function hide() {
+        setState(false);
+      }
+      function handleKeyup(e) {
+        // Char Code: 27  ESC
+        if (e.which ===  27) {
+          hide();
+        }
+      }
+      setOptions(options);
+      init();
+      return {
+        show: show,
+        hide: hide,
+        $el: $root
+      };
+    }
+    $.fn.modal = modal;
+  });
+})();
+</script><div class="modal modal--overflow page__search-modal d-print-none js-page-search-modal"><script>
+(function () {
+  var SOURCES = window.TEXT_VARIABLES.sources;
+  window.Lazyload.js(SOURCES.jquery, function() {
+    // search panel
+    var search = (window.search || (window.search = {}));
+    var useDefaultSearchBox = window.useDefaultSearchBox === undefined ?
+      true : window.useDefaultSearchBox ;
+
+    var $searchModal = $('.js-page-search-modal');
+    var $searchToggle = $('.js-search-toggle');
+    var searchModal = $searchModal.modal({ onChange: handleModalChange, hideWhenWindowScroll: true });
+    var modalVisible = false;
+    search.searchModal = searchModal;
+
+    var $searchBox = null;
+    var $searchInput = null;
+    var $searchClear = null;
+
+    function getModalVisible() {
+      return modalVisible;
+    }
+    search.getModalVisible = getModalVisible;
+
+    function handleModalChange(visible) {
+      modalVisible = visible;
+      if (visible) {
+        search.onShow && search.onShow();
+        useDefaultSearchBox && $searchInput[0] && $searchInput[0].focus();
+      } else {
+        search.onShow && search.onHide();
+        useDefaultSearchBox && $searchInput[0] && $searchInput[0].blur();
+        setTimeout(function() {
+          useDefaultSearchBox && ($searchInput.val(''), $searchBox.removeClass('not-empty'));
+          search.clear && search.clear();
+          window.pageAsideAffix && window.pageAsideAffix.refresh();
+        }, 400);
+      }
+    }
+
+    $searchToggle.on('click', function() {
+      modalVisible ? searchModal.hide() : searchModal.show();
+    });
+    // Char Code: 83  S, 191 /
+    $(window).on('keyup', function(e) {
+      if (!modalVisible && !window.isFormElement(e.target || e.srcElement) && (e.which === 83 || e.which === 191)) {
+        modalVisible || searchModal.show();
+      }
+    });
+
+    if (useDefaultSearchBox) {
+      $searchBox = $('.js-search-box');
+      $searchInput = $searchBox.children('input');
+      $searchClear = $searchBox.children('.js-icon-clear');
+      search.getSearchInput = function() {
+        return $searchInput.get(0);
+      };
+      search.getVal = function() {
+        return $searchInput.val();
+      };
+      search.setVal = function(val) {
+        $searchInput.val(val);
+      };
+
+      $searchInput.on('focus', function() {
+        $(this).addClass('focus');
+      });
+      $searchInput.on('blur', function() {
+        $(this).removeClass('focus');
+      });
+      $searchInput.on('input', window.throttle(function() {
+        var val = $(this).val();
+        if (val === '' || typeof val !== 'string') {
+          search.clear && search.clear();
+        } else {
+          $searchBox.addClass('not-empty');
+          search.onInputNotEmpty && search.onInputNotEmpty(val);
+        }
+      }, 400));
+      $searchClear.on('click', function() {
+        $searchInput.val(''); $searchBox.removeClass('not-empty');
+        search.clear && search.clear();
+      });
+    }
+  });
+})();
+</script><div class="search search--dark">
+  <div class="main">
+    <div class="search__header">Search</div>
+    <div class="search-bar">
+      <div class="search-box js-search-box">
+        <div class="search-box__icon-search"><i class="fas fa-search"></i></div>
+        <input type="text" />
+        <div class="search-box__icon-clear js-icon-clear">
+          <a><i class="fas fa-times"></i></a>
+        </div>
+      </div>
+      <button class="button button--theme-dark button--pill search__cancel js-search-toggle">
+        Cancel</button>
+    </div>
+    <div class="search-result js-search-result"></div>
+  </div>
+</div>
+<script>var SOURCES = window.TEXT_VARIABLES.sources;
+var PAHTS = window.TEXT_VARIABLES.paths;
+window.Lazyload.js([SOURCES.jquery, PAHTS.search_js], function() {
+  var search = (window.search || (window.search = {}));
+  var searchData = window.TEXT_SEARCH_DATA || {};
+
+  function memorize(f) {
+    var cache = {};
+    return function () {
+      var key = Array.prototype.join.call(arguments, ',');
+      if (key in cache) return cache[key];
+      else return cache[key] = f.apply(this, arguments);
+    };
+  }
+
+  /// search
+  function searchByQuery(query) {
+    var i, j, key, keys, cur, _title, result = {};
+    keys = Object.keys(searchData);
+    for (i = 0; i < keys.length; i++) {
+      key = keys[i];
+      for (j = 0; j < searchData[key].length; j++) {
+        cur = searchData[key][j], _title = cur.title;
+        if ((result[key] === undefined || result[key] && result[key].length < 4 )
+          && _title.toLowerCase().indexOf(query.toLowerCase()) >= 0) {
+          if (result[key] === undefined) {
+            result[key] = [];
+          }
+          result[key].push(cur);
+        }
+      }
+    }
+    return result;
+  }
+
+  var renderHeader = memorize(function(header) {
+    return $('<p class="search-result__header">' + header + '</p>');
+  });
+
+  var renderItem = function(index, title, url) {
+    return $('<li class="search-result__item" data-index="' + index + '"><a class="button" href="' + url + '">' + title + '</a></li>');
+  };
+
+  function render(data) {
+    if (!data) { return null; }
+    var $root = $('<ul></ul>'), i, j, key, keys, cur, itemIndex = 0;
+    keys = Object.keys(data);
+    for (i = 0; i < keys.length; i++) {
+      key = keys[i];
+      $root.append(renderHeader(key));
+      for (j = 0; j < data[key].length; j++) {
+        cur = data[key][j];
+        $root.append(renderItem(itemIndex++, cur.title, cur.url));
+      }
+    }
+    return $root;
+  }
+
+  // search box
+  var $result = $('.js-search-result'), $resultItems;
+  var lastActiveIndex, activeIndex;
+
+  function clear() {
+    $result.html(null);
+    $resultItems = $('.search-result__item'); activeIndex = 0;
+  }
+  function onInputNotEmpty(val) {
+    $result.html(render(searchByQuery(val)));
+    $resultItems = $('.search-result__item'); activeIndex = 0;
+    $resultItems.eq(0).addClass('active');
+  }
+
+  search.clear = clear;
+  search.onInputNotEmpty = onInputNotEmpty;
+
+  function updateResultItems() {
+    lastActiveIndex >= 0 && $resultItems.eq(lastActiveIndex).removeClass('active');
+    activeIndex >= 0 && $resultItems.eq(activeIndex).addClass('active');
+  }
+
+  function moveActiveIndex(direction) {
+    var itemsCount = $resultItems ? $resultItems.length : 0;
+    if (itemsCount > 1) {
+      lastActiveIndex = activeIndex;
+      if (direction === 'up') {
+        activeIndex = (activeIndex - 1 + itemsCount) % itemsCount;
+      } else if (direction === 'down') {
+        activeIndex = (activeIndex + 1 + itemsCount) % itemsCount;
+      }
+      updateResultItems();
+    }
+  }
+
+  // Char Code: 13  Enter, 37  ⬅, 38  ⬆, 39  ➡, 40  ⬇
+  $(window).on('keyup', function(e) {
+    var modalVisible = search.getModalVisible && search.getModalVisible();
+    if (modalVisible) {
+      if (e.which === 38) {
+        modalVisible && moveActiveIndex('up');
+      } else if (e.which === 40) {
+        modalVisible && moveActiveIndex('down');
+      } else if (e.which === 13) {
+        modalVisible && $resultItems && activeIndex >= 0 && $resultItems.eq(activeIndex).children('a')[0].click();
+      }
+    }
+  });
+
+  $result.on('mouseover', '.search-result__item > a', function() {
+    var itemIndex = $(this).parent().data('index');
+    itemIndex >= 0 && (lastActiveIndex = activeIndex, activeIndex = itemIndex, updateResultItems());
+  });
+});
+</script>
+</div></div>
+
+
+<script>(function() {
+  var SOURCES = window.TEXT_VARIABLES.sources;
+  window.Lazyload.js(SOURCES.jquery, function() {
+    function scrollToAnchor(anchor, duration, callback) {
+      var $root = this;
+      $root.animate({ scrollTop: $(anchor).position().top }, duration, function() {
+        window.history.replaceState(null, '', window.location.href.split('#')[0] + anchor);
+        callback && callback();
+      });
+    }
+    $.fn.scrollToAnchor = scrollToAnchor;
+  });
+})();
+(function() {
+  var SOURCES = window.TEXT_VARIABLES.sources;
+  window.Lazyload.js(SOURCES.jquery, function() {
+    function affix(options) {
+      var $root = this, $window = $(window), $scrollTarget, $scroll,
+        offsetBottom = 0, scrollTarget = window, scroll = window.document, disabled = false, isOverallScroller = true,
+        rootTop, rootLeft, rootHeight, scrollBottom, rootBottomTop,
+        hasInit = false, curState;
+
+      function setOptions(options) {
+        var _options = options || {};
+        _options.offsetBottom && (offsetBottom = _options.offsetBottom);
+        _options.scrollTarget && (scrollTarget = _options.scrollTarget);
+        _options.scroll && (scroll = _options.scroll);
+        _options.disabled !== undefined && (disabled = _options.disabled);
+        $scrollTarget = $(scrollTarget);
+        isOverallScroller = window.isOverallScroller($scrollTarget[0]);
+        $scroll = $(scroll);
+      }
+      function preCalc() {
+        top();
+        rootHeight = $root.outerHeight();
+        rootTop = $root.offset().top + (isOverallScroller ? 0 :  $scrollTarget.scrollTop());
+        rootLeft = $root.offset().left;
+      }
+      function calc(needPreCalc) {
+        needPreCalc && preCalc();
+        scrollBottom = $scroll.outerHeight() - offsetBottom - rootHeight;
+        rootBottomTop = scrollBottom - rootTop;
+      }
+      function top() {
+        if (curState !== 'top') {
+          $root.removeClass('fixed').css({
+            left: 0,
+            top: 0
+          });
+          curState = 'top';
+        }
+      }
+      function fixed() {
+        if (curState !== 'fixed') {
+          $root.addClass('fixed').css({
+            left: rootLeft + 'px',
+            top: 0
+          });
+          curState = 'fixed';
+        }
+      }
+      function bottom() {
+        if (curState !== 'bottom') {
+          $root.removeClass('fixed').css({
+            left: 0,
+            top: rootBottomTop + 'px'
+          });
+          curState = 'bottom';
+        }
+      }
+      function setState() {
+        var scrollTop = $scrollTarget.scrollTop();
+        if (scrollTop >= rootTop && scrollTop <= scrollBottom) {
+          fixed();
+        } else if (scrollTop < rootTop) {
+          top();
+        } else {
+          bottom();
+        }
+      }
+      function init() {
+        if(!hasInit) {
+          var interval, timeout;
+          calc(true); setState();
+          // run calc every 100 millisecond
+          interval = setInterval(function() {
+            calc();
+          }, 100);
+          timeout = setTimeout(function() {
+            clearInterval(interval);
+          }, 45000);
+          window.pageLoad.then(function() {
+            setTimeout(function() {
+              clearInterval(interval);
+              clearTimeout(timeout);
+            }, 3000);
+          });
+          $scrollTarget.on('scroll', function() {
+            disabled || setState();
+          });
+          $window.on('resize', function() {
+            disabled || (calc(true), setState());
+          });
+          hasInit = true;
+        }
+      }
+
+      setOptions(options);
+      if (!disabled) {
+        init();
+      }
+      $window.on('resize', window.throttle(function() {
+        init();
+      }, 200));
+      return {
+        setOptions: setOptions,
+        refresh: function() {
+          calc(true, { animation: false }); setState();
+        }
+      };
+    }
+    $.fn.affix = affix;
+  });
+})();
+(function() {
+  var SOURCES = window.TEXT_VARIABLES.sources;
+  window.Lazyload.js(SOURCES.jquery, function() {
+    function toc(options) {
+      var $root = this, $window = $(window), $scrollTarget, $scroller, $tocUl = $('<ul class="toc toc--ellipsis"></ul>'), $tocLi, $headings, $activeLast, $activeCur,
+        selectors = 'h1,h2,h3', container = 'body', scrollTarget = window, scroller = 'html, body', disabled = false,
+        headingsPos, scrolling = false, hasRendered = false, hasInit = false;
+
+      function setOptions(options) {
+        var _options = options || {};
+        _options.selectors && (selectors = _options.selectors);
+        _options.container && (container = _options.container);
+        _options.scrollTarget && (scrollTarget = _options.scrollTarget);
+        _options.scroller && (scroller = _options.scroller);
+        _options.disabled !== undefined && (disabled = _options.disabled);
+        $headings = $(container).find(selectors).filter('[id]');
+        $scrollTarget = $(scrollTarget);
+        $scroller = $(scroller);
+      }
+      function calc() {
+        headingsPos = [];
+        $headings.each(function() {
+          headingsPos.push(Math.floor($(this).position().top));
+        });
+      }
+      function setState(element, disabled) {
+        var scrollTop = $scrollTarget.scrollTop(), i;
+        if (disabled || !headingsPos || headingsPos.length < 1) { return; }
+        if (element) {
+          $activeCur = element;
+        } else {
+          for (i = 0; i < headingsPos.length; i++) {
+            if (scrollTop >= headingsPos[i]) {
+              $activeCur = $tocLi.eq(i);
+            } else {
+              $activeCur || ($activeCur = $tocLi.eq(i));
+              break;
+            }
+          }
+        }
+        $activeLast && $activeLast.removeClass('active');
+        ($activeLast = $activeCur).addClass('active');
+      }
+      function render() {
+        if(!hasRendered) {
+          $root.append($tocUl);
+          $headings.each(function() {
+            var $this = $(this);
+            $tocUl.append($('<li></li>').addClass('toc-' + $this.prop('tagName').toLowerCase())
+              .append($('<a></a>').text($this.text()).attr('href', '#' + $this.prop('id'))));
+          });
+          $tocLi = $tocUl.children('li');
+          $tocUl.on('click', 'a', function(e) {
+            e.preventDefault();
+            var $this = $(this);
+            scrolling = true;
+            setState($this.parent());
+            $scroller.scrollToAnchor($this.attr('href'), 400, function() {
+              scrolling = false;
+            });
+          });
+        }
+        hasRendered = true;
+      }
+      function init() {
+        var interval, timeout;
+        if(!hasInit) {
+          render(); calc(); setState(null, scrolling);
+          // run calc every 100 millisecond
+          interval = setInterval(function() {
+            calc();
+          }, 100);
+          timeout = setTimeout(function() {
+            clearInterval(interval);
+          }, 45000);
+          window.pageLoad.then(function() {
+            setTimeout(function() {
+              clearInterval(interval);
+              clearTimeout(timeout);
+            }, 3000);
+          });
+          $scrollTarget.on('scroll', function() {
+            disabled || setState(null, scrolling);
+          });
+          $window.on('resize', window.throttle(function() {
+            if (!disabled) {
+              render(); calc(); setState(null, scrolling);
+            }
+          }, 100));
+        }
+        hasInit = true;
+      }
+
+      setOptions(options);
+      if (!disabled) {
+        init();
+      }
+      $window.on('resize', window.throttle(function() {
+        init();
+      }, 200));
+      return {
+        setOptions: setOptions
+      };
+    }
+    $.fn.toc = toc;
+  });
+})();
+/*(function () {
+
+})();*/
+</script><script>
+  /* toc must before affix, since affix need to konw toc' height. */(function() {
+  var SOURCES = window.TEXT_VARIABLES.sources;
+  var TOC_SELECTOR = window.TEXT_VARIABLES.site.toc.selectors;
+  window.Lazyload.js(SOURCES.jquery, function() {
+    var $window = $(window);
+    var $articleContent = $('.js-article-content');
+    var $tocRoot = $('.js-toc-root'), $col2 = $('.js-col-aside');
+    var toc;
+    var tocDisabled = false;
+    var hasSidebar = $('.js-page-root').hasClass('layout--page--sidebar');
+    var hasToc = $articleContent.find(TOC_SELECTOR).length > 0;
+
+    function disabled() {
+      return $col2.css('display') === 'none' || !hasToc;
+    }
+
+    tocDisabled = disabled();
+
+    toc = $tocRoot.toc({
+      selectors: TOC_SELECTOR,
+      container: $articleContent,
+      scrollTarget: hasSidebar ? '.js-page-main' : null,
+      scroller: hasSidebar ? '.js-page-main' : null,
+      disabled: tocDisabled
+    });
+
+    $window.on('resize', window.throttle(function() {
+      tocDisabled = disabled();
+      toc && toc.setOptions({
+        disabled: tocDisabled
+      });
+    }, 100));
+
+  });
+})();
+(function() {
+  var SOURCES = window.TEXT_VARIABLES.sources;
+  window.Lazyload.js(SOURCES.jquery, function() {
+    var $window = $(window), $pageFooter = $('.js-page-footer');
+    var $pageAside = $('.js-page-aside');
+    var affix;
+    var tocDisabled = false;
+    var hasSidebar = $('.js-page-root').hasClass('layout--page--sidebar');
+
+    affix = $pageAside.affix({
+      offsetBottom: $pageFooter.outerHeight(),
+      scrollTarget: hasSidebar ? '.js-page-main' : null,
+      scroller: hasSidebar ? '.js-page-main' : null,
+      scroll: hasSidebar ? $('.js-page-main').children() : null,
+      disabled: tocDisabled
+    });
+
+    $window.on('resize', window.throttle(function() {
+      affix && affix.setOptions({
+        disabled: tocDisabled
+      });
+    }, 100));
+
+    window.pageAsideAffix = affix;
+  });
+})();
+</script>
+    </div>
+    <script>(function () {
+  var $root = document.getElementsByClassName('root')[0];
+  if (window.hasEvent('touchstart')) {
+    $root.dataset.isTouch = true;
+    document.addEventListener('touchstart', function(){}, false);
+  }
+})();
+</script>
+  </body>
+</html>
+
