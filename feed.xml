@@ -1,5 +1,592 @@
-<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" xml:lang="en"><generator uri="https://jekyllrb.com/" version="4.2.0">Jekyll</generator><link href="https://mincong.io/feed.xml" rel="self" type="application/atom+xml" /><link href="https://mincong.io/" rel="alternate" type="text/html" hreflang="en" /><updated>2021-07-11T19:23:55+02:00</updated><id>https://mincong.io/feed.xml</id><title type="html">Mincong Huang</title><subtitle>Hi, welcome to my blog! I'm a software engineer at Datadog. I write blog posts in my free time. My blogs are bits and pieces of my tech journey. Most of them are related to Java. Hope you enjoy them! My opinions are my own, not Datadog's. This blog is powered by Jekyll, a simple, blog-aware, static sites solution.
-</subtitle><author><name>Mincong Huang</name><email>mincong.h@gmail.com</email></author><entry xml:lang="en"><title type="html">An Important Change</title><link href="https://mincong.io/2021/04/20/an-important-change/" rel="alternate" type="text/html" title="An Important Change" /><published>2021-04-20T04:40:32+02:00</published><updated>2021-04-20T04:40:32+02:00</updated><id>https://mincong.io/2021/04/20/an-important-change</id><content type="html" xml:base="https://mincong.io/2021/04/20/an-important-change/">&lt;p&gt;Hi my readers,&lt;/p&gt;
+<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" xml:lang="en"><generator uri="https://jekyllrb.com/" version="4.2.0">Jekyll</generator><link href="https://mincong.io/feed.xml" rel="self" type="application/atom+xml" /><link href="https://mincong.io/" rel="alternate" type="text/html" hreflang="en" /><updated>2021-07-14T13:35:16+02:00</updated><id>https://mincong.io/feed.xml</id><title type="html">Mincong Huang</title><subtitle>Hi, welcome to my blog! I'm a software engineer at Datadog. I write blog posts in my free time. My blogs are bits and pieces of my tech journey. Most of them are related to Java. Hope you enjoy them! My opinions are my own, not Datadog's. This blog is powered by Jekyll, a simple, blog-aware, static sites solution.
+</subtitle><author><name>Mincong Huang</name><email>mincong.h@gmail.com</email></author><entry xml:lang="en"><title type="html">Custom Internationalization (i18n) with Jekyll</title><link href="https://mincong.io/en/jekyll-i18n/" rel="alternate" type="text/html" title="Custom Internationalization (i18n) with Jekyll" /><published>2021-07-11T22:02:53+02:00</published><updated>2021-07-11T22:02:53+02:00</updated><id>https://mincong.io/en/jekyll-i18n</id><content type="html" xml:base="https://mincong.io/en/jekyll-i18n/">&lt;p class=&quot;info&quot;&gt;This article is translated with www.DeepL.com/Translator (free version) and reviewed by Mincong.&lt;/p&gt;
+
+&lt;h2 id=&quot;introduction&quot;&gt;Introduction&lt;/h2&gt;
+
+&lt;p&gt;During my visit to my family back home in April this year, I came across a lot of technical content in Chinese when I was looking for information, but I also found that not many of them have good quality. So I started to write Chinese articles in my blog, hoping to contribute to the Chinese developer community. More concretely, I wrote in two languages: Chinese and English. But in practice, I found that it is not a good experience for reader to see two languages in one blog.&lt;/p&gt;
+
+&lt;p&gt;After I started writing in Chinese, several times my colleagues found my popular English articles in Google Search and started reading them. This thing made me embarrassed, because since April, my articles are all in Chinese. Let me think about it from their point of view: what happens if after reading, they are curious to read more articles? They may click on the home page and then surprised to see a bunch of Chinese blogs: they may feel confused and feel like they are in the wrong place. For someone who doesn’t know another language, the experience can be very bad. The opposite also holds true: when a Chinese friend sees my blog and sees a bunch of English articles, it feels hard to get interested in reading them. If the articles are written in their native language, it will be much more user-friendly.&lt;/p&gt;
+
+&lt;p&gt;That’s why I want to do internationalization: I want to provide a comfortable reading experience for every reader. I want to have a clear distinction between the different languages in the blog, so that when people visit, they can read the content in the language they are familiar with, no matter which page they click on. Then the blog itself can also provide options for people to switch to another language.&lt;/p&gt;
+
+&lt;p&gt;This post will share with you the internationalization of my blog.&lt;/p&gt;
+
+&lt;h2 id=&quot;proposals&quot;&gt;Proposals&lt;/h2&gt;
+
+&lt;p&gt;There are serveral proposals for internationalization, and I’ll discuss their feasibility below.&lt;/p&gt;
+
+&lt;ol&gt;
+  &lt;li&gt;Provide translation feature. Embed translation button in the article and use third-party translators (Bing, Google, DeepL, etc.) to translate when user clicks the translation button.&lt;/li&gt;
+  &lt;li&gt;Interlink English and Chinese articles. Embed a link to English article in Chinese article and another link to Chinese article in English article.&lt;/li&gt;
+  &lt;li&gt;Introduce the concept of page key. Chinese and English articles share the same page key.&lt;/li&gt;
+  &lt;li&gt;Use two collections: &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;posts&lt;/code&gt; and &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;cn&lt;/code&gt;.&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;&lt;mark&gt;Final plan: Use two collections.&lt;/mark&gt;&lt;/p&gt;
+
+&lt;h3 id=&quot;proposal-1-provide-translation-feature&quot;&gt;Proposal 1: Provide Translation Feature&lt;/h3&gt;
+
+&lt;p&gt;Embed a translation button inside the article and use a third-party translator (Bing, Google, DeepL, etc.) to translate when the translation button is clicked. The rationale is that my blog is not very visited, with about 18,000 visitors per month. And I am not a professional writer, purely writing for fun and not making money. There is no need to be so serious. This feature is inspired by Chrome’s Translate button, which allows you to translate a page in a non-frequently used language by clicking the Translate button in the URL input field, or by right-clicking on the page content.&lt;/p&gt;
+
+&lt;p&gt;The advantages of this proposal are:&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;It’s easy to implement&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;The disadvantages of this proposal are:&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;There are no two articles, there is only one.&lt;/li&gt;
+  &lt;li&gt;No correction for translation results&lt;/li&gt;
+  &lt;li&gt;Without articles, we can’t attract readers through articles&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h3 id=&quot;proposal-2-interlinking-english-and-chinese-posts&quot;&gt;Proposal 2: Interlinking English and Chinese Posts&lt;/h3&gt;
+
+&lt;p&gt;Add a link to the corresponding article at the beginning of each article in order to switch languages. That is, embed a link to an English article in a Chinese article and a link to a Chinese article in an English article. On the web page, add a button or an icon to achieve language switching. This way, readers can access another language version of the article by clicking this button or this icon while reading.&lt;/p&gt;
+
+&lt;p&gt;For example, for the article &lt;a href=&quot;/cn/mongodb-schema-compatibility/&quot;&gt;“Implementing backward-compatible schema changes in MongoDB”&lt;/a&gt;, the switch between the English and Chinese versions of the article can be implemented in the following form.&lt;/p&gt;
+
+&lt;p&gt;English version.&lt;/p&gt;
+
+&lt;div class=&quot;language-diff highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;  ---
+  layout: post
+  title: Making Backward-Compatible Schema Changes in MongoDB
+  date: 2021-02-27 17:07:27 +0100
+  categories: [java-serialization, reliability]
+  tags: [java, mongodb, serialization, jackson, reliability]
+  comments: true
+&lt;span class=&quot;gi&quot;&gt;+ lang: en
++ version:
++ en-CN: 2021-04-30-mongodb-schema-compatibility.md
+&lt;/span&gt;  ...
+  ---
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;Chinese version.&lt;/p&gt;
+
+&lt;div class=&quot;language-diff highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;  ---
+  layout: post
+  title: Is it really that easy to add and delete fields in MongoDB?
+  date: 2021-04-30 23:09:38 +0800
+  categories: [java-serialization, reliability]
+  tags: [java, mongodb, serialization, jackson, reliability]
+  comments: true
+&lt;span class=&quot;gi&quot;&gt;+ lang: zh
++ version:
++ en-US: 2021-02-27-mongodb-schema-compatibility.md
+&lt;/span&gt;  ...
+  ---
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;The advantages of this proposal are:&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;The links to existing articles remain unchanged and do not affect SEO&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;The disadvantages of this proposal are:&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;It is not possible to know the link of another version of the other article through the article link.&lt;/li&gt;
+  &lt;li&gt;If you change the link to the article, you should remember to change the referer, i.e. in the other language page.&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h3 id=&quot;proposal-3-shared-page-key-between-chinese-and-english&quot;&gt;Proposal 3: Shared Page Key between Chinese and English&lt;/h3&gt;
+
+&lt;p&gt;Introduce the concept of page key in each article. When a user accesses the article, the page URL contains both the language and the page key. More precisely, it follows the following expression.&lt;/p&gt;
+
+&lt;div class=&quot;language-plaintext highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;https://mincong.io/{lang}/{page-key}
+https://mincong.io/en/mongodb-schema-compability
+https://mincong.io/cn/mongodb-schema-compability
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;English version (ideal state).&lt;/p&gt;
+
+&lt;div class=&quot;language-diff highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;  ---
+  layout: post
+  title: Making Backward-Compatible Schema Changes in MongoDB
+  date: 2021-02-27 17:07:27 +0100
+  categories: [java-serialization, reliability]
+  tags: [java, mongodb, serialization, jackson, reliability]
+  comments: true
+&lt;span class=&quot;gi&quot;&gt;+ key: mongodb-schema-compatibility
++ lang: en
+&lt;/span&gt;  ...
+  ---
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;Chinese version (ideal state).&lt;/p&gt;
+
+&lt;div class=&quot;language-diff highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;  ---
+  layout: post
+  title: Is it really that easy to add and delete fields in MongoDB?
+  date: 2021-04-30 23:09:38 +0800
+  categories: [java-serialization, reliability]
+  tags: [java, mongodb, serialization, jackson, reliability]
+  comments: true
+&lt;span class=&quot;gi&quot;&gt;+ key: mongodb-schema-compatibility
++ lang: zh
+&lt;/span&gt;  ...
+  ---
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;The advantage of this proposal are:&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;The article link contains the language. So you can also know the link of the other version by naming convension.&lt;/li&gt;
+  &lt;li&gt;Hide date from URL&lt;/li&gt;
+  &lt;li&gt;Thanks to the permalink pattern, you can write two articles a day (Chinese + English), which was not possible before when using date + title as URL.&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;The disadvantages of this proposal are:&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;May affect SEO&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;Originally this was my perferred solution. Unfortunately it is not possible to implement. Because not all variables are available as part of Jekyll’s permalink. For example, Jekyll does not support custom variable &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;lang&lt;/code&gt; as part of a link. See the official documentation &lt;a href=&quot;https://jekyllrb.com/docs/permalinks/&quot;&gt;Permalinks&lt;/a&gt; for variables supported by Permalinks.&lt;/p&gt;
+
+&lt;h3 id=&quot;proposal-4-use-two-collections&quot;&gt;Proposal 4: Use Two Collections&lt;/h3&gt;
+
+&lt;p&gt;The first collection is the default &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;posts&lt;/code&gt; and the second collection is &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;cn&lt;/code&gt;.&lt;/p&gt;
+
+&lt;p&gt;The advantage of this is the same as proposal 3:&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;The article link contains the language. So you can also know the link of the other version by naming convension.&lt;/li&gt;
+  &lt;li&gt;Hide date from URL&lt;/li&gt;
+  &lt;li&gt;Thanks to the permalink pattern, you can write two articles a day (Chinese + English), which was not possible before when using date + title as URL.&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;The downside of this are:&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;The default plugin &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;jekyll-paginate&lt;/code&gt; only supports pagination for the default collection posts. If you need to paginate another collection, you need to use the &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;jekyll-paginate-v2&lt;/code&gt; plugin. However, GitHub Pages does not officially support the &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;jekyll-paginate-v2&lt;/code&gt; plugin.&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h3 id=&quot;other-considerations&quot;&gt;Other Considerations&lt;/h3&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;Whether the theme you are currently using has support for internationalization? For example, I use &lt;a href=&quot;https://github.com/kitian616/jekyll-TeXt-theme&quot;&gt;Jekyll TeXt Theme&lt;/a&gt;, which has some support for internationalization itself. The information in the header and footer of the browsing page can be automatically adjusted according to the language of the page. However, it does not translation for the page content directly.&lt;/li&gt;
+  &lt;li&gt;If you’re using GitHub Pages, consider whether GitHub Pages has support for the plugins that you use. Only some of the Jekyll plugins are officially supported by GitHub, and others won’t work even if you install them. This will affect you unless you don’t use the official site generation, you can generate pages locally yourself or generate them from your custom CI pipeline.&lt;/li&gt;
+  &lt;li&gt;Consider using another Jekyll internationalization plugin, such as &lt;a href=&quot;https://github.com/kurtsson/jekyll-multiple-languages-plugin&quot;&gt;jekyll-multiple-languages-plugin&lt;/a&gt;. I didn’t look into it at the time I wrote the proposals, and only found out about this plugin after the project was done… But this plugin is not supported by GitHub Pages neither.&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h2 id=&quot;other-websites&quot;&gt;Other Websites&lt;/h2&gt;
+
+&lt;p&gt;How do other blogs work? Is there anything we can learn from them?&lt;/p&gt;
+
+&lt;h3 id=&quot;elasticsearch-blog&quot;&gt;Elasticsearch Blog&lt;/h3&gt;
+
+&lt;p&gt;Elastic’s blog is internationalized, and each article is available in multiple languages, such as the following article: &lt;a href=&quot;https://www.elastic.co/cn/blog/how-to-design-your-elasticsearch-data-storage-architecture-for-scale&quot;&gt;How to design a scalable Elasticsearch data storage architecture&lt;/a&gt;.&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/assets/20210711-elasticsearch-blog.png&quot; alt=&quot;Elasticsearch blog i18n&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;It is listed below in three languages.&lt;/p&gt;
+
+&lt;table&gt;
+  &lt;thead&gt;
+    &lt;tr&gt;
+      &lt;th style=&quot;text-align: left&quot;&gt;Language&lt;/th&gt;
+      &lt;th style=&quot;text-align: left&quot;&gt;Links&lt;/th&gt;
+    &lt;/tr&gt;
+  &lt;/thead&gt;
+  &lt;tbody&gt;
+    &lt;tr&gt;
+      &lt;td style=&quot;text-align: left&quot;&gt;How to design your Elasticsearch data storage architecture for scale&lt;/td&gt;
+      &lt;td style=&quot;text-align: left&quot;&gt;&lt;a href=&quot;https://www.elastic.co/blog/how-to-design-your- elasticsearch-data-storage-architecture-for-scale&quot;&gt;https://www.elastic.co/blog/how-to-design-your- elasticsearch-data-storage-architecture-for-scale&lt;/a&gt;&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td style=&quot;text-align: left&quot;&gt;How to design your Elasticsearch data storage architecture for scale&lt;/td&gt;
+      &lt;td style=&quot;text-align: left&quot;&gt;&lt;a href=&quot;https://www.elastic.co/cn/blog/how-to-design-your-elasticsearch-data-storage-architecture-for- scale&quot;&gt;https://www.elastic.co/cn/blog/how-to-design-your-elasticsearch-data-storage-architecture-for- scale&lt;/a&gt;&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td style=&quot;text-align: left&quot;&gt;スケーラブルなElasticsearchデータストレージを设计する&lt;/td&gt;
+      &lt;td style=&quot;text-align: left&quot;&gt;&lt;a href=&quot;https://www.elastic.co/jp/blog/how-to-design-your-elasticsearch-data-storage-architecture-for -scale&quot;&gt;https://www.elastic.co/jp/blog/how-to-design-your-elasticsearch-data-storage-architecture-for -scale&lt;/a&gt;&lt;/td&gt;
+    &lt;/tr&gt;
+  &lt;/tbody&gt;
+&lt;/table&gt;
+
+&lt;p&gt;It is named in the following way.&lt;/p&gt;
+
+&lt;div class=&quot;language-plaintext highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;https://www.elastic.co/blog/{post}
+https://www.elastic.co/{country}/blog/{post}
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;English blogs do not have EN prefix, other languages use country abbreviation as prefix, for example, CN for China, JP for Japan.&lt;/p&gt;
+
+&lt;h3 id=&quot;text-theme&quot;&gt;TeXt Theme&lt;/h3&gt;
+
+&lt;p&gt;Jekyll TeXt Theme is a highly customizable Jekyll theme for personal or team websites, blogs, projects, documents and more. It references the iOS 11 style with big and prominent headers and rounded buttons and cards. It was written by Alibaba’s engineer Tian Qi (&lt;a href=&quot;https://github.com/kitian616&quot;&gt;kitian616&lt;/a&gt;). This theme supports &lt;a href=&quot;https://tianqi.name/jekyll-TeXt-theme/docs/zh/i18n&quot;&gt;internationalization&lt;/a&gt;. In fact, the documentation of this theme itself is internationalized. If you don’t believe me, see this table:&lt;/p&gt;
+
+&lt;table&gt;
+  &lt;thead&gt;
+    &lt;tr&gt;
+      &lt;th style=&quot;text-align: left&quot;&gt;Language&lt;/th&gt;
+      &lt;th style=&quot;text-align: left&quot;&gt;Links&lt;/th&gt;
+    &lt;/tr&gt;
+  &lt;/thead&gt;
+  &lt;tbody&gt;
+    &lt;tr&gt;
+      &lt;td style=&quot;text-align: left&quot;&gt;Quick Start&lt;/td&gt;
+      &lt;td style=&quot;text-align: left&quot;&gt;&lt;a href=&quot;https://tianqi.name/jekyll-TeXt-theme/docs/en/quick-start&quot;&gt;https://tianqi.name/jekyll-TeXt-theme/docs/en/quick-start&lt;/a&gt;&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td style=&quot;text-align: left&quot;&gt;Quick Start&lt;/td&gt;
+      &lt;td style=&quot;text-align: left&quot;&gt;&lt;a href=&quot;https://tianqi.name/jekyll-TeXt-theme/docs/zh/quick-start&quot;&gt;https://tianqi.name/jekyll-TeXt-theme/docs/zh/quick-start&lt;/a&gt;&lt;/td&gt;
+    &lt;/tr&gt;
+  &lt;/tbody&gt;
+&lt;/table&gt;
+
+&lt;p&gt;It is named in the following way.&lt;/p&gt;
+
+&lt;div class=&quot;language-plaintext highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;https://tianqi.name/jekyll-TeXt-theme/docs/{lang}/{post}
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;Whatever the language, the language abbreviation is used as the prefix, for example, zh for Chinese, en for English.&lt;/p&gt;
+
+&lt;h2 id=&quot;final-solution&quot;&gt;Final solution&lt;/h2&gt;
+
+&lt;p&gt;The final solution is proposal 4: use two collections. The first collection is the default &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;posts&lt;/code&gt; and the second collection is &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;cn&lt;/code&gt;. The main goal is to modify the article links to the following format.&lt;/p&gt;
+
+&lt;div class=&quot;language-plaintext highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;https://mincong.io/{country}/{post}
+https://mincong.io/{country}/{page}
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;The two parts of the link here.&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;country&lt;/code&gt; is the country, EN for English-speaking countries and CN for China. This expression was better than using locale en/zh because it’s not only a matter of language, but also the components loaded by the page: for example, the Chinese page will suggest WeChat but not the English version. In the future, I’ll also consider splitting the other components into two different versions: Chinese and English pages load different comment systems, different SEO scripts, etc.&lt;/li&gt;
+  &lt;li&gt;The &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;post&lt;/code&gt; or &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;page&lt;/code&gt; is the ID of the blog post or the ID of another page.&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;Next, I want to share with you the specific tasks that need to be done when implementing internationalization.&lt;/p&gt;
+
+&lt;h2 id=&quot;tasks&quot;&gt;Tasks&lt;/h2&gt;
+
+&lt;p&gt;This section is a detailed explanation of the main tasks that need to be done. This section may be a bit long, it’s mainly for those who are interested in changing their blogs for real. If you don’t want to internationalize your site, I suggest avoid reading it into details.&lt;/p&gt;
+
+&lt;h3 id=&quot;task-1-modify-chinese-articles&quot;&gt;Task 1: Modify Chinese Articles&lt;/h3&gt;
+
+&lt;p&gt;Modify the article link to the following format.&lt;/p&gt;
+
+&lt;div class=&quot;language-plaintext highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;https://mincong.io/cn/{post}
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;Since most of the Chinese articles were written after April this year, there is no need to keep the original links. At the beginning of each article, add two pieces of information: language and link redirection.&lt;/p&gt;
+
+&lt;div class=&quot;language-diff highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;gi&quot;&gt;+ lang: zh
+&lt;/span&gt;  date: 2021-04-20 11:21:16 +0800
+  categories: [java-core]
+  tags: [java, akka]
+&lt;span class=&quot;p&quot;&gt;@@ -13,6 +14,8 @@&lt;/span&gt; excerpt: &amp;gt;
+  image: /assets/bg-ocean-ng-L0xOtAnv94Y-unsplash.jpg
+  cover: /assets/bg-ocean-ng-L0xOtAnv94Y-unsplash.jpg
+&lt;span class=&quot;gi&quot;&gt;+ redirect_from:
++ - /2021/04/20/exponential-backoff-in-akka/
+&lt;/span&gt;  article_header:
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;Then create a new collection called &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;cn&lt;/code&gt;. Store it in the folder &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;_cn&lt;/code&gt; according to Jekyll naming requirements, then put all Chinese articles in that folder and remove the “year, month and day” part of the file name.&lt;/p&gt;
+
+&lt;p&gt;Changes in article links.&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;Before: &lt;a href=&quot;https://mincong.io/2021/04/30/mongodb-schema-compatibility/&quot;&gt;https://mincong.io/2021/04/30/mongodb-schema-compatibility/&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;After: &lt;a href=&quot;https://mincong.io/cn/mongodb-schema-compability/&quot;&gt;https://mincong.io/cn/mongodb-schema-compability/&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;In addition, in the global configuration file (&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;_config.yml&lt;/code&gt;), configure the information about the &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;cn&lt;/code&gt; collection, such as the permalink, whether to display the table of contents, etc. For details, see: &lt;a href=&quot;https://github.com/mincong-h/mincong-h.github.io/pull/31&quot;&gt;https://github.com/mincong-h/mincong-h.github.io/pull/31&lt;/a&gt;&lt;/p&gt;
+
+&lt;h3 id=&quot;task-2-modify-english-articles&quot;&gt;Task 2: Modify English Articles&lt;/h3&gt;
+
+&lt;p&gt;I have 168 English articles on my blog, some of which have important page views. I don’t want them to lose any information because of the internationalization, such as comments and likes on Disqus. So my strategy for English articles is to not make any changes to existing articles and only change the new articles. For new articles, I use the new naming convention &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;https://mincong.io/en/{post}&lt;/code&gt;. In the following paragraphs, let’s discuss it further.&lt;/p&gt;
+
+&lt;p&gt;For all existing articles, explicitly mark the article language as English in the front matter at the article level.&lt;/p&gt;
+
+&lt;div class=&quot;language-sh highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;find _posts &lt;span class=&quot;nt&quot;&gt;-type&lt;/span&gt; f &lt;span class=&quot;nt&quot;&gt;-exec&lt;/span&gt; &lt;span class=&quot;nb&quot;&gt;sed&lt;/span&gt; &lt;span class=&quot;nt&quot;&gt;-i&lt;/span&gt; &lt;span class=&quot;s1&quot;&gt;''&lt;/span&gt; &lt;span class=&quot;nt&quot;&gt;-E&lt;/span&gt; &lt;span class=&quot;s1&quot;&gt;'s/date:/i lang: en'&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;{}&lt;/span&gt; +
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;And after adding &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;permalink&lt;/code&gt; so that they are not interfered with by the global configuration.&lt;/p&gt;
+
+&lt;div class=&quot;language-sh highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;c&quot;&gt;#! /bin/bash&lt;/span&gt;
+&lt;span class=&quot;nv&quot;&gt;paths&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=(&lt;/span&gt;&lt;span class=&quot;si&quot;&gt;$(&lt;/span&gt;find &lt;span class=&quot;s2&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;${&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;HOME&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;}&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;/github/mincong-h.github.io/_posts&quot;&lt;/span&gt; &lt;span class=&quot;nt&quot;&gt;-type&lt;/span&gt; f &lt;span class=&quot;nt&quot;&gt;-name&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot;*.md&quot;&lt;/span&gt; | &lt;span class=&quot;nb&quot;&gt;tr&lt;/span&gt; &lt;span class=&quot;s1&quot;&gt;'\n'&lt;/span&gt; &lt;span class=&quot;s1&quot;&gt;' '&lt;/span&gt;&lt;span class=&quot;si&quot;&gt;)&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt;
+&lt;span class=&quot;nv&quot;&gt;i&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;0
+&lt;span class=&quot;k&quot;&gt;for &lt;/span&gt;path &lt;span class=&quot;k&quot;&gt;in&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;${&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;paths&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;[@]&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;}&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;do
+    &lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;filename&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;${&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;path&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;##*/&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;}&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;&lt;/span&gt;
+    &lt;span class=&quot;nv&quot;&gt;year&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;si&quot;&gt;$(&lt;/span&gt;&lt;span class=&quot;nb&quot;&gt;echo&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;$filename&lt;/span&gt; | &lt;span class=&quot;nb&quot;&gt;sed&lt;/span&gt; &lt;span class=&quot;nt&quot;&gt;-E&lt;/span&gt; &lt;span class=&quot;s1&quot;&gt;'s/^([[:digit:]]+)-([[:digit:]]+)-([[:digit:]]+)-(. *)\.md/\1/'&lt;/span&gt;&lt;span class=&quot;si&quot;&gt;)&lt;/span&gt;
+    &lt;span class=&quot;nv&quot;&gt;month&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;si&quot;&gt;$(&lt;/span&gt;&lt;span class=&quot;nb&quot;&gt;echo&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;$filename&lt;/span&gt; | &lt;span class=&quot;nb&quot;&gt;sed&lt;/span&gt; &lt;span class=&quot;nt&quot;&gt;-E&lt;/span&gt; &lt;span class=&quot;s1&quot;&gt;'s/^([[:digit:]]+)-([[:digit:]]+)-([[:digit:]]+)-(. *)\.md/\2/'&lt;/span&gt;&lt;span class=&quot;si&quot;&gt;)&lt;/span&gt;
+    &lt;span class=&quot;nv&quot;&gt;day&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;si&quot;&gt;$(&lt;/span&gt;&lt;span class=&quot;nb&quot;&gt;echo&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;$filename&lt;/span&gt; | &lt;span class=&quot;nb&quot;&gt;sed&lt;/span&gt; &lt;span class=&quot;nt&quot;&gt;-E&lt;/span&gt; &lt;span class=&quot;s1&quot;&gt;'s/^([[:digit:]]+)-([[:digit:]]+)-([[:digit:]]+)-(. *)\.md/\3/'&lt;/span&gt;&lt;span class=&quot;si&quot;&gt;)&lt;/span&gt;
+    &lt;span class=&quot;nv&quot;&gt;name&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;si&quot;&gt;$(&lt;/span&gt;&lt;span class=&quot;nb&quot;&gt;echo&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;$filename&lt;/span&gt; | &lt;span class=&quot;nb&quot;&gt;sed&lt;/span&gt; &lt;span class=&quot;nt&quot;&gt;-E&lt;/span&gt; &lt;span class=&quot;s1&quot;&gt;'s/^([[:digit:]]+)-([[:digit:]]+)-([[:digit:]]+)-(. *)\.md/\4/'&lt;/span&gt;&lt;span class=&quot;si&quot;&gt;)&lt;/span&gt;
+    &lt;span class=&quot;nv&quot;&gt;permalink&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;/&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;${&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;year&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;}&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;/&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;${&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;month&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;}&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;/&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;${&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;day&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;}&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;/&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;${&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;name&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;}&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;/&quot;&lt;/span&gt;
+    &lt;span class=&quot;nb&quot;&gt;echo&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;${&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;i&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;}&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;: year=&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;${&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;year&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;}&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;, month=&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;${&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;month&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;}&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;, day=&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;${&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;day&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;}&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;, name=&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;${&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;name&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;}&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;, permalink=&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;${&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;permalink&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;}&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;&lt;/span&gt;
+    &lt;span class=&quot;nb&quot;&gt;sed&lt;/span&gt; &lt;span class=&quot;nt&quot;&gt;-i&lt;/span&gt; &lt;span class=&quot;s1&quot;&gt;''&lt;/span&gt; &lt;span class=&quot;nt&quot;&gt;-E&lt;/span&gt; &lt;span class=&quot;s1&quot;&gt;'/comments:/i\
+permalink: PERMALINK
+'&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;$path&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;&lt;/span&gt;
+    &lt;span class=&quot;nb&quot;&gt;sed&lt;/span&gt; &lt;span class=&quot;nt&quot;&gt;-i&lt;/span&gt; &lt;span class=&quot;s1&quot;&gt;''&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot;s|PERMALINK|&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;${&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;permalink&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;}&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;|&quot;&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;$path&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;&lt;/span&gt;
+    &lt;span class=&quot;nv&quot;&gt;i&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;$((&lt;/span&gt;i &lt;span class=&quot;o&quot;&gt;+&lt;/span&gt; &lt;span class=&quot;m&quot;&gt;1&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;))&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;done&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;For new articles, use the new naming convention (&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;_config.yml&lt;/code&gt;).&lt;/p&gt;
+
+&lt;div class=&quot;language-diff highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;gd&quot;&gt;- permalink: /:year/:month/:day/:title/
+&lt;/span&gt;&lt;span class=&quot;gi&quot;&gt;+ permalink: /en/:title/
+&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;Also you need to modify the post generation script &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;newpost.sh&lt;/code&gt; to make it generate both Chinese and English posts. Here is an excerpt from the script: we generate the paths for both Chinese and English posts, confirm that they do not exist, and then add new content.&lt;/p&gt;
+
+&lt;div class=&quot;language-sh highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;nv&quot;&gt;title&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;${&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;*&lt;/span&gt;:1&lt;span class=&quot;k&quot;&gt;}&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;&lt;/span&gt;
+
+&lt;span class=&quot;k&quot;&gt;if&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;[[&lt;/span&gt; &lt;span class=&quot;nt&quot;&gt;-z&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;$title&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;]]&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;then
+    &lt;/span&gt;&lt;span class=&quot;nb&quot;&gt;echo&lt;/span&gt; &lt;span class=&quot;s1&quot;&gt;'usage: newpost.sh My New Blog'&lt;/span&gt;
+    &lt;span class=&quot;nb&quot;&gt;exit &lt;/span&gt;1
+&lt;span class=&quot;k&quot;&gt;fi
+
+&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;bloghome&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;si&quot;&gt;$(&lt;/span&gt;&lt;span class=&quot;nb&quot;&gt;cd&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;si&quot;&gt;$(&lt;/span&gt;&lt;span class=&quot;nb&quot;&gt;dirname&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;$0&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;si&quot;&gt;)&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;||&lt;/span&gt; &lt;span class=&quot;nb&quot;&gt;exit&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt; &lt;span class=&quot;nb&quot;&gt;pwd&lt;/span&gt;&lt;span class=&quot;si&quot;&gt;)&lt;/span&gt;
+&lt;span class=&quot;nv&quot;&gt;url&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;si&quot;&gt;$(&lt;/span&gt;&lt;span class=&quot;nb&quot;&gt;echo&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;$title&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;&lt;/span&gt; | &lt;span class=&quot;nb&quot;&gt;tr&lt;/span&gt; &lt;span class=&quot;s1&quot;&gt;'[:upper:]'&lt;/span&gt; &lt;span class=&quot;s1&quot;&gt;'[:lower:]'&lt;/span&gt; | &lt;span class=&quot;nb&quot;&gt;tr&lt;/span&gt; &lt;span class=&quot;s1&quot;&gt;' '&lt;/span&gt; &lt;span class=&quot;s1&quot;&gt;'-'&lt;/span&gt;&lt;span class=&quot;si&quot;&gt;)&lt;/span&gt;
+&lt;span class=&quot;nv&quot;&gt;filename&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;si&quot;&gt;$(&lt;/span&gt;&lt;span class=&quot;nb&quot;&gt;date&lt;/span&gt; +&lt;span class=&quot;s2&quot;&gt;&quot;%Y-%m-%d&quot;&lt;/span&gt;&lt;span class=&quot;si&quot;&gt;)&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;-&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;$url&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;.md&quot;&lt;/span&gt;
+&lt;span class=&quot;nv&quot;&gt;filepath_en&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;${&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;bloghome&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;}&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;/_posts/&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;${&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;filename&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;}&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;&lt;/span&gt;
+&lt;span class=&quot;nv&quot;&gt;filepath_cn&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;${&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;bloghome&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;}&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;/_cn/&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;${&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;filename&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;}&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;&lt;/span&gt;
+
+&lt;span class=&quot;k&quot;&gt;if&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;[[&lt;/span&gt; &lt;span class=&quot;nt&quot;&gt;-f&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;$filepath_en&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;]]&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;then
+    &lt;/span&gt;&lt;span class=&quot;nb&quot;&gt;echo&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;${&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;filepath_en&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;}&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt; already exists.&quot;&lt;/span&gt;
+    &lt;span class=&quot;nb&quot;&gt;exit &lt;/span&gt;1
+&lt;span class=&quot;k&quot;&gt;fi
+
+if&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;[[&lt;/span&gt; &lt;span class=&quot;nt&quot;&gt;-f&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;$filepath_cn&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;]]&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;then
+    &lt;/span&gt;&lt;span class=&quot;nb&quot;&gt;echo&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;${&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;filepath_cn&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;}&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt; already exists.&quot;&lt;/span&gt;
+    &lt;span class=&quot;nb&quot;&gt;exit &lt;/span&gt;1
+&lt;span class=&quot;k&quot;&gt;fi
+
+&lt;/span&gt;append_metadata_en &lt;span class=&quot;s2&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;$filepath_en&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;$title&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;&lt;/span&gt;
+append_metadata_cn &lt;span class=&quot;s2&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;$filepath_cn&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;$title&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;&lt;/span&gt;
+
+&lt;span class=&quot;c&quot;&gt;# Not for EN, because EN post is translated.&lt;/span&gt;
+append_content &lt;span class=&quot;s2&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;$filepath_cn&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;&lt;/span&gt;
+
+&lt;span class=&quot;nb&quot;&gt;echo&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot;Blog posts created!&quot;&lt;/span&gt;
+&lt;span class=&quot;nb&quot;&gt;echo&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot; EN: &lt;/span&gt;&lt;span class=&quot;k&quot;&gt;${&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;filepath_en&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;}&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;&lt;/span&gt;
+&lt;span class=&quot;nb&quot;&gt;echo&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot; CN: &lt;/span&gt;&lt;span class=&quot;k&quot;&gt;${&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;filepath_cn&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;}&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;For more details, see: &lt;a href=&quot;https://github.com/mincong-h/mincong-h.github.io/pull/37&quot;&gt;https://github.com/mincong-h/mincong-h.github.io/pull/37&lt;/a&gt;&lt;/p&gt;
+
+&lt;h3 id=&quot;task-3-adding-a-chinese-homepage&quot;&gt;Task 3: Adding a Chinese Homepage&lt;/h3&gt;
+
+&lt;p&gt;Adding a Chinese homepage sounds easy, as if all you need to do is copy &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;index.html&lt;/code&gt; from the blog home page to &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;cn/index.html&lt;/code&gt; and translate a few words. Actually, it is way more complex than that. I use the official Jekyll plugin jekyll-paginate (v1) for my home page. But this plugin only supports pagination for the default set &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;posts&lt;/code&gt;, not for other sets, such as &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;cn&lt;/code&gt;. So the real meaning of adding a Chinese homepage is to upgrade the plugin to jekyll-paginate-v2 to support pagination for the Chinese collection &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;cn&lt;/code&gt;.&lt;/p&gt;
+
+&lt;p&gt;Install and use the new plugin in the site configuration (&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;_config.yml&lt;/code&gt;) at&lt;/p&gt;
+
+&lt;div class=&quot;language-diff highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;gd&quot;&gt;- paginate: 8
+- paginate_path: /page:num # don't change this unless for special need
+&lt;/span&gt;&lt;span class=&quot;gi&quot;&gt;+ pagination:
++ enabled: true
++ per_page: 8
+&lt;/span&gt;
+
+  ## =&amp;gt; Sources
+&lt;span class=&quot;p&quot;&gt;@@ -238,7 +240,7 @@&lt;/span&gt; defaults:
+  ##############################
+  plugins:
+    - jekyll-feed
+&lt;span class=&quot;gd&quot;&gt;- jekyll-paginate
+&lt;/span&gt;&lt;span class=&quot;gi&quot;&gt;+ - jekyll-paginate-v2
+&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;Modified the paginator of the TeXt Theme theme itself to avoid using &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;site.posts&lt;/code&gt; directly as a source for posts. And also add a specific prefix to the homepage, so that English and Chinese have their own homepage, i.e. &lt;a href=&quot;https://mincong.io/&quot;&gt;https://mincong.io/&lt;/a&gt; and &lt;a href=&quot;https://mincong.io/cn/&quot;&gt;https://mincong.io/cn/&lt;/a&gt;.&lt;/p&gt;
+
+&lt;div class=&quot;language-diff highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;
+- {%- assign _post_count = site.posts | size -%}
+&lt;span class=&quot;gi&quot;&gt;+ {%- assign _post_count = paginator.total_posts -%}
+&lt;/span&gt;      {%- assign _page_count = paginator.total_pages -%}
+      &amp;lt;p&amp;gt;&amp;lt;/p&amp;gt;
+      &amp;lt;div class=&quot;pagination__menu&quot;&amp;gt;
+&lt;span class=&quot;p&quot;&gt;@@ -51,7 +51,7 @@&lt;/span&gt;
+              &amp;lt;/li&amp;gt;
+
+            {%- elsif page == 1 -%}
+&lt;span class=&quot;gd&quot;&gt;- {%- assign _home_path = site.paths.home | default: site.data.variables.default.paths.home -%}
+&lt;/span&gt;&lt;span class=&quot;gi&quot;&gt;+ {%- assign _home_path = site.paths.home | default: site.data.variables.default.paths.home | append: include.baseurl -%} 
+&lt;/span&gt;              {%- include snippets/prepend-baseurl.html path=_home_path -%} 
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;There are actually some other modifications to consider, but I won’t expand on them due to the timing. For more details see: &lt;a href=&quot;https://github.com/mincong-h/mincong-h.github.io/pull/32&quot;&gt;https://github.com/mincong-h/mincong-h.github.io/pull/32&lt;/a&gt;&lt;/p&gt;
+
+&lt;h3 id=&quot;task-4-modifying-build-and-deployment&quot;&gt;Task 4: Modifying Build and Deployment&lt;/h3&gt;
+
+&lt;p&gt;You can no longer use the old automatic deployment method because of jekyll-paginate-v2, a plugin that is not officially supported by GitHub. Now you need to deploy it manually. That is, you no longer deploy from the &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;master&lt;/code&gt; branch. After the code is merged into &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;master&lt;/code&gt;, the new pages are generated manually or by CI (core command: &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;jekyll build&lt;/code&gt;). Then, the generated content, which is in the folder &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;_site&lt;/code&gt;, is uploaded to the &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;gh-pages&lt;/code&gt; branch for deployment.&lt;/p&gt;
+
+&lt;p&gt;The main steps to achieve this are as follows: create a new, master-independent branch &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;gh-pages&lt;/code&gt;, add an empty commit as the start of the branch, then empty the local Jekyll generated files folder &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;_site&lt;/code&gt; and connect it to the new branch &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;gh-pages&lt;/code&gt;&lt;/p&gt;
+
+&lt;div class=&quot;language-sh highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;git checkout &lt;span class=&quot;nt&quot;&gt;--orphan&lt;/span&gt; gh-pages
+git commit &lt;span class=&quot;nt&quot;&gt;--allow-empty&lt;/span&gt; &lt;span class=&quot;nt&quot;&gt;-m&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot;Initialize gh-pages&quot;&lt;/span&gt;
+&lt;span class=&quot;nb&quot;&gt;rm&lt;/span&gt; &lt;span class=&quot;nt&quot;&gt;-rf&lt;/span&gt; _site
+git worktree add _site gh-pages
+&lt;span class=&quot;c&quot;&gt;# &quot;jekyll build&quot; or equivalent commands&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;To implement this task, you also need to change the branch to deploy from &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;master&lt;/code&gt; to &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;ph-pages&lt;/code&gt; in the GitHub project settings.&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/assets/20210711-deploy-via-gh-pages.png&quot; alt=&quot;Change the deployment method: no longer use master branch but gh-pages branch deployment&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;For more information, see: Sangsoo Nam, &lt;a href=&quot;https://sangsoonam.github.io/2019/02/08/using-git-worktree-to-deploy- github-pages.html&quot;&gt;Using Git Worktree to Deploy GitHub Pages&lt;/a&gt;, 2019.&lt;/p&gt;
+
+&lt;h3 id=&quot;task-5-modifying-more-pages&quot;&gt;Task 5: Modifying More Pages&lt;/h3&gt;
+
+&lt;p&gt;In the task above, we mainly mentioned modifications for Chinese articles and English articles. But a website has many other pages besides articles, such as categories, series, archives, about, etc. These pages also need to be modified before they can be used properly.&lt;/p&gt;
+
+&lt;p&gt;The main objective is to ensure a consistent user-experience for browsing. When navigating between pages, all links in English pages will lead to English pages, and all links in Chinese pages will lead to Chinese pages. This creates a comfortable reading experience for the user: because all pages are in a language they are familiar with. As for the pages that already exist, we need to redirect them to the new links. The following is a list of new pages and the redirection of existing pages.&lt;/p&gt;
+
+&lt;p&gt;Home page:&lt;/p&gt;
+
+&lt;div class=&quot;language-plaintext highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;https://mincong.io/
+https://mincong.io/cn/
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;Category pages:&lt;/p&gt;
+
+&lt;div class=&quot;language-plaintext highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;https://mincong.io/en/categories/
+https://mincong.io/en/categories/{category}/
+https://mincong.io/cn/categories/
+https://mincong.io/cn/categories/{category}/
+
+https://mincong.io/categories/ -&amp;gt; https://mincong.io/en/categories/
+https://mincong.io/categories/{category} -&amp;gt; https://mincong.io/en/categories/{category}/
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;Series pages:&lt;/p&gt;
+
+&lt;div class=&quot;language-plaintext highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;https://mincong.io/en/series/
+https://mincong.io/en/series/{serie}/
+https://mincong.io/cn/series/
+
+https://mincong.io/series/ -&amp;gt; https://mincong.io/en/series/
+https://mincong.io/series/{serie} -&amp;gt; https://mincong.io/en/series/{serie}/
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;About page:&lt;/p&gt;
+
+&lt;div class=&quot;language-plaintext highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;https://mincong.io/en/about/
+https://mincong.io/cn/about/
+
+https://mincong.io/about/ -&amp;gt; https://mincong.io/en/about/
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;Archived pages:&lt;/p&gt;
+
+&lt;div class=&quot;language-plaintext highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;https://mincong.io/en/archive/
+https://mincong.io/cn/archive/
+
+https://mincong.io/archive/ -&amp;gt; https://mincong.io/en/archive/
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;For more information, see: &lt;a href=&quot;https://github.com/mincong-h/mincong-h.github.io/pull/34&quot;&gt;https://github.com/mincong-h/mincong-h.github.io/pull/34&lt;/a&gt;&lt;/p&gt;
+
+&lt;h3 id=&quot;task-6-language-switching-button&quot;&gt;Task 6: Language Switching Button&lt;/h3&gt;
+
+&lt;p&gt;Provide a language switch button in the website to enable languange switching. There are two main buttons here: one in the top right corner of the page, displayed as a flag, and another button in the title section of the article, highlighted in red for the current language and white for the optional other languages. The difference between these two buttons is that the top-right button will switch to the home page in another language when clicked, while the language button on the page will make the page jump directly to another version of the same article. I call them “global switching” and “article switching” feature.&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/assets/20210711-post-en.png&quot; alt=&quot;English post page example&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/assets/20210711-post-cn.png&quot; alt=&quot;Chinese article page example&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;For the global switching feature, the main tasks are to write the flag, link, and other information of another language in the configuration file of the page navigation, and then use these information when the page is generated.&lt;/p&gt;
+
+&lt;p&gt;Register information to the data file of the page navigation (&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;_data/navigation.yml&lt;/code&gt;).&lt;/p&gt;
+
+&lt;div class=&quot;language-yml highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;na&quot;&gt;site&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt;
+  &lt;span class=&quot;s&quot;&gt;...&lt;/span&gt;
+  &lt;span class=&quot;s&quot;&gt;# switch to the other langage&lt;/span&gt;
+  &lt;span class=&quot;s&quot;&gt;urls2&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt;
+    &lt;span class=&quot;na&quot;&gt;en &lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;/cn/&lt;/span&gt;
+    &lt;span class=&quot;na&quot;&gt;zh &lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;/&lt;/span&gt;
+  &lt;span class=&quot;na&quot;&gt;urls2_src&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt;
+    &lt;span class=&quot;na&quot;&gt;en &lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;/assets/flag-CN.png&lt;/span&gt;
+    &lt;span class=&quot;na&quot;&gt;zh &lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;/assets/flag-US.png&lt;/span&gt;
+  &lt;span class=&quot;na&quot;&gt;urls2_alt&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt;
+    &lt;span class=&quot;na&quot;&gt;en &lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;Switch&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt; &lt;/span&gt;&lt;span class=&quot;s&quot;&gt;to&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt; &lt;/span&gt;&lt;span class=&quot;s&quot;&gt;Chinese&quot;&lt;/span&gt;
+    &lt;span class=&quot;na&quot;&gt;zh &lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;Switch&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt; &lt;/span&gt;&lt;span class=&quot;s&quot;&gt;to&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt; &lt;/span&gt;&lt;span class=&quot;s&quot;&gt;English&quot;&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;The header (&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;_includes/header.html&lt;/code&gt;) should include this element as well.&lt;/p&gt;
+
+&lt;div class=&quot;language-html highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;nt&quot;&gt;&amp;lt;li&amp;gt;&lt;/span&gt;
+  &lt;span class=&quot;nt&quot;&gt;&amp;lt;a&lt;/span&gt; &lt;span class=&quot;na&quot;&gt;href=&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;&quot;&lt;/span&gt;&lt;span class=&quot;nt&quot;&gt;&amp;gt;&lt;/span&gt;
+    &lt;span class=&quot;nt&quot;&gt;&amp;lt;img&lt;/span&gt; &lt;span class=&quot;na&quot;&gt;src=&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;&quot;&lt;/span&gt;
+         &lt;span class=&quot;na&quot;&gt;alt=&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;&quot;&lt;/span&gt;
+         &lt;span class=&quot;na&quot;&gt;class=&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;navigation__lang_img&quot;&lt;/span&gt;&lt;span class=&quot;nt&quot;&gt;&amp;gt;&lt;/span&gt;
+  &lt;span class=&quot;nt&quot;&gt;&amp;lt;/a&amp;gt;&lt;/span&gt;
+&lt;span class=&quot;nt&quot;&gt;&amp;lt;/li&amp;gt;&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;For the local toggle feature, the implementation is quite different. This is achieved by looking for articles with the same name in a collection of other languages. Here, articles in different languages must use the same filename, otherwise they cannot be found. Specifically, we first get the article ID, then extract the characters after the last slash &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;/&lt;/code&gt; (with the slash &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;/&lt;/code&gt;), then take this information to traverse other collections and return the corresponding link:&lt;/p&gt;
+
+&lt;div class=&quot;language-liquid highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;p&quot;&gt;{%&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;nt&quot;&gt;assign&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;_id&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;include&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;article&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;id&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;p&quot;&gt;%}&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;{%&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;nt&quot;&gt;assign&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;_filename&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;_id&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;p&quot;&gt;|&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;split&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;/&quot;&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;p&quot;&gt;|&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;last&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;p&quot;&gt;%}&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;{%&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;nt&quot;&gt;assign&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;_suffix&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;_filename&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;p&quot;&gt;|&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;prepend&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;/&quot;&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;p&quot;&gt;%}&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;{%&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;nt&quot;&gt;assign&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;_matched&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;include&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;collection&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;p&quot;&gt;|&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;where_exp&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;item&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;item.id contains _suffix&quot;&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;p&quot;&gt;|&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;first&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;p&quot;&gt;%}&lt;/span&gt;
+
+&lt;span class=&quot;p&quot;&gt;{%&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;kr&quot;&gt;if&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;_matched&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;p&quot;&gt;%}&lt;/span&gt;
+  &lt;span class=&quot;p&quot;&gt;{%&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;nt&quot;&gt;assign&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;__return&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;_matched&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;url&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;p&quot;&gt;%}&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;{%&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;kr&quot;&gt;else&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;p&quot;&gt;%}&lt;/span&gt;
+  &lt;span class=&quot;p&quot;&gt;{%&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;nt&quot;&gt;assign&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;__return&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;kc&quot;&gt;nil&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;p&quot;&gt;%}&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;{%&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;kr&quot;&gt;endif&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;p&quot;&gt;%}&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;For more information, see.&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;&lt;a href=&quot;https://github.com/mincong-h/mincong-h.github.io/pull/34&quot;&gt;https://github.com/mincong-h/mincong-h.github.io/pull/34&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://github.com/mincong-h/mincong-h.github.io/pull/36&quot;&gt;https://github.com/mincong-h/mincong-h.github.io/pull/36&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h3 id=&quot;remaining-tasks&quot;&gt;Remaining Tasks&lt;/h3&gt;
+
+&lt;p&gt;Having done this, the entire internationalization task is basically done. The following tasks can be addressed in the future to improve the situation:&lt;/p&gt;
+
+&lt;ol&gt;
+  &lt;li&gt;Implement both Chinese and English RSS feeds.&lt;/li&gt;
+  &lt;li&gt;Load more Chinese components on Chinese pages, such as loading WeChat’s SDK for sharing, loading Baidu’s SDK to improve search presence on Chinese search engine, replacing Disqus with another commenting system that can be loaded in mainland China without VPN, and links to other Chinese developer platforms.&lt;/li&gt;
+  &lt;li&gt;Automate the Chinese-to-English translation by scripting translation requests directly to third-party translation platforms, such as Google Translate, DeepL, etc.&lt;/li&gt;
+  &lt;li&gt;Automate the build and deployment process, e.g. take inspiration from MrPowerScripts’ article &lt;a href=&quot;https: //mrpowerscripts.com/github-pages-circleci-jekyll-pagination-v2/&quot;&gt;How to get around the jekyll-pagination-v2 limitation of GitHub pages with CircleCI&lt;/a&gt;.&lt;/li&gt;
+  &lt;li&gt;Fix the tag-cloud feature in the archive page. The tag-cloud currently uses &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;site.tags&lt;/code&gt; for tag-related statistics. However, all the tags of Chinese articles (under the &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;cn&lt;/code&gt; collection) are not taken into account.&lt;/li&gt;
+  &lt;li&gt;Fix the article category pages. Now the category page can show text in Chinese, but the actual article list is retrieved from English collection &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;posts&lt;/code&gt; rather than Chinese collection &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;cn&lt;/code&gt;.&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;If you have other suggestions, please feel free to leave a comment!&lt;/p&gt;
+
+&lt;h2 id=&quot;going-further&quot;&gt;Going Further&lt;/h2&gt;
+
+&lt;p&gt;How to go further from this article?&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;If you’ve never heard of Jekyll, you can visit &lt;a href=&quot;https://jekyllrb.com/&quot;&gt;official website&lt;/a&gt; to learn about this great blogging engine.&lt;/li&gt;
+  &lt;li&gt;If you’ve never tried the free &lt;a href=&quot;https://pages.github.com/&quot;&gt;GitHub Pages&lt;/a&gt;, visit the official website and try to build your and host your own personal blog for free!&lt;/li&gt;
+  &lt;li&gt;If you haven’t tried &lt;a href=&quot;https://tianqi.name/jekyll-TeXt-theme/&quot;&gt;Jekyll TeXt Theme&lt;/a&gt; by Qi Tian, maybe you would like to try it.&lt;/li&gt;
+  &lt;li&gt;If you want to learn more about &lt;a href=&quot;https://github.com/sverrirs/jekyll-paginate-v2&quot;&gt;jekyll-paginate-v2&lt;/a&gt;, you can visit their GitHub project.&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h2 id=&quot;conclusion&quot;&gt;Conclusion&lt;/h2&gt;
+
+&lt;p&gt;In this article, we have seen the process of internationalizing of this site &lt;a href=&quot;https://mincong.io&quot;&gt;https://mincong.io&lt;/a&gt;, an internationalization based on Jekyll and TeXt Theme. We compared the pros and the cons of the four proposals; we looked at other blogs’ implementations of internationalization; we listed the six of the more important tasks; and we looked further into the next steps for internationalization. Finally, I also share some resources for you to going further from this article. I hope this article has given you some insights. If you’re interested in more information and advice, please follow me on GitHub &lt;a href=&quot;https://github.com/mincong-h&quot;&gt;mincong-h&lt;/a&gt;. Thank you all!&lt;/p&gt;
+
+&lt;h2 id=&quot;references&quot;&gt;References&lt;/h2&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;Elastic, “Elastic Blog”, Elastic, 2021. &lt;a href=&quot;https://www.elastic.co/cn/blog/&quot;&gt;https://www.elastic.co/cn/blog/&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;MrPowerScripts, “How to get around the jekyll-pagination-v2 limitation of GitHub pages with CircleCI”, MrPowerScripts, 2019. &lt;a href=&quot;https://mrpowerscripts.com/github-pages-circleci-jekyll-paginate-v2/&quot;&gt;https://mrpowerscripts.com/github-pages-circleci-jekyll-paginate-v2/&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;Sangsoo Nam, “Using Git Worktree to Deploy GitHub Pages”, Sangsoo Nam, 2019. &lt;a href=&quot;https://sangsoonam.github.io/2019/02/08/using-git- worktree-to-deploy-github-pages.html&quot;&gt;https://sangsoonam.github.io/2019/02/08/using-git- worktree-to-deploy-github-pages.html&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;Jekyll, “Jekyll Documentation”, Jekyll, 2021. &lt;a href=&quot;https://jekyllrb.com/docs/&quot;&gt;https://jekyllrb.com/docs/&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;Sverrir Sigmundarson, “jekyll-paginate-v2”, GitHub, 2021. &lt;a href=&quot;https://github.com/sverrirs/jekyll-paginate-v2&quot;&gt;https://github.com/sverrirs/jekyll-paginate-v2&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;Tian Qi, “Internationalization”, TeXt Theme, 2021.
+&lt;a href=&quot;https://tianqi.name/jekyll-TeXt-theme/docs/en/i18n&quot;&gt;https://tianqi.name/jekyll-TeXt-theme/docs/en/i18n&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;Rahul Patil, “How to insert text after a certain string in a file?”, Unix &amp;amp; Linux - Stack Exchange, 2014. &lt;a href=&quot;https://unix. stackexchange.com/a/121173/220624&quot;&gt;https://unix. stackexchange.com/a/121173/220624&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;Taewoo Lee, “[Jekyll](EN) Make array and add element in liquid”, TWpower’s Tech Blog, 2020. &lt;a href=&quot;https://twpower.github.io/228- make-array-and-add-element-in-jekyll-liquid-en&quot;&gt;https://twpower.github.io/228- make-array-and-add-element-in-jekyll-liquid-en&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;</content><author><name>Mincong Huang</name><email>mincong.h@gmail.com</email></author><category term="java-core" /><category term="jekyll" /><category term="i18n" /><summary type="html">One blog and two languages: bringing a better reading experience for the readers! This article shares how I internationalize my blog https://mincong.io</summary><media:thumbnail xmlns:media="http://search.yahoo.com/mrss/" url="https://mincong.io/assets/bg-chuttersnap-aku7Zlj_x_o-unsplash.jpg" /><media:content medium="image" url="https://mincong.io/assets/bg-chuttersnap-aku7Zlj_x_o-unsplash.jpg" xmlns:media="http://search.yahoo.com/mrss/" /></entry><entry xml:lang="en"><title type="html">An Important Change</title><link href="https://mincong.io/2021/04/20/an-important-change/" rel="alternate" type="text/html" title="An Important Change" /><published>2021-04-20T04:40:32+02:00</published><updated>2021-04-20T04:40:32+02:00</updated><id>https://mincong.io/2021/04/20/an-important-change</id><content type="html" xml:base="https://mincong.io/2021/04/20/an-important-change/">&lt;p&gt;Hi my readers,&lt;/p&gt;
 
 &lt;p&gt;Currently I am traveling to Tianjing (天津) and writing this article in my hotel. In
 China, we cannot access to the internet the same way as others do in other
@@ -3886,215 +4473,4 @@ on &lt;a href=&quot;https://twitter.com/mincong_h&quot;&gt;Twitter&lt;/a&gt; or
 &lt;a href=&quot;https://www.elastic.co/guide/en/elasticsearch/reference/7.x/snapshot-restore.html&quot;&gt;https://www.elastic.co/guide/en/elasticsearch/reference/7.x/snapshot-restore.html&lt;/a&gt;&lt;/li&gt;
   &lt;li&gt;Elasticsearch, “Create a snapshot (7.x)”, 2021.
 &lt;a href=&quot;https://www.elastic.co/guide/en/elasticsearch/reference/7.x/snapshots-take-snapshot.html&quot;&gt;https://www.elastic.co/guide/en/elasticsearch/reference/7.x/snapshots-take-snapshot.html&lt;/a&gt;&lt;/li&gt;
-&lt;/ul&gt;</content><author><name>Mincong Huang</name><email>mincong.h@gmail.com</email></author><category term="elasticsearch" /><category term="elasticsearch" /><category term="java" /><summary type="html">Part 4: How to create a snapshot for index &quot;transactions&quot; of DVF and restore it to an Elasticsearch cluster.</summary><media:thumbnail xmlns:media="http://search.yahoo.com/mrss/" url="https://mincong.io/assets/bg-leonard-cotte-R5scocnOOdM-unsplash.jpg" /><media:content medium="image" url="https://mincong.io/assets/bg-leonard-cotte-R5scocnOOdM-unsplash.jpg" xmlns:media="http://search.yahoo.com/mrss/" /></entry><entry xml:lang="en"><title type="html">Highlight 2020</title><link href="https://mincong.io/2021/01/02/highlight-2020/" rel="alternate" type="text/html" title="Highlight 2020" /><published>2021-01-02T16:13:01+01:00</published><updated>2021-01-02T16:13:01+01:00</updated><id>https://mincong.io/2021/01/02/highlight-2020</id><content type="html" xml:base="https://mincong.io/2021/01/02/highlight-2020/">&lt;h2 id=&quot;introduction&quot;&gt;Introduction&lt;/h2&gt;
-
-&lt;p&gt;Every chapter has an end and we finally finished the year 2020. 2020 was a
-difficult year for everyone and COVID-19 changed completely the way we work and
-live. Many people were infected, some left forever. That’s why I chose a grey
-image from Kelly Sikkema for this article: to remember the people that were
-impacted, to remember that life can be challenging, and to thank those who
-protect us and avoid the situation being worse.&lt;/p&gt;
-
-&lt;p&gt;Despite all the difficulties, I am lucky enough to say that 2020 was a good
-year for me. In this article, I would like to share my technical journey
-at Datadog as a software engineer working for data storage. Some personal projects I
-did during my free time, such as open-source project VAVR and this technical blog
-&lt;a href=&quot;https://mincong.io&quot;&gt;https://mincong.io&lt;/a&gt;. They are not just about what I did, but also
-some thoughts and lessons learned that I want to share with you. Now, let’s get started!&lt;/p&gt;
-
-&lt;h2 id=&quot;datadog&quot;&gt;Datadog&lt;/h2&gt;
-
-&lt;p&gt;I joined Datadog at the end of 2019 as a software engineer working for the Event
-Platform. Event Platform ingests trillions of events per day for different
-products: Logs, APM, Profiling, Real User Monitoring (RUM), Security Analytics,
-Error Tracking, Network Monitoring, and more. I am mainly working on the storage
-part, where we host thousands of servers for storing these events. I am really
-proud of being part of the team. There are many technical challenges to handle and my
-teammates are very talented. Back in 2019, I wrote an article &lt;a href=&quot;/2019/11/17/dd-onboarding/&quot;&gt;“Datadog
-Onboarding Recap”&lt;/a&gt;. But now, after working a full
-year here, I found more interesting points to share with you.&lt;/p&gt;
-
-&lt;p&gt;&lt;strong&gt;Reliability.&lt;/strong&gt; Reliability is the key to our backend services. We spent a lot
-of effort to: ensure service availability, reduce the impact across
-services when a problem happens, reduce the impact across customers, and ensure
-that we don’t lose any customer data. This is important for any SaaS
-application, but I believe it’s even more important for Datadog as a monitoring
-tool. People usually use Datadog in a critical situation, such as during an
-incident, so Datadog cannot disappoint them. This year, I contributed to this
-field in many tasks, such as adding throttling to some services to reduce the impact at peak
-activity; backing-off client requests when servers are overloaded; participate
-in the changes of data lifecycle so that we snapshot and restore data
-continuously and much more.&lt;/p&gt;
-
-&lt;p&gt;&lt;strong&gt;Observability.&lt;/strong&gt; When I was a junior developer, I cared a lot about the
-correctness of the code. But the reality is not just about right and wrong, it’s
-more complex than that. Many factors can make software not working as
-expected: the traffic volume, the network conditions, the hardware, the order of
-execution, the parallelism, the state of the server, etc. Having observability
-makes it much easier to operate a running system. Talking about observability,
-we can use metrics, logs, tracing, etc to observe our application and the
-underlying infrastructure. At Datadog, I learned how to write code with
-observability in mind. Some basic ideas are: adding a log when the code faces an
-important event; providing metrics about the application state or resources;
-adding spans to code blocks to understand and visualize the workflow; measuring the
-performance with statistics (p50, p90, p95, p99).&lt;/p&gt;
-
-&lt;p&gt;&lt;strong&gt;On-call.&lt;/strong&gt; In our platform with 50+ engineers and managers, everyone
-participates in on-call rotations. No matter you are a software engineer, a team
-lead, or a director, you need to be part of the rotation. We do that 24/7,
-i.e. whenever there is a problem in production, at least one person is notified
-and has to reply in minutes. There is also an escalation policy to ensure we don’t
-miss any potential problems. This policy is also here to help the primary on-call
-person for bigger incidents (outages) because one person may not be enough. This
-year is the first time I participated in the on-call activity. I cannot say that I
-enjoyed it, that would be a lie. Being paged at 3 AM in the morning trying to fix
-a problem isn’t fun at all. But globally speaking, it’s worth the effort because
-it reminds us of the importance of site reliability. If we were paged, it means our
-customers are having problems — at least a subset of them. It is a great
-motivation to improve the system and avoid the same problem from happening again.&lt;/p&gt;
-
-&lt;p&gt;&lt;strong&gt;Multi-language.&lt;/strong&gt; We use multiple programming languages to build our services.
-The majority of the Event Platform services are written in Java, but we also use JS
-for the front-end, Python and Bash for scripting, and Go for the agents.
-This is a good opportunity to
-learn other languages, know the advantages and inconveniences of each of them.
-It also forces us to think about packaging and communication flow between
-services. For example, we deliver Docker images as artifacts, use RESTful APIs
-for many exchanges. On my side, I learned a lot about Python this year working
-on scripting and an internal toolbox for Elasticsearch clusters. I definitely
-miss the strong typing of Java, but I enjoy using JSON in Python, which is much
-easier.&lt;/p&gt;
-
-&lt;h2 id=&quot;oss&quot;&gt;OSS&lt;/h2&gt;
-
-&lt;h3 id=&quot;vavr&quot;&gt;Vavr&lt;/h3&gt;
-
-&lt;p&gt;&lt;a href=&quot;https://github.com/vavr-io&quot;&gt;Vavr&lt;/a&gt; (formerly called Javaslang) is a non-commercial, non-profit
-object-functional library that runs with Java 8+. It aims to reduce the lines
-of code and increase code quality. It brings the concept of Scala to the Java
-ecosystem. After being a member of this project, I contributed several patches
-to Vavr in 2020:&lt;/p&gt;
-
-&lt;p&gt;&lt;img src=&quot;/assets/20210102-vavr-2020.png&quot; alt=&quot;My contributions to VAVR organization&quot; /&gt;&lt;/p&gt;
-
-&lt;p&gt;Vavr-core:&lt;/p&gt;
-
-&lt;ul&gt;
-  &lt;li&gt;&lt;a href=&quot;https://github.com/vavr-io/vavr/pull/2572&quot;&gt;#2572 Support Option.orNull()&lt;/a&gt;&lt;/li&gt;
-  &lt;li&gt;&lt;a href=&quot;https://github.com/vavr-io/vavr/pull/2577&quot;&gt;#2577 Iterate once to create two iterators in
-partition&lt;/a&gt;&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;p&gt;Vavr-jackson:&lt;/p&gt;
-
-&lt;ul&gt;
-  &lt;li&gt;&lt;a href=&quot;https://github.com/vavr-io/vavr-jackson/pull/155&quot;&gt;#155 Collection serializers and deserializer should be contextual&lt;/a&gt;&lt;/li&gt;
-  &lt;li&gt;&lt;a href=&quot;https://github.com/vavr-io/vavr-jackson/pull/158&quot;&gt;#158 Serializer and deserializer of Map and Multimap should be contextual&lt;/a&gt;&lt;/li&gt;
-  &lt;li&gt;&lt;a href=&quot;https://github.com/vavr-io/vavr-jackson/pull/163&quot;&gt;#163 Support deserializeNullAsEmpty for maps&lt;/a&gt;&lt;/li&gt;
-  &lt;li&gt;&lt;a href=&quot;https://github.com/vavr-io/vavr-jackson/pull/166&quot;&gt;#166 Deserialize classes Option.{Some,None}&lt;/a&gt;&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;p&gt;You can see the complete list of contributions &lt;a href=&quot;https://github.com/vavr-io/vavr/pulls?q=is%3Apr+is%3Aclosed+author%3Amincong-h&quot;&gt;here for
-vavr-core&lt;/a&gt;
-and &lt;a href=&quot;https://github.com/vavr-io/vavr-jackson/pulls?q=is%3Apr+is%3Aclosed+author%3Amincong-h&quot;&gt;here for
-vavr-jackson&lt;/a&gt;.
-I also wrote an article for the &lt;a href=&quot;https://blog.vavr.io/vavr-jackson-1-0-0-alpha-3/&quot;&gt;release note of vavr-jackson 1.0.0 Alpha
-3&lt;/a&gt; in &lt;a href=&quot;https://blog.vavr.io&quot;&gt;https://blog.vavr.io&lt;/a&gt;.
-However, starting from this summer, I lost my interest in continuing the
-contributions because I don’t have the opportunity to use vavr in Datadog and I
-don’t see other opportunities to use this library in the mid-term. So I stopped
-investigating my time on it and tried to put effort into other fields that are
-more related to my current work.&lt;/p&gt;
-
-&lt;h3 id=&quot;algorithm&quot;&gt;Algorithm&lt;/h3&gt;
-
-&lt;p&gt;I have two GitHub repositories about the algorithm and I want to share them with you
-today.&lt;/p&gt;
-
-&lt;p&gt;&lt;img src=&quot;/assets/20210102-algo.png&quot; alt=&quot;GitHub projects: mincong-h/algorithm-princeton and AlgoStudyGroup/Leetcode&quot; /&gt;&lt;/p&gt;
-
-&lt;p&gt;&lt;a href=&quot;https://github.com/mincong-h/algorithm-princeton&quot;&gt;mincong-h/algorithm-princeton&lt;/a&gt;
-– This project contains my solutions for the Coursera online course:
-Introduction to Algorithms, created by Princeton University, taught by Kevin
-Wayne, Senior Lecturer, and Robert Sedgewick, Professor. I created this project
-when I learned the course back in 2016 and stop maintaining it after. People
-keep adding stars since then and now reached 90 stars!! I am quite surprised by
-the popularity of the project but I am happy to see that people love it and find
-it useful. It makes me understand that hard work gets paid in the end, but you
-need to be patient to see that day coming. It also encourages me to write software
-with the quality so that it will still work years after.&lt;/p&gt;
-
-&lt;p&gt;&lt;a href=&quot;https://github.com/AlgoStudyGroup/Leetcode&quot;&gt;AlgoStudyGroup/Leetcode&lt;/a&gt; – This
-project contains solutions of multiple LeetCode challenges starting
-from Challenge April 2020 to Challenge November 2020. The solutions are written
-in different languages: C++, C#, Python, Java, Scala, JS, Kotlin. This project
-was created by &lt;a href=&quot;https://github.com/jinshendan&quot;&gt;Shendan Jin&lt;/a&gt; and followed by many
-other Chinese developers in France when we were bored during the May holidays
-and the COVID lockdown. It was fun!&lt;/p&gt;
-
-&lt;p&gt;&lt;img src=&quot;/assets/20210102-AlgoStudyGroup.png&quot; alt=&quot;GitHub project: AlgoStudyGroup/Leetcode&quot; /&gt;&lt;/p&gt;
-
-&lt;h2 id=&quot;blogging&quot;&gt;Blogging&lt;/h2&gt;
-
-&lt;p&gt;In 2020, I wrote 28 articles and updated some existing ones. Most of these blog
-posts are about Java and Elasticsearch. They reflect on what I learned and practiced in my
-daily work. Here you can see an overview of them, grouped by quarter:&lt;/p&gt;
-
-&lt;p&gt;&lt;img src=&quot;/assets/20210102-2020-overview.png&quot; alt=&quot;Blogging overview for 2020&quot; /&gt;&lt;/p&gt;
-
-&lt;p&gt;I like writing blog posts because it has several advantages.&lt;/p&gt;
-
-&lt;ul&gt;
-  &lt;li&gt;It is a good way to express technology in a human-readable way. Different
-from writing code, this way is more accessible to most people, even
-for those that have a little knowledge about the target framework or the language.&lt;/li&gt;
-  &lt;li&gt;It expresses the motivation and reasoning behind logical choices. Why we need
-this, why we need that, why shouldn’t we do it in this way, etc. As developers,
-we need to make decisions every day, it’s important to know the pros and cons,
-argue the benefits and potential risks face to choices.&lt;/li&gt;
-  &lt;li&gt;It structures my skills. When writing code, I only know the fraction of the
-framework I use. Writing articles allow me to take a step back and understand
-the big picture and other important aspects provided by the product/framework/language.&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;p&gt;In 2020, I received 234k page views from 182k users all around the world. It’s a
-25% increase in terms of page views and a 23% increase in terms of users. Over the
-4 years, the traffic grew and dropped, there were a lot of back-and-forths. For
-example, it dropped significantly end of last year when my article &lt;a href=&quot;/2018/05/02/git-upstream-tracking/&quot;&gt;Git:
-Upstream Tracking Understanding&lt;/a&gt; was not
-featured by Google anymore and when I changed the domain name from
-&lt;a href=&quot;https://mincong-h.github.io&quot;&gt;https://mincong-h.github.io&lt;/a&gt; to &lt;a href=&quot;https://mincong.io&quot;&gt;https://mincong.io&lt;/a&gt;. But overall, the trend is
-growing up. Back to the 234k page view, it’s
-such a pleasure to see that my articles are useful for other people! It gives me
-the motivation to continue writing. Writing for the author himself may just be a daily
-task, but for readers, it may be the answer for a long-pending problem, a solution
-for a bug encountered in production, a confusing issue that requires
-clarification. This reminds me to always go further in my
-article, find the value points for readers.&lt;/p&gt;
-
-&lt;p&gt;&lt;img src=&quot;/assets/20210102-blog-stats-last-4-years.png&quot; alt=&quot;Google Analytics - The statistics of my blog mincong.io from 2017 to 2020&quot; /&gt;&lt;/p&gt;
-
-&lt;p&gt;Among all the articles written this year, the top 3 articles getting the most
-page views are:&lt;/p&gt;
-
-&lt;ol&gt;
-  &lt;li&gt;&lt;a href=&quot;/2020/04/19/mockito-junit5/&quot;&gt;Mockito: 3 Ways to Init Mock in JUnit 5&lt;/a&gt;
-(13,340 page views)&lt;/li&gt;
-  &lt;li&gt;&lt;a href=&quot;/2020/05/30/exception-handling-in-completable-future/&quot;&gt;3 Ways to Handle Exception In Completable
-Future&lt;/a&gt; (10,031 page
-views)&lt;/li&gt;
-  &lt;li&gt;&lt;a href=&quot;/2020/01/19/elasticsearch-scroll-api/&quot;&gt;Elasticsearch Scroll API&lt;/a&gt; (2,486 page
-views)&lt;/li&gt;
-&lt;/ol&gt;
-
-&lt;p&gt;I hope that in 2021, I can share more valuable articles with you!&lt;/p&gt;
-
-&lt;h2 id=&quot;conclusion&quot;&gt;Conclusion&lt;/h2&gt;
-
-&lt;p&gt;Thank you for reading this whole article. In this post, I shared some lessons
-learned from Datadog as a software engineer, open-source contributions at Vavr,
-and two projects related to Algorithm. Finally, some statistics and thoughts
-about this blog &lt;a href=&quot;https://mincong.io&quot;&gt;https://mincong.io&lt;/a&gt;.
-Interested to know more? You can subscribe to &lt;a href=&quot;/feed.xml&quot;&gt;the feed of my blog&lt;/a&gt;, follow me
-on &lt;a href=&quot;https://twitter.com/mincong_h&quot;&gt;Twitter&lt;/a&gt; or
-&lt;a href=&quot;https://github.com/mincong-h/&quot;&gt;GitHub&lt;/a&gt;. Hope you enjoy this article, see you the next time!&lt;/p&gt;</content><author><name>Mincong Huang</name><email>mincong.h@gmail.com</email></author><category term="review" /><category term="career" /><summary type="html">My tech journey at Datadog in 2020 as a software engineer working for data storage. Also pieces about blogging, open source software VAVR, and other side-projects.</summary><media:thumbnail xmlns:media="http://search.yahoo.com/mrss/" url="https://mincong.io/assets/bg-kelly-sikkema-ZHUi4uX6ipY-unsplash.jpg" /><media:content medium="image" url="https://mincong.io/assets/bg-kelly-sikkema-ZHUi4uX6ipY-unsplash.jpg" xmlns:media="http://search.yahoo.com/mrss/" /></entry></feed>
+&lt;/ul&gt;</content><author><name>Mincong Huang</name><email>mincong.h@gmail.com</email></author><category term="elasticsearch" /><category term="elasticsearch" /><category term="java" /><summary type="html">Part 4: How to create a snapshot for index &quot;transactions&quot; of DVF and restore it to an Elasticsearch cluster.</summary><media:thumbnail xmlns:media="http://search.yahoo.com/mrss/" url="https://mincong.io/assets/bg-leonard-cotte-R5scocnOOdM-unsplash.jpg" /><media:content medium="image" url="https://mincong.io/assets/bg-leonard-cotte-R5scocnOOdM-unsplash.jpg" xmlns:media="http://search.yahoo.com/mrss/" /></entry></feed>

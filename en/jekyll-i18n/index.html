@@ -1,0 +1,1685 @@
+<!DOCTYPE html><html lang="en">
+  <head><!-- Global site tag (gtag.js) - Google Analytics -->
+	<script async src="https://www.googletagmanager.com/gtag/js?id=UA-87129300-1"></script>
+	<script>
+		window.dataLayer = window.dataLayer || [];
+		function gtag(){dataLayer.push(arguments);}
+		gtag('js', new Date());
+
+		gtag('config', 'UA-87129300-1');
+		
+	</script><meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no"><title>Custom Internationalization (i18n) with Jekyll - Mincong Huang</title>
+
+<meta name="description" content="One blog and two languages: bringing a better reading experience for the readers! This article shares how I internationalize my blog https://mincong.io">
+
+<!-- Begin Jekyll SEO tag v2.7.1 -->
+<title>Custom Internationalization (i18n) with Jekyll | Mincong Huang</title>
+<meta name="generator" content="Jekyll v4.2.0" />
+<meta property="og:title" content="Custom Internationalization (i18n) with Jekyll" />
+<meta name="author" content="Mincong Huang" />
+<meta property="og:locale" content="en" />
+<meta name="description" content="One blog and two languages: bringing a better reading experience for the readers! This article shares how I internationalize my blog https://mincong.io" />
+<meta property="og:description" content="One blog and two languages: bringing a better reading experience for the readers! This article shares how I internationalize my blog https://mincong.io" />
+<link rel="canonical" href="https://mincong.io/en/jekyll-i18n/" />
+<meta property="og:url" content="https://mincong.io/en/jekyll-i18n/" />
+<meta property="og:site_name" content="Mincong Huang" />
+<meta property="og:image" content="https://mincong.io/assets/bg-chuttersnap-aku7Zlj_x_o-unsplash.jpg" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2021-07-11T22:02:53+02:00" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta property="twitter:image" content="https://mincong.io/assets/bg-chuttersnap-aku7Zlj_x_o-unsplash.jpg" />
+<meta property="twitter:title" content="Custom Internationalization (i18n) with Jekyll" />
+<meta name="twitter:site" content="@mincong_h" />
+<meta name="twitter:creator" content="@mincong_h" />
+<script type="application/ld+json">
+{"mainEntityOfPage":{"@type":"WebPage","@id":"https://mincong.io/en/jekyll-i18n/"},"author":{"@type":"Person","name":"Mincong Huang"},"image":"https://mincong.io/assets/bg-chuttersnap-aku7Zlj_x_o-unsplash.jpg","description":"One blog and two languages: bringing a better reading experience for the readers! This article shares how I internationalize my blog https://mincong.io","@type":"BlogPosting","url":"https://mincong.io/en/jekyll-i18n/","headline":"Custom Internationalization (i18n) with Jekyll","dateModified":"2021-07-11T22:02:53+02:00","datePublished":"2021-07-11T22:02:53+02:00","@context":"https://schema.org"}</script>
+<!-- End Jekyll SEO tag -->
+
+
+<!-- Extra Open Graph :: Start -->
+
+<meta property="og:image:width" content="1282"/>
+<meta property="og:image:height" content="1920"/>
+
+<!-- Extra Open Graph :: End -->
+
+<link rel="canonical" href="https://mincong.io/en/jekyll-i18n/"><link rel="alternate" type="application/rss+xml" title="Mincong Huang" href="/feed.xml"><!-- start favicons snippet, use https://realfavicongenerator.net/ --><link rel="apple-touch-icon" sizes="180x180" href="/assets/apple-touch-icon.png"><link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon-32x32.png"><link rel="icon" type="image/png" sizes="16x16" href="/assets/favicon-16x16.png"><link rel="manifest" href="/assets/site.webmanifest"><link rel="mask-icon" href="/assets/safari-pinned-tab.svg" color="#fc4d50"><link rel="shortcut icon" href="/assets/favicon.ico">
+
+<meta name="msapplication-TileColor" content="#ffc40d"><meta name="msapplication-config" content="/assets/browserconfig.xml">
+
+<meta name="theme-color" content="#ffffff">
+<!-- end favicons snippet --><link rel="stylesheet" href="/assets/css/main.css"><link rel="stylesheet" href="https://cdn.bootcdn.net/ajax/libs/font-awesome/5.15.1/css/all.css" ><!-- start custom head snippets -->
+
+<!-- end custom head snippets -->
+<script>(function() {
+  window.isArray = function(val) {
+    return Object.prototype.toString.call(val) === '[object Array]';
+  };
+  window.isString = function(val) {
+    return typeof val === 'string';
+  };
+
+  window.hasEvent = function(event) {
+    return 'on'.concat(event) in window.document;
+  };
+
+  window.isOverallScroller = function(node) {
+    return node === document.documentElement || node === document.body || node === window;
+  };
+
+  window.isFormElement = function(node) {
+    var tagName = node.tagName;
+    return tagName === 'INPUT' || tagName === 'SELECT' || tagName === 'TEXTAREA';
+  };
+
+  window.pageLoad = (function () {
+    var loaded = false, cbs = [];
+    window.addEventListener('load', function () {
+      var i;
+      loaded = true;
+      if (cbs.length > 0) {
+        for (i = 0; i < cbs.length; i++) {
+          cbs[i]();
+        }
+      }
+    });
+    return {
+      then: function(cb) {
+        cb && (loaded ? cb() : (cbs.push(cb)));
+      }
+    };
+  })();
+})();
+(function() {
+  window.throttle = function(func, wait) {
+    var args, result, thisArg, timeoutId, lastCalled = 0;
+
+    function trailingCall() {
+      lastCalled = new Date;
+      timeoutId = null;
+      result = func.apply(thisArg, args);
+    }
+    return function() {
+      var now = new Date,
+        remaining = wait - (now - lastCalled);
+
+      args = arguments;
+      thisArg = this;
+
+      if (remaining <= 0) {
+        clearTimeout(timeoutId);
+        timeoutId = null;
+        lastCalled = now;
+        result = func.apply(thisArg, args);
+      } else if (!timeoutId) {
+        timeoutId = setTimeout(trailingCall, remaining);
+      }
+      return result;
+    };
+  };
+})();
+(function() {
+  var Set = (function() {
+    var add = function(item) {
+      var i, data = this._data;
+      for (i = 0; i < data.length; i++) {
+        if (data[i] === item) {
+          return;
+        }
+      }
+      this.size ++;
+      data.push(item);
+      return data;
+    };
+
+    var Set = function(data) {
+      this.size = 0;
+      this._data = [];
+      var i;
+      if (data.length > 0) {
+        for (i = 0; i < data.length; i++) {
+          add.call(this, data[i]);
+        }
+      }
+    };
+    Set.prototype.add = add;
+    Set.prototype.get = function(index) { return this._data[index]; };
+    Set.prototype.has = function(item) {
+      var i, data = this._data;
+      for (i = 0; i < data.length; i++) {
+        if (this.get(i) === item) {
+          return true;
+        }
+      }
+      return false;
+    };
+    Set.prototype.is = function(map) {
+      if (map._data.length !== this._data.length) { return false; }
+      var i, j, flag, tData = this._data, mData = map._data;
+      for (i = 0; i < tData.length; i++) {
+        for (flag = false, j = 0; j < mData.length; j++) {
+          if (tData[i] === mData[j]) {
+            flag = true;
+            break;
+          }
+        }
+        if (!flag) { return false; }
+      }
+      return true;
+    };
+    Set.prototype.values = function() {
+      return this._data;
+    };
+    return Set;
+  })();
+
+  window.Lazyload = (function(doc) {
+    var queue = {js: [], css: []}, sources = {js: {}, css: {}}, context = this;
+    var createNode = function(name, attrs) {
+      var node = doc.createElement(name), attr;
+      for (attr in attrs) {
+        if (attrs.hasOwnProperty(attr)) {
+          node.setAttribute(attr, attrs[attr]);
+        }
+      }
+      return node;
+    };
+    var end = function(type, url) {
+      var s, q, qi, cbs, i, j, cur, val, flag;
+      if (type === 'js' || type ==='css') {
+        s = sources[type], q = queue[type];
+        s[url] = true;
+        for (i = 0; i < q.length; i++) {
+          cur = q[i];
+          if (cur.urls.has(url)) {
+            qi = cur, val = qi.urls.values();
+            qi && (cbs = qi.callbacks);
+            for (flag = true, j = 0; j < val.length; j++) {
+              cur = val[j];
+              if (!s[cur]) {
+                flag = false;
+              }
+            }
+            if (flag && cbs && cbs.length > 0) {
+              for (j = 0; j < cbs.length; j++) {
+                cbs[j].call(context);
+              }
+              qi.load = true;
+            }
+          }
+        }
+      }
+    };
+    var load = function(type, urls, callback) {
+      var s, q, qi, node, i, cur,
+        _urls = typeof urls === 'string' ? new Set([urls]) : new Set(urls), val, url;
+      if (type === 'js' || type ==='css') {
+        s = sources[type], q = queue[type];
+        for (i = 0; i < q.length; i++) {
+          cur = q[i];
+          if (_urls.is(cur.urls)) {
+            qi = cur;
+            break;
+          }
+        }
+        val = _urls.values();
+        if (qi) {
+          callback && (qi.load || qi.callbacks.push(callback));
+          callback && (qi.load && callback());
+        } else {
+          q.push({
+            urls: _urls,
+            callbacks: callback ? [callback] : [],
+            load: false
+          });
+          for (i = 0; i < val.length; i++) {
+            node = null, url = val[i];
+            if (s[url] === undefined) {
+              (type === 'js' ) && (node = createNode('script', { src: url }));
+              (type === 'css') && (node = createNode('link', { rel: 'stylesheet', href: url }));
+              if (node) {
+                node.onload = (function(type, url) {
+                  return function() {
+                    end(type, url);
+                  };
+                })(type, url);
+                (doc.head || doc.body).appendChild(node);
+                s[url] = false;
+              }
+            }
+          }
+        }
+      }
+    };
+    return {
+      js: function(url, callback) {
+        load('js', url, callback);
+      },
+      css: function(url, callback) {
+        load('css', url, callback);
+      }
+    };
+  })(this.document);
+})();
+</script><script>
+  (function() {
+    var TEXT_VARIABLES = {
+      version: '2.2.6',
+      sources: {
+        font_awesome: 'https://cdn.bootcdn.net/ajax/libs/font-awesome/5.15.1/css/all.css',
+        jquery: 'https://cdn.bootcss.com/jquery/3.1.1/jquery.min.js',
+        leancloud_js_sdk: '//cdn.jsdelivr.net/npm/leancloud-storage@3.13.2/dist/av-min.js',
+        chart: 'https://cdn.bootcss.com/Chart.js/2.7.2/Chart.bundle.min.js',
+        gitalk: {
+          js: 'https://cdn.bootcss.com/gitalk/1.2.2/gitalk.min.js',
+          css: 'https://cdn.bootcss.com/gitalk/1.2.2/gitalk.min.css'
+        },
+        valine: 'https://unpkg.com/valine/dist/Valine.min.js',
+        mathjax: 'https://cdn.bootcss.com/mathjax/2.7.4/MathJax.js?config=TeX-MML-AM_CHTML',
+        mermaid: 'https://cdn.bootcss.com/mermaid/8.0.0-rc.8/mermaid.min.js'
+      },
+      site: {
+        toc: {
+          selectors: 'h1,h2,h3'
+        }
+      },
+      paths: {
+        search_js: '/assets/search.js'
+      }
+    };
+    window.TEXT_VARIABLES = TEXT_VARIABLES;
+  })();
+</script>
+</head>
+  <body>
+    <div class="root" data-is-touch="false">
+      <div class="layout--page js-page-root"><div class="page__main js-page-main page__viewport has-aside cell cell--auto">
+
+      <div class="page__main-inner"><div class="page__header d-print-none"><header class="header"><div class="main">
+      <div class="header__title">
+        <div class="header__brand"><svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
+	 width="24px" height="24px" viewBox="0 0 24 24">
+<style type="text/css">
+	.st0{fill:#515151;}
+</style>
+<path class="st0" d="M1.7,22.3c5.7-5.7,11.3-5.7,17,0c3.3-3.3,3.5-5.3,0.8-6c2.7,0.7,3.5-1.1,2.3-5.6s-3.3-5.2-6.3-2.1
+	c3-3,2.3-5.2-2.1-6.3S7,1.8,7.7,4.6C7,1.8,5,2.1,1.7,5.3C7.3,11,7.3,16.7,1.7,22.3"/>
+</svg>
+
+          
+
+          
+          
+          
+
+          
+          
+          
+
+          
+          
+
+          
+          
+
+          <a href="/">Mincong Huang</a>
+        </div><button class="button button--secondary button--circle search-button js-search-toggle">
+            <i class="fas fa-search"></i>
+          </button></div><nav class="navigation">
+        <ul><li class="navigation__item"><a href="/en/categories/">Categories</a></li><li class="navigation__item"><a href="/en/series/">Series</a></li><li class="navigation__item"><a href="/en/archive/">Archive</a></li><li class="navigation__item"><a href="/en/about/">About</a></li><li><button class="button button--secondary button--circle search-button js-search-toggle"><i class="fas fa-search"></i></button></li><li>
+            <a href="/cn/">
+             <img src="/assets/flag-CN.png"
+                  alt=""
+                  class="naviation__lang_img">
+            </a>
+          </li>
+        </ul>
+      </nav></div>
+  </header>
+</div><div class="page__content"><div class="article__header--overlay"><div class="hero hero--dark overlay" style="background-image:linear-gradient(135deg, rgba(0, 0, 0, .6), rgba(0, 0, 0, .4)),url(/assets/bg-chuttersnap-aku7Zlj_x_o-unsplash.jpg);background-color:#203028;"><div class="hero__content"><div class ="main"><div class="article__info clearfix">
+      <ul class="left-col menu">
+        <li>
+              <a class="button button--secondary button--pill button--sm"
+                href="/archive?tag=jekyll">jekyll</a>
+            </li><li>
+              <a class="button button--secondary button--pill button--sm"
+                href="/archive?tag=i18n">i18n</a>
+            </li>
+
+        <li class="separator">|</li>
+          
+            <li>
+              <a class="button button--circle button--primary focus lang"
+                 href="/en/jekyll-i18n/"><span>EN</span></a>
+
+              
+
+
+
+
+
+
+              
+
+              
+                <a class="button button--circle button--secondary lang"
+                   href="/cn/jekyll-i18n/"><span>CN</span></a>
+              
+            </li>
+          
+        
+      </ul><ul class="right-col menu"><li><i class="far fa-calendar-alt"></i> <span>Jul 11, 2021</span>
+            </li></ul></div><div class="article__header"><header><h1>Custom Internationalization (i18n) with Jekyll</h1></header></div><div class="article__header">
+                        <p class="overlay__excerpt">One blog and two languages: bringing a better reading experience to the readers.</p>
+                      </div><div class="article__info clearfix">
+  <ul class="left-col menu">
+    <li>
+      <i class="fas fa-camera"></i>
+      
+      Photo by
+      <a href="https://unsplash.com/@chuttersnap" target="_blank">CHUTTERSNAP</a>
+      
+      on
+      <a href="https://unsplash.com/license" target="_blank">Unplash </a>
+    </li>
+  </ul>
+</div>
+</div></div>
+              </div>
+            </div><div class ="main"><div class="grid grid--reverse">
+
+              <div class="col-aside d-print-none js-col-aside"><aside class="page__aside js-page-aside"><div class="toc-aside js-toc-root"></div>
+</aside></div>
+
+              <div class="col-main cell cell--auto"><!-- start custom main top snippet -->
+
+<!-- end custom main top snippet -->
+<article itemscope itemtype="http://schema.org/Article"><meta itemprop="headline" content="Custom Internationalization (i18n) with Jekyll"><meta itemprop="author" content="Mincong Huang"/><meta itemprop="datePublished" content="2021-07-11T22:02:53+02:00">
+    <meta itemprop="keywords" content="jekyll,i18n"><div class="js-article-content"><div class="layout--article"><!-- start custom article top snippet -->
+
+
+<!-- end custom article top snippet -->
+<div class="article__content" itemprop="articleBody"><p class="info">This article is translated with www.DeepL.com/Translator (free version) and reviewed by Mincong.</p>
+
+<h2 id="introduction">Introduction</h2>
+
+<p>During my visit to my family back home in April this year, I came across a lot of technical content in Chinese when I was looking for information, but I also found that not many of them have good quality. So I started to write Chinese articles in my blog, hoping to contribute to the Chinese developer community. More concretely, I wrote in two languages: Chinese and English. But in practice, I found that it is not a good experience for reader to see two languages in one blog.</p>
+
+<p>After I started writing in Chinese, several times my colleagues found my popular English articles in Google Search and started reading them. This thing made me embarrassed, because since April, my articles are all in Chinese. Let me think about it from their point of view: what happens if after reading, they are curious to read more articles? They may click on the home page and then surprised to see a bunch of Chinese blogs: they may feel confused and feel like they are in the wrong place. For someone who doesn’t know another language, the experience can be very bad. The opposite also holds true: when a Chinese friend sees my blog and sees a bunch of English articles, it feels hard to get interested in reading them. If the articles are written in their native language, it will be much more user-friendly.</p>
+
+<p>That’s why I want to do internationalization: I want to provide a comfortable reading experience for every reader. I want to have a clear distinction between the different languages in the blog, so that when people visit, they can read the content in the language they are familiar with, no matter which page they click on. Then the blog itself can also provide options for people to switch to another language.</p>
+
+<p>This post will share with you the internationalization of my blog.</p>
+
+<h2 id="proposals">Proposals</h2>
+
+<p>There are serveral proposals for internationalization, and I’ll discuss their feasibility below.</p>
+
+<ol>
+  <li>Provide translation feature. Embed translation button in the article and use third-party translators (Bing, Google, DeepL, etc.) to translate when user clicks the translation button.</li>
+  <li>Interlink English and Chinese articles. Embed a link to English article in Chinese article and another link to Chinese article in English article.</li>
+  <li>Introduce the concept of page key. Chinese and English articles share the same page key.</li>
+  <li>Use two collections: <code class="language-plaintext highlighter-rouge">posts</code> and <code class="language-plaintext highlighter-rouge">cn</code>.</li>
+</ol>
+
+<p><mark>Final plan: Use two collections.</mark></p>
+
+<h3 id="proposal-1-provide-translation-feature">Proposal 1: Provide Translation Feature</h3>
+
+<p>Embed a translation button inside the article and use a third-party translator (Bing, Google, DeepL, etc.) to translate when the translation button is clicked. The rationale is that my blog is not very visited, with about 18,000 visitors per month. And I am not a professional writer, purely writing for fun and not making money. There is no need to be so serious. This feature is inspired by Chrome’s Translate button, which allows you to translate a page in a non-frequently used language by clicking the Translate button in the URL input field, or by right-clicking on the page content.</p>
+
+<p>The advantages of this proposal are:</p>
+
+<ul>
+  <li>It’s easy to implement</li>
+</ul>
+
+<p>The disadvantages of this proposal are:</p>
+
+<ul>
+  <li>There are no two articles, there is only one.</li>
+  <li>No correction for translation results</li>
+  <li>Without articles, we can’t attract readers through articles</li>
+</ul>
+
+<h3 id="proposal-2-interlinking-english-and-chinese-posts">Proposal 2: Interlinking English and Chinese Posts</h3>
+
+<p>Add a link to the corresponding article at the beginning of each article in order to switch languages. That is, embed a link to an English article in a Chinese article and a link to a Chinese article in an English article. On the web page, add a button or an icon to achieve language switching. This way, readers can access another language version of the article by clicking this button or this icon while reading.</p>
+
+<p>For example, for the article <a href="/cn/mongodb-schema-compatibility/">“Implementing backward-compatible schema changes in MongoDB”</a>, the switch between the English and Chinese versions of the article can be implemented in the following form.</p>
+
+<p>English version.</p>
+
+<div class="language-diff highlighter-rouge"><div class="highlight"><pre class="highlight"><code>  ---
+  layout: post
+  title: Making Backward-Compatible Schema Changes in MongoDB
+  date: 2021-02-27 17:07:27 +0100
+  categories: [java-serialization, reliability]
+  tags: [java, mongodb, serialization, jackson, reliability]
+  comments: true
+<span class="gi">+ lang: en
++ version:
++ en-CN: 2021-04-30-mongodb-schema-compatibility.md
+</span>  ...
+  ---
+</code></pre></div></div>
+
+<p>Chinese version.</p>
+
+<div class="language-diff highlighter-rouge"><div class="highlight"><pre class="highlight"><code>  ---
+  layout: post
+  title: Is it really that easy to add and delete fields in MongoDB?
+  date: 2021-04-30 23:09:38 +0800
+  categories: [java-serialization, reliability]
+  tags: [java, mongodb, serialization, jackson, reliability]
+  comments: true
+<span class="gi">+ lang: zh
++ version:
++ en-US: 2021-02-27-mongodb-schema-compatibility.md
+</span>  ...
+  ---
+</code></pre></div></div>
+
+<p>The advantages of this proposal are:</p>
+
+<ul>
+  <li>The links to existing articles remain unchanged and do not affect SEO</li>
+</ul>
+
+<p>The disadvantages of this proposal are:</p>
+
+<ul>
+  <li>It is not possible to know the link of another version of the other article through the article link.</li>
+  <li>If you change the link to the article, you should remember to change the referer, i.e. in the other language page.</li>
+</ul>
+
+<h3 id="proposal-3-shared-page-key-between-chinese-and-english">Proposal 3: Shared Page Key between Chinese and English</h3>
+
+<p>Introduce the concept of page key in each article. When a user accesses the article, the page URL contains both the language and the page key. More precisely, it follows the following expression.</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>https://mincong.io/{lang}/{page-key}
+https://mincong.io/en/mongodb-schema-compability
+https://mincong.io/cn/mongodb-schema-compability
+</code></pre></div></div>
+
+<p>English version (ideal state).</p>
+
+<div class="language-diff highlighter-rouge"><div class="highlight"><pre class="highlight"><code>  ---
+  layout: post
+  title: Making Backward-Compatible Schema Changes in MongoDB
+  date: 2021-02-27 17:07:27 +0100
+  categories: [java-serialization, reliability]
+  tags: [java, mongodb, serialization, jackson, reliability]
+  comments: true
+<span class="gi">+ key: mongodb-schema-compatibility
++ lang: en
+</span>  ...
+  ---
+</code></pre></div></div>
+
+<p>Chinese version (ideal state).</p>
+
+<div class="language-diff highlighter-rouge"><div class="highlight"><pre class="highlight"><code>  ---
+  layout: post
+  title: Is it really that easy to add and delete fields in MongoDB?
+  date: 2021-04-30 23:09:38 +0800
+  categories: [java-serialization, reliability]
+  tags: [java, mongodb, serialization, jackson, reliability]
+  comments: true
+<span class="gi">+ key: mongodb-schema-compatibility
++ lang: zh
+</span>  ...
+  ---
+</code></pre></div></div>
+
+<p>The advantage of this proposal are:</p>
+
+<ul>
+  <li>The article link contains the language. So you can also know the link of the other version by naming convension.</li>
+  <li>Hide date from URL</li>
+  <li>Thanks to the permalink pattern, you can write two articles a day (Chinese + English), which was not possible before when using date + title as URL.</li>
+</ul>
+
+<p>The disadvantages of this proposal are:</p>
+
+<ul>
+  <li>May affect SEO</li>
+</ul>
+
+<p>Originally this was my perferred solution. Unfortunately it is not possible to implement. Because not all variables are available as part of Jekyll’s permalink. For example, Jekyll does not support custom variable <code class="language-plaintext highlighter-rouge">lang</code> as part of a link. See the official documentation <a href="https://jekyllrb.com/docs/permalinks/">Permalinks</a> for variables supported by Permalinks.</p>
+
+<h3 id="proposal-4-use-two-collections">Proposal 4: Use Two Collections</h3>
+
+<p>The first collection is the default <code class="language-plaintext highlighter-rouge">posts</code> and the second collection is <code class="language-plaintext highlighter-rouge">cn</code>.</p>
+
+<p>The advantage of this is the same as proposal 3:</p>
+
+<ul>
+  <li>The article link contains the language. So you can also know the link of the other version by naming convension.</li>
+  <li>Hide date from URL</li>
+  <li>Thanks to the permalink pattern, you can write two articles a day (Chinese + English), which was not possible before when using date + title as URL.</li>
+</ul>
+
+<p>The downside of this are:</p>
+
+<ul>
+  <li>The default plugin <code class="language-plaintext highlighter-rouge">jekyll-paginate</code> only supports pagination for the default collection posts. If you need to paginate another collection, you need to use the <code class="language-plaintext highlighter-rouge">jekyll-paginate-v2</code> plugin. However, GitHub Pages does not officially support the <code class="language-plaintext highlighter-rouge">jekyll-paginate-v2</code> plugin.</li>
+</ul>
+
+<h3 id="other-considerations">Other Considerations</h3>
+
+<ul>
+  <li>Whether the theme you are currently using has support for internationalization? For example, I use <a href="https://github.com/kitian616/jekyll-TeXt-theme">Jekyll TeXt Theme</a>, which has some support for internationalization itself. The information in the header and footer of the browsing page can be automatically adjusted according to the language of the page. However, it does not translation for the page content directly.</li>
+  <li>If you’re using GitHub Pages, consider whether GitHub Pages has support for the plugins that you use. Only some of the Jekyll plugins are officially supported by GitHub, and others won’t work even if you install them. This will affect you unless you don’t use the official site generation, you can generate pages locally yourself or generate them from your custom CI pipeline.</li>
+  <li>Consider using another Jekyll internationalization plugin, such as <a href="https://github.com/kurtsson/jekyll-multiple-languages-plugin">jekyll-multiple-languages-plugin</a>. I didn’t look into it at the time I wrote the proposals, and only found out about this plugin after the project was done… But this plugin is not supported by GitHub Pages neither.</li>
+</ul>
+
+<h2 id="other-websites">Other Websites</h2>
+
+<p>How do other blogs work? Is there anything we can learn from them?</p>
+
+<h3 id="elasticsearch-blog">Elasticsearch Blog</h3>
+
+<p>Elastic’s blog is internationalized, and each article is available in multiple languages, such as the following article: <a href="https://www.elastic.co/cn/blog/how-to-design-your-elasticsearch-data-storage-architecture-for-scale">How to design a scalable Elasticsearch data storage architecture</a>.</p>
+
+<p><img src="/assets/20210711-elasticsearch-blog.png" alt="Elasticsearch blog i18n" /></p>
+
+<p>It is listed below in three languages.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th style="text-align: left">Language</th>
+      <th style="text-align: left">Links</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td style="text-align: left">How to design your Elasticsearch data storage architecture for scale</td>
+      <td style="text-align: left"><a href="https://www.elastic.co/blog/how-to-design-your- elasticsearch-data-storage-architecture-for-scale">https://www.elastic.co/blog/how-to-design-your- elasticsearch-data-storage-architecture-for-scale</a></td>
+    </tr>
+    <tr>
+      <td style="text-align: left">How to design your Elasticsearch data storage architecture for scale</td>
+      <td style="text-align: left"><a href="https://www.elastic.co/cn/blog/how-to-design-your-elasticsearch-data-storage-architecture-for- scale">https://www.elastic.co/cn/blog/how-to-design-your-elasticsearch-data-storage-architecture-for- scale</a></td>
+    </tr>
+    <tr>
+      <td style="text-align: left">スケーラブルなElasticsearchデータストレージを设计する</td>
+      <td style="text-align: left"><a href="https://www.elastic.co/jp/blog/how-to-design-your-elasticsearch-data-storage-architecture-for -scale">https://www.elastic.co/jp/blog/how-to-design-your-elasticsearch-data-storage-architecture-for -scale</a></td>
+    </tr>
+  </tbody>
+</table>
+
+<p>It is named in the following way.</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>https://www.elastic.co/blog/{post}
+https://www.elastic.co/{country}/blog/{post}
+</code></pre></div></div>
+
+<p>English blogs do not have EN prefix, other languages use country abbreviation as prefix, for example, CN for China, JP for Japan.</p>
+
+<h3 id="text-theme">TeXt Theme</h3>
+
+<p>Jekyll TeXt Theme is a highly customizable Jekyll theme for personal or team websites, blogs, projects, documents and more. It references the iOS 11 style with big and prominent headers and rounded buttons and cards. It was written by Alibaba’s engineer Tian Qi (<a href="https://github.com/kitian616">kitian616</a>). This theme supports <a href="https://tianqi.name/jekyll-TeXt-theme/docs/zh/i18n">internationalization</a>. In fact, the documentation of this theme itself is internationalized. If you don’t believe me, see this table:</p>
+
+<table>
+  <thead>
+    <tr>
+      <th style="text-align: left">Language</th>
+      <th style="text-align: left">Links</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td style="text-align: left">Quick Start</td>
+      <td style="text-align: left"><a href="https://tianqi.name/jekyll-TeXt-theme/docs/en/quick-start">https://tianqi.name/jekyll-TeXt-theme/docs/en/quick-start</a></td>
+    </tr>
+    <tr>
+      <td style="text-align: left">Quick Start</td>
+      <td style="text-align: left"><a href="https://tianqi.name/jekyll-TeXt-theme/docs/zh/quick-start">https://tianqi.name/jekyll-TeXt-theme/docs/zh/quick-start</a></td>
+    </tr>
+  </tbody>
+</table>
+
+<p>It is named in the following way.</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>https://tianqi.name/jekyll-TeXt-theme/docs/{lang}/{post}
+</code></pre></div></div>
+
+<p>Whatever the language, the language abbreviation is used as the prefix, for example, zh for Chinese, en for English.</p>
+
+<h2 id="final-solution">Final solution</h2>
+
+<p>The final solution is proposal 4: use two collections. The first collection is the default <code class="language-plaintext highlighter-rouge">posts</code> and the second collection is <code class="language-plaintext highlighter-rouge">cn</code>. The main goal is to modify the article links to the following format.</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>https://mincong.io/{country}/{post}
+https://mincong.io/{country}/{page}
+</code></pre></div></div>
+
+<p>The two parts of the link here.</p>
+
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">country</code> is the country, EN for English-speaking countries and CN for China. This expression was better than using locale en/zh because it’s not only a matter of language, but also the components loaded by the page: for example, the Chinese page will suggest WeChat but not the English version. In the future, I’ll also consider splitting the other components into two different versions: Chinese and English pages load different comment systems, different SEO scripts, etc.</li>
+  <li>The <code class="language-plaintext highlighter-rouge">post</code> or <code class="language-plaintext highlighter-rouge">page</code> is the ID of the blog post or the ID of another page.</li>
+</ul>
+
+<p>Next, I want to share with you the specific tasks that need to be done when implementing internationalization.</p>
+
+<h2 id="tasks">Tasks</h2>
+
+<p>This section is a detailed explanation of the main tasks that need to be done. This section may be a bit long, it’s mainly for those who are interested in changing their blogs for real. If you don’t want to internationalize your site, I suggest avoid reading it into details.</p>
+
+<h3 id="task-1-modify-chinese-articles">Task 1: Modify Chinese Articles</h3>
+
+<p>Modify the article link to the following format.</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>https://mincong.io/cn/{post}
+</code></pre></div></div>
+
+<p>Since most of the Chinese articles were written after April this year, there is no need to keep the original links. At the beginning of each article, add two pieces of information: language and link redirection.</p>
+
+<div class="language-diff highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="gi">+ lang: zh
+</span>  date: 2021-04-20 11:21:16 +0800
+  categories: [java-core]
+  tags: [java, akka]
+<span class="p">@@ -13,6 +14,8 @@</span> excerpt: &gt;
+  image: /assets/bg-ocean-ng-L0xOtAnv94Y-unsplash.jpg
+  cover: /assets/bg-ocean-ng-L0xOtAnv94Y-unsplash.jpg
+<span class="gi">+ redirect_from:
++ - /2021/04/20/exponential-backoff-in-akka/
+</span>  article_header:
+</code></pre></div></div>
+
+<p>Then create a new collection called <code class="language-plaintext highlighter-rouge">cn</code>. Store it in the folder <code class="language-plaintext highlighter-rouge">_cn</code> according to Jekyll naming requirements, then put all Chinese articles in that folder and remove the “year, month and day” part of the file name.</p>
+
+<p>Changes in article links.</p>
+
+<ul>
+  <li>Before: <a href="https://mincong.io/2021/04/30/mongodb-schema-compatibility/">https://mincong.io/2021/04/30/mongodb-schema-compatibility/</a></li>
+  <li>After: <a href="https://mincong.io/cn/mongodb-schema-compability/">https://mincong.io/cn/mongodb-schema-compability/</a></li>
+</ul>
+
+<p>In addition, in the global configuration file (<code class="language-plaintext highlighter-rouge">_config.yml</code>), configure the information about the <code class="language-plaintext highlighter-rouge">cn</code> collection, such as the permalink, whether to display the table of contents, etc. For details, see: <a href="https://github.com/mincong-h/mincong-h.github.io/pull/31">https://github.com/mincong-h/mincong-h.github.io/pull/31</a></p>
+
+<h3 id="task-2-modify-english-articles">Task 2: Modify English Articles</h3>
+
+<p>I have 168 English articles on my blog, some of which have important page views. I don’t want them to lose any information because of the internationalization, such as comments and likes on Disqus. So my strategy for English articles is to not make any changes to existing articles and only change the new articles. For new articles, I use the new naming convention <code class="language-plaintext highlighter-rouge">https://mincong.io/en/{post}</code>. In the following paragraphs, let’s discuss it further.</p>
+
+<p>For all existing articles, explicitly mark the article language as English in the front matter at the article level.</p>
+
+<div class="language-sh highlighter-rouge"><div class="highlight"><pre class="highlight"><code>find _posts <span class="nt">-type</span> f <span class="nt">-exec</span> <span class="nb">sed</span> <span class="nt">-i</span> <span class="s1">''</span> <span class="nt">-E</span> <span class="s1">'s/date:/i lang: en'</span> <span class="o">{}</span> +
+</code></pre></div></div>
+
+<p>And after adding <code class="language-plaintext highlighter-rouge">permalink</code> so that they are not interfered with by the global configuration.</p>
+
+<div class="language-sh highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c">#! /bin/bash</span>
+<span class="nv">paths</span><span class="o">=(</span><span class="si">$(</span>find <span class="s2">"</span><span class="k">${</span><span class="nv">HOME</span><span class="k">}</span><span class="s2">/github/mincong-h.github.io/_posts"</span> <span class="nt">-type</span> f <span class="nt">-name</span> <span class="s2">"*.md"</span> | <span class="nb">tr</span> <span class="s1">'\n'</span> <span class="s1">' '</span><span class="si">)</span><span class="o">)</span>
+<span class="nv">i</span><span class="o">=</span>0
+<span class="k">for </span>path <span class="k">in</span> <span class="s2">"</span><span class="k">${</span><span class="nv">paths</span><span class="p">[@]</span><span class="k">}</span><span class="s2">"</span>
+<span class="k">do
+    </span><span class="nv">filename</span><span class="o">=</span><span class="s2">"</span><span class="k">${</span><span class="nv">path</span><span class="p">##*/</span><span class="k">}</span><span class="s2">"</span>
+    <span class="nv">year</span><span class="o">=</span><span class="si">$(</span><span class="nb">echo</span> <span class="nv">$filename</span> | <span class="nb">sed</span> <span class="nt">-E</span> <span class="s1">'s/^([[:digit:]]+)-([[:digit:]]+)-([[:digit:]]+)-(. *)\.md/\1/'</span><span class="si">)</span>
+    <span class="nv">month</span><span class="o">=</span><span class="si">$(</span><span class="nb">echo</span> <span class="nv">$filename</span> | <span class="nb">sed</span> <span class="nt">-E</span> <span class="s1">'s/^([[:digit:]]+)-([[:digit:]]+)-([[:digit:]]+)-(. *)\.md/\2/'</span><span class="si">)</span>
+    <span class="nv">day</span><span class="o">=</span><span class="si">$(</span><span class="nb">echo</span> <span class="nv">$filename</span> | <span class="nb">sed</span> <span class="nt">-E</span> <span class="s1">'s/^([[:digit:]]+)-([[:digit:]]+)-([[:digit:]]+)-(. *)\.md/\3/'</span><span class="si">)</span>
+    <span class="nv">name</span><span class="o">=</span><span class="si">$(</span><span class="nb">echo</span> <span class="nv">$filename</span> | <span class="nb">sed</span> <span class="nt">-E</span> <span class="s1">'s/^([[:digit:]]+)-([[:digit:]]+)-([[:digit:]]+)-(. *)\.md/\4/'</span><span class="si">)</span>
+    <span class="nv">permalink</span><span class="o">=</span><span class="s2">"/</span><span class="k">${</span><span class="nv">year</span><span class="k">}</span><span class="s2">/</span><span class="k">${</span><span class="nv">month</span><span class="k">}</span><span class="s2">/</span><span class="k">${</span><span class="nv">day</span><span class="k">}</span><span class="s2">/</span><span class="k">${</span><span class="nv">name</span><span class="k">}</span><span class="s2">/"</span>
+    <span class="nb">echo</span> <span class="s2">"</span><span class="k">${</span><span class="nv">i</span><span class="k">}</span><span class="s2">: year=</span><span class="k">${</span><span class="nv">year</span><span class="k">}</span><span class="s2">, month=</span><span class="k">${</span><span class="nv">month</span><span class="k">}</span><span class="s2">, day=</span><span class="k">${</span><span class="nv">day</span><span class="k">}</span><span class="s2">, name=</span><span class="k">${</span><span class="nv">name</span><span class="k">}</span><span class="s2">, permalink=</span><span class="k">${</span><span class="nv">permalink</span><span class="k">}</span><span class="s2">"</span>
+    <span class="nb">sed</span> <span class="nt">-i</span> <span class="s1">''</span> <span class="nt">-E</span> <span class="s1">'/comments:/i\
+permalink: PERMALINK
+'</span> <span class="s2">"</span><span class="nv">$path</span><span class="s2">"</span>
+    <span class="nb">sed</span> <span class="nt">-i</span> <span class="s1">''</span> <span class="s2">"s|PERMALINK|</span><span class="k">${</span><span class="nv">permalink</span><span class="k">}</span><span class="s2">|"</span> <span class="s2">"</span><span class="nv">$path</span><span class="s2">"</span>
+    <span class="nv">i</span><span class="o">=</span><span class="k">$((</span>i <span class="o">+</span> <span class="m">1</span><span class="k">))</span>
+<span class="k">done</span>
+</code></pre></div></div>
+
+<p>For new articles, use the new naming convention (<code class="language-plaintext highlighter-rouge">_config.yml</code>).</p>
+
+<div class="language-diff highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="gd">- permalink: /:year/:month/:day/:title/
+</span><span class="gi">+ permalink: /en/:title/
+</span></code></pre></div></div>
+
+<p>Also you need to modify the post generation script <code class="language-plaintext highlighter-rouge">newpost.sh</code> to make it generate both Chinese and English posts. Here is an excerpt from the script: we generate the paths for both Chinese and English posts, confirm that they do not exist, and then add new content.</p>
+
+<div class="language-sh highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nv">title</span><span class="o">=</span><span class="s2">"</span><span class="k">${</span><span class="p">*</span>:1<span class="k">}</span><span class="s2">"</span>
+
+<span class="k">if</span> <span class="o">[[</span> <span class="nt">-z</span> <span class="s2">"</span><span class="nv">$title</span><span class="s2">"</span> <span class="o">]]</span><span class="p">;</span> <span class="k">then
+    </span><span class="nb">echo</span> <span class="s1">'usage: newpost.sh My New Blog'</span>
+    <span class="nb">exit </span>1
+<span class="k">fi
+
+</span><span class="nv">bloghome</span><span class="o">=</span><span class="si">$(</span><span class="nb">cd</span> <span class="s2">"</span><span class="si">$(</span><span class="nb">dirname</span> <span class="s2">"</span><span class="nv">$0</span><span class="s2">"</span><span class="si">)</span><span class="s2">"</span> <span class="o">||</span> <span class="nb">exit</span><span class="p">;</span> <span class="nb">pwd</span><span class="si">)</span>
+<span class="nv">url</span><span class="o">=</span><span class="si">$(</span><span class="nb">echo</span> <span class="s2">"</span><span class="nv">$title</span><span class="s2">"</span> | <span class="nb">tr</span> <span class="s1">'[:upper:]'</span> <span class="s1">'[:lower:]'</span> | <span class="nb">tr</span> <span class="s1">' '</span> <span class="s1">'-'</span><span class="si">)</span>
+<span class="nv">filename</span><span class="o">=</span><span class="s2">"</span><span class="si">$(</span><span class="nb">date</span> +<span class="s2">"%Y-%m-%d"</span><span class="si">)</span><span class="s2">-</span><span class="nv">$url</span><span class="s2">.md"</span>
+<span class="nv">filepath_en</span><span class="o">=</span><span class="s2">"</span><span class="k">${</span><span class="nv">bloghome</span><span class="k">}</span><span class="s2">/_posts/</span><span class="k">${</span><span class="nv">filename</span><span class="k">}</span><span class="s2">"</span>
+<span class="nv">filepath_cn</span><span class="o">=</span><span class="s2">"</span><span class="k">${</span><span class="nv">bloghome</span><span class="k">}</span><span class="s2">/_cn/</span><span class="k">${</span><span class="nv">filename</span><span class="k">}</span><span class="s2">"</span>
+
+<span class="k">if</span> <span class="o">[[</span> <span class="nt">-f</span> <span class="s2">"</span><span class="nv">$filepath_en</span><span class="s2">"</span> <span class="o">]]</span><span class="p">;</span> <span class="k">then
+    </span><span class="nb">echo</span> <span class="s2">"</span><span class="k">${</span><span class="nv">filepath_en</span><span class="k">}</span><span class="s2"> already exists."</span>
+    <span class="nb">exit </span>1
+<span class="k">fi
+
+if</span> <span class="o">[[</span> <span class="nt">-f</span> <span class="s2">"</span><span class="nv">$filepath_cn</span><span class="s2">"</span> <span class="o">]]</span><span class="p">;</span> <span class="k">then
+    </span><span class="nb">echo</span> <span class="s2">"</span><span class="k">${</span><span class="nv">filepath_cn</span><span class="k">}</span><span class="s2"> already exists."</span>
+    <span class="nb">exit </span>1
+<span class="k">fi
+
+</span>append_metadata_en <span class="s2">"</span><span class="nv">$filepath_en</span><span class="s2">"</span> <span class="s2">"</span><span class="nv">$title</span><span class="s2">"</span>
+append_metadata_cn <span class="s2">"</span><span class="nv">$filepath_cn</span><span class="s2">"</span> <span class="s2">"</span><span class="nv">$title</span><span class="s2">"</span>
+
+<span class="c"># Not for EN, because EN post is translated.</span>
+append_content <span class="s2">"</span><span class="nv">$filepath_cn</span><span class="s2">"</span>
+
+<span class="nb">echo</span> <span class="s2">"Blog posts created!"</span>
+<span class="nb">echo</span> <span class="s2">" EN: </span><span class="k">${</span><span class="nv">filepath_en</span><span class="k">}</span><span class="s2">"</span>
+<span class="nb">echo</span> <span class="s2">" CN: </span><span class="k">${</span><span class="nv">filepath_cn</span><span class="k">}</span><span class="s2">"</span>
+</code></pre></div></div>
+
+<p>For more details, see: <a href="https://github.com/mincong-h/mincong-h.github.io/pull/37">https://github.com/mincong-h/mincong-h.github.io/pull/37</a></p>
+
+<h3 id="task-3-adding-a-chinese-homepage">Task 3: Adding a Chinese Homepage</h3>
+
+<p>Adding a Chinese homepage sounds easy, as if all you need to do is copy <code class="language-plaintext highlighter-rouge">index.html</code> from the blog home page to <code class="language-plaintext highlighter-rouge">cn/index.html</code> and translate a few words. Actually, it is way more complex than that. I use the official Jekyll plugin jekyll-paginate (v1) for my home page. But this plugin only supports pagination for the default set <code class="language-plaintext highlighter-rouge">posts</code>, not for other sets, such as <code class="language-plaintext highlighter-rouge">cn</code>. So the real meaning of adding a Chinese homepage is to upgrade the plugin to jekyll-paginate-v2 to support pagination for the Chinese collection <code class="language-plaintext highlighter-rouge">cn</code>.</p>
+
+<p>Install and use the new plugin in the site configuration (<code class="language-plaintext highlighter-rouge">_config.yml</code>) at</p>
+
+<div class="language-diff highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="gd">- paginate: 8
+- paginate_path: /page:num # don't change this unless for special need
+</span><span class="gi">+ pagination:
++ enabled: true
++ per_page: 8
+</span>
+
+  ## =&gt; Sources
+<span class="p">@@ -238,7 +240,7 @@</span> defaults:
+  ##############################
+  plugins:
+    - jekyll-feed
+<span class="gd">- jekyll-paginate
+</span><span class="gi">+ - jekyll-paginate-v2
+</span></code></pre></div></div>
+
+<p>Modified the paginator of the TeXt Theme theme itself to avoid using <code class="language-plaintext highlighter-rouge">site.posts</code> directly as a source for posts. And also add a specific prefix to the homepage, so that English and Chinese have their own homepage, i.e. <a href="https://mincong.io/">https://mincong.io/</a> and <a href="https://mincong.io/cn/">https://mincong.io/cn/</a>.</p>
+
+<div class="language-diff highlighter-rouge"><div class="highlight"><pre class="highlight"><code>
+- {%- assign _post_count = site.posts | size -%}
+<span class="gi">+ {%- assign _post_count = paginator.total_posts -%}
+</span>      {%- assign _page_count = paginator.total_pages -%}
+      &lt;p&gt;&lt;/p&gt;
+      &lt;div class="pagination__menu"&gt;
+<span class="p">@@ -51,7 +51,7 @@</span>
+              &lt;/li&gt;
+
+            {%- elsif page == 1 -%}
+<span class="gd">- {%- assign _home_path = site.paths.home | default: site.data.variables.default.paths.home -%}
+</span><span class="gi">+ {%- assign _home_path = site.paths.home | default: site.data.variables.default.paths.home | append: include.baseurl -%} 
+</span>              {%- include snippets/prepend-baseurl.html path=_home_path -%} 
+</code></pre></div></div>
+
+<p>There are actually some other modifications to consider, but I won’t expand on them due to the timing. For more details see: <a href="https://github.com/mincong-h/mincong-h.github.io/pull/32">https://github.com/mincong-h/mincong-h.github.io/pull/32</a></p>
+
+<h3 id="task-4-modifying-build-and-deployment">Task 4: Modifying Build and Deployment</h3>
+
+<p>You can no longer use the old automatic deployment method because of jekyll-paginate-v2, a plugin that is not officially supported by GitHub. Now you need to deploy it manually. That is, you no longer deploy from the <code class="language-plaintext highlighter-rouge">master</code> branch. After the code is merged into <code class="language-plaintext highlighter-rouge">master</code>, the new pages are generated manually or by CI (core command: <code class="language-plaintext highlighter-rouge">jekyll build</code>). Then, the generated content, which is in the folder <code class="language-plaintext highlighter-rouge">_site</code>, is uploaded to the <code class="language-plaintext highlighter-rouge">gh-pages</code> branch for deployment.</p>
+
+<p>The main steps to achieve this are as follows: create a new, master-independent branch <code class="language-plaintext highlighter-rouge">gh-pages</code>, add an empty commit as the start of the branch, then empty the local Jekyll generated files folder <code class="language-plaintext highlighter-rouge">_site</code> and connect it to the new branch <code class="language-plaintext highlighter-rouge">gh-pages</code></p>
+
+<div class="language-sh highlighter-rouge"><div class="highlight"><pre class="highlight"><code>git checkout <span class="nt">--orphan</span> gh-pages
+git commit <span class="nt">--allow-empty</span> <span class="nt">-m</span> <span class="s2">"Initialize gh-pages"</span>
+<span class="nb">rm</span> <span class="nt">-rf</span> _site
+git worktree add _site gh-pages
+<span class="c"># "jekyll build" or equivalent commands</span>
+</code></pre></div></div>
+
+<p>To implement this task, you also need to change the branch to deploy from <code class="language-plaintext highlighter-rouge">master</code> to <code class="language-plaintext highlighter-rouge">ph-pages</code> in the GitHub project settings.</p>
+
+<p><img src="/assets/20210711-deploy-via-gh-pages.png" alt="Change the deployment method: no longer use master branch but gh-pages branch deployment" /></p>
+
+<p>For more information, see: Sangsoo Nam, <a href="https://sangsoonam.github.io/2019/02/08/using-git-worktree-to-deploy- github-pages.html">Using Git Worktree to Deploy GitHub Pages</a>, 2019.</p>
+
+<h3 id="task-5-modifying-more-pages">Task 5: Modifying More Pages</h3>
+
+<p>In the task above, we mainly mentioned modifications for Chinese articles and English articles. But a website has many other pages besides articles, such as categories, series, archives, about, etc. These pages also need to be modified before they can be used properly.</p>
+
+<p>The main objective is to ensure a consistent user-experience for browsing. When navigating between pages, all links in English pages will lead to English pages, and all links in Chinese pages will lead to Chinese pages. This creates a comfortable reading experience for the user: because all pages are in a language they are familiar with. As for the pages that already exist, we need to redirect them to the new links. The following is a list of new pages and the redirection of existing pages.</p>
+
+<p>Home page:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>https://mincong.io/
+https://mincong.io/cn/
+</code></pre></div></div>
+
+<p>Category pages:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>https://mincong.io/en/categories/
+https://mincong.io/en/categories/{category}/
+https://mincong.io/cn/categories/
+https://mincong.io/cn/categories/{category}/
+
+https://mincong.io/categories/ -&gt; https://mincong.io/en/categories/
+https://mincong.io/categories/{category} -&gt; https://mincong.io/en/categories/{category}/
+</code></pre></div></div>
+
+<p>Series pages:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>https://mincong.io/en/series/
+https://mincong.io/en/series/{serie}/
+https://mincong.io/cn/series/
+
+https://mincong.io/series/ -&gt; https://mincong.io/en/series/
+https://mincong.io/series/{serie} -&gt; https://mincong.io/en/series/{serie}/
+</code></pre></div></div>
+
+<p>About page:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>https://mincong.io/en/about/
+https://mincong.io/cn/about/
+
+https://mincong.io/about/ -&gt; https://mincong.io/en/about/
+</code></pre></div></div>
+
+<p>Archived pages:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>https://mincong.io/en/archive/
+https://mincong.io/cn/archive/
+
+https://mincong.io/archive/ -&gt; https://mincong.io/en/archive/
+</code></pre></div></div>
+
+<p>For more information, see: <a href="https://github.com/mincong-h/mincong-h.github.io/pull/34">https://github.com/mincong-h/mincong-h.github.io/pull/34</a></p>
+
+<h3 id="task-6-language-switching-button">Task 6: Language Switching Button</h3>
+
+<p>Provide a language switch button in the website to enable languange switching. There are two main buttons here: one in the top right corner of the page, displayed as a flag, and another button in the title section of the article, highlighted in red for the current language and white for the optional other languages. The difference between these two buttons is that the top-right button will switch to the home page in another language when clicked, while the language button on the page will make the page jump directly to another version of the same article. I call them “global switching” and “article switching” feature.</p>
+
+<p><img src="/assets/20210711-post-en.png" alt="English post page example" /></p>
+
+<p><img src="/assets/20210711-post-cn.png" alt="Chinese article page example" /></p>
+
+<p>For the global switching feature, the main tasks are to write the flag, link, and other information of another language in the configuration file of the page navigation, and then use these information when the page is generated.</p>
+
+<p>Register information to the data file of the page navigation (<code class="language-plaintext highlighter-rouge">_data/navigation.yml</code>).</p>
+
+<div class="language-yml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="na">site</span><span class="pi">:</span>
+  <span class="s">...</span>
+  <span class="s"># switch to the other langage</span>
+  <span class="s">urls2</span><span class="pi">:</span>
+    <span class="na">en </span><span class="pi">:</span> <span class="s">/cn/</span>
+    <span class="na">zh </span><span class="pi">:</span> <span class="s">/</span>
+  <span class="na">urls2_src</span><span class="pi">:</span>
+    <span class="na">en </span><span class="pi">:</span> <span class="s">/assets/flag-CN.png</span>
+    <span class="na">zh </span><span class="pi">:</span> <span class="s">/assets/flag-US.png</span>
+  <span class="na">urls2_alt</span><span class="pi">:</span>
+    <span class="na">en </span><span class="pi">:</span> <span class="s2">"</span><span class="s">Switch</span><span class="nv"> </span><span class="s">to</span><span class="nv"> </span><span class="s">Chinese"</span>
+    <span class="na">zh </span><span class="pi">:</span> <span class="s2">"</span><span class="s">Switch</span><span class="nv"> </span><span class="s">to</span><span class="nv"> </span><span class="s">English"</span>
+</code></pre></div></div>
+
+<p>The header (<code class="language-plaintext highlighter-rouge">_includes/header.html</code>) should include this element as well.</p>
+
+<div class="language-html highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nt">&lt;li&gt;</span>
+  <span class="nt">&lt;a</span> <span class="na">href=</span><span class="s">""</span><span class="nt">&gt;</span>
+    <span class="nt">&lt;img</span> <span class="na">src=</span><span class="s">""</span>
+         <span class="na">alt=</span><span class="s">""</span>
+         <span class="na">class=</span><span class="s">"navigation__lang_img"</span><span class="nt">&gt;</span>
+  <span class="nt">&lt;/a&gt;</span>
+<span class="nt">&lt;/li&gt;</span>
+</code></pre></div></div>
+
+<p>For the local toggle feature, the implementation is quite different. This is achieved by looking for articles with the same name in a collection of other languages. Here, articles in different languages must use the same filename, otherwise they cannot be found. Specifically, we first get the article ID, then extract the characters after the last slash <code class="language-plaintext highlighter-rouge">/</code> (with the slash <code class="language-plaintext highlighter-rouge">/</code>), then take this information to traverse other collections and return the corresponding link:</p>
+
+<div class="language-liquid highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">{%</span><span class="w"> </span><span class="nt">assign</span><span class="w"> </span><span class="nv">_id</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nv">include</span><span class="p">.</span><span class="nv">article</span><span class="p">.</span><span class="nv">id</span><span class="w"> </span><span class="p">%}</span>
+<span class="p">{%</span><span class="w"> </span><span class="nt">assign</span><span class="w"> </span><span class="nv">_filename</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nv">_id</span><span class="w"> </span><span class="p">|</span><span class="w"> </span><span class="nf">split</span><span class="p">:</span><span class="s2">"/"</span><span class="w"> </span><span class="p">|</span><span class="w"> </span><span class="nf">last</span><span class="w"> </span><span class="p">%}</span>
+<span class="p">{%</span><span class="w"> </span><span class="nt">assign</span><span class="w"> </span><span class="nv">_suffix</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nv">_filename</span><span class="w"> </span><span class="p">|</span><span class="w"> </span><span class="nf">prepend</span><span class="p">:</span><span class="w"> </span><span class="s2">"/"</span><span class="w"> </span><span class="p">%}</span>
+<span class="p">{%</span><span class="w"> </span><span class="nt">assign</span><span class="w"> </span><span class="nv">_matched</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nv">include</span><span class="p">.</span><span class="nv">collection</span><span class="w"> </span><span class="p">|</span><span class="w"> </span><span class="nf">where_exp</span><span class="p">:</span><span class="w"> </span><span class="s2">"item"</span><span class="p">,</span><span class="w"> </span><span class="s2">"item.id contains _suffix"</span><span class="w"> </span><span class="p">|</span><span class="w"> </span><span class="nf">first</span><span class="w"> </span><span class="p">%}</span>
+
+<span class="p">{%</span><span class="w"> </span><span class="kr">if</span><span class="w"> </span><span class="nv">_matched</span><span class="w"> </span><span class="p">%}</span>
+  <span class="p">{%</span><span class="w"> </span><span class="nt">assign</span><span class="w"> </span><span class="nv">__return</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nv">_matched</span><span class="p">.</span><span class="nv">url</span><span class="w"> </span><span class="p">%}</span>
+<span class="p">{%</span><span class="w"> </span><span class="kr">else</span><span class="w"> </span><span class="p">%}</span>
+  <span class="p">{%</span><span class="w"> </span><span class="nt">assign</span><span class="w"> </span><span class="nv">__return</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">nil</span><span class="w"> </span><span class="p">%}</span>
+<span class="p">{%</span><span class="w"> </span><span class="kr">endif</span><span class="w"> </span><span class="p">%}</span>
+</code></pre></div></div>
+
+<p>For more information, see.</p>
+
+<ul>
+  <li><a href="https://github.com/mincong-h/mincong-h.github.io/pull/34">https://github.com/mincong-h/mincong-h.github.io/pull/34</a></li>
+  <li><a href="https://github.com/mincong-h/mincong-h.github.io/pull/36">https://github.com/mincong-h/mincong-h.github.io/pull/36</a></li>
+</ul>
+
+<h3 id="remaining-tasks">Remaining Tasks</h3>
+
+<p>Having done this, the entire internationalization task is basically done. The following tasks can be addressed in the future to improve the situation:</p>
+
+<ol>
+  <li>Implement both Chinese and English RSS feeds.</li>
+  <li>Load more Chinese components on Chinese pages, such as loading WeChat’s SDK for sharing, loading Baidu’s SDK to improve search presence on Chinese search engine, replacing Disqus with another commenting system that can be loaded in mainland China without VPN, and links to other Chinese developer platforms.</li>
+  <li>Automate the Chinese-to-English translation by scripting translation requests directly to third-party translation platforms, such as Google Translate, DeepL, etc.</li>
+  <li>Automate the build and deployment process, e.g. take inspiration from MrPowerScripts’ article <a href="https: //mrpowerscripts.com/github-pages-circleci-jekyll-pagination-v2/">How to get around the jekyll-pagination-v2 limitation of GitHub pages with CircleCI</a>.</li>
+  <li>Fix the tag-cloud feature in the archive page. The tag-cloud currently uses <code class="language-plaintext highlighter-rouge">site.tags</code> for tag-related statistics. However, all the tags of Chinese articles (under the <code class="language-plaintext highlighter-rouge">cn</code> collection) are not taken into account.</li>
+  <li>Fix the article category pages. Now the category page can show text in Chinese, but the actual article list is retrieved from English collection <code class="language-plaintext highlighter-rouge">posts</code> rather than Chinese collection <code class="language-plaintext highlighter-rouge">cn</code>.</li>
+</ol>
+
+<p>If you have other suggestions, please feel free to leave a comment!</p>
+
+<h2 id="going-further">Going Further</h2>
+
+<p>How to go further from this article?</p>
+
+<ul>
+  <li>If you’ve never heard of Jekyll, you can visit <a href="https://jekyllrb.com/">official website</a> to learn about this great blogging engine.</li>
+  <li>If you’ve never tried the free <a href="https://pages.github.com/">GitHub Pages</a>, visit the official website and try to build your and host your own personal blog for free!</li>
+  <li>If you haven’t tried <a href="https://tianqi.name/jekyll-TeXt-theme/">Jekyll TeXt Theme</a> by Qi Tian, maybe you would like to try it.</li>
+  <li>If you want to learn more about <a href="https://github.com/sverrirs/jekyll-paginate-v2">jekyll-paginate-v2</a>, you can visit their GitHub project.</li>
+</ul>
+
+<h2 id="conclusion">Conclusion</h2>
+
+<p>In this article, we have seen the process of internationalizing of this site <a href="https://mincong.io">https://mincong.io</a>, an internationalization based on Jekyll and TeXt Theme. We compared the pros and the cons of the four proposals; we looked at other blogs’ implementations of internationalization; we listed the six of the more important tasks; and we looked further into the next steps for internationalization. Finally, I also share some resources for you to going further from this article. I hope this article has given you some insights. If you’re interested in more information and advice, please follow me on GitHub <a href="https://github.com/mincong-h">mincong-h</a>. Thank you all!</p>
+
+<h2 id="references">References</h2>
+
+<ul>
+  <li>Elastic, “Elastic Blog”, Elastic, 2021. <a href="https://www.elastic.co/cn/blog/">https://www.elastic.co/cn/blog/</a></li>
+  <li>MrPowerScripts, “How to get around the jekyll-pagination-v2 limitation of GitHub pages with CircleCI”, MrPowerScripts, 2019. <a href="https://mrpowerscripts.com/github-pages-circleci-jekyll-paginate-v2/">https://mrpowerscripts.com/github-pages-circleci-jekyll-paginate-v2/</a></li>
+  <li>Sangsoo Nam, “Using Git Worktree to Deploy GitHub Pages”, Sangsoo Nam, 2019. <a href="https://sangsoonam.github.io/2019/02/08/using-git- worktree-to-deploy-github-pages.html">https://sangsoonam.github.io/2019/02/08/using-git- worktree-to-deploy-github-pages.html</a></li>
+  <li>Jekyll, “Jekyll Documentation”, Jekyll, 2021. <a href="https://jekyllrb.com/docs/">https://jekyllrb.com/docs/</a></li>
+  <li>Sverrir Sigmundarson, “jekyll-paginate-v2”, GitHub, 2021. <a href="https://github.com/sverrirs/jekyll-paginate-v2">https://github.com/sverrirs/jekyll-paginate-v2</a></li>
+  <li>Tian Qi, “Internationalization”, TeXt Theme, 2021.
+<a href="https://tianqi.name/jekyll-TeXt-theme/docs/en/i18n">https://tianqi.name/jekyll-TeXt-theme/docs/en/i18n</a></li>
+  <li>Rahul Patil, “How to insert text after a certain string in a file?”, Unix &amp; Linux - Stack Exchange, 2014. <a href="https://unix. stackexchange.com/a/121173/220624">https://unix. stackexchange.com/a/121173/220624</a></li>
+  <li>Taewoo Lee, “[Jekyll](EN) Make array and add element in liquid”, TWpower’s Tech Blog, 2020. <a href="https://twpower.github.io/228- make-array-and-add-element-in-jekyll-liquid-en">https://twpower.github.io/228- make-array-and-add-element-in-jekyll-liquid-en</a></li>
+</ul>
+</div><section class="article__sharing d-print-none"></section><div class="d-print-none"><footer class="article__footer"><meta itemprop="dateModified" content="2021-07-11T22:02:53+02:00"><!-- start custom article footer snippet -->
+
+<!-- end custom article footer snippet -->
+<div class="article__subscribe"><div class="subscribe">
+  <i class="fas fa-rss"></i>
+  <a type="application/rss+xml" href="/feed.xml">Subscribe</a>
+</div></div><div class="article__license"><div class="license">
+    <p>This work is licensed under a <a itemprop="license" rel="license" href="https://creativecommons.org/licenses/by/4.0/">Attribution 4.0 International</a> license.
+      <a rel="license" href="https://creativecommons.org/licenses/by/4.0/">
+        <img alt="Attribution 4.0 International" src="https://i.creativecommons.org/l/by/4.0/88x31.png" />
+      </a>
+    </p>
+  </div></div></footer>
+<div class="article__section-navigator clearfix"><div class="previous"><span>PREVIOUS</span><a href="/2021/04/20/an-important-change/">An Important Change</a></div></div></div>
+
+</div>
+
+<script>(function() {
+  var SOURCES = window.TEXT_VARIABLES.sources;
+  window.Lazyload.js(SOURCES.jquery, function() {
+    $(function() {
+      var $this ,$scroll;
+      var $articleContent = $('.js-article-content');
+      var hasSidebar = $('.js-page-root').hasClass('layout--page--sidebar');
+      var scroll = hasSidebar ? '.js-page-main' : 'html, body';
+      $scroll = $(scroll);
+
+      $articleContent.find('.highlight').each(function() {
+        $this = $(this);
+        $this.attr('data-lang', $this.find('code').attr('data-lang'));
+      });
+      $articleContent.find('h1[id], h2[id], h3[id], h4[id], h5[id], h6[id]').each(function() {
+        $this = $(this);
+        $this.append($('<a class="anchor d-print-none" aria-hidden="true"></a>').html('<i class="fas fa-anchor"></i>'));
+      });
+      $articleContent.on('click', '.anchor', function() {
+        $scroll.scrollToAnchor('#' + $(this).parent().attr('id'), 400);
+      });
+    });
+  });
+})();
+</script>
+</div><section class="page__comments d-print-none"><div id="disqus_thread"></div>
+  <script>
+  /**
+  *  RECOMMENDED CONFIGURATION VARIABLES: EDIT AND UNCOMMENT THE SECTION BELOW TO INSERT DYNAMIC VALUES FROM YOUR PLATFORM OR CMS.
+  *  LEARN WHY DEFINING THESE VARIABLES IS IMPORTANT: https://disqus.com/admin/universalcode/#configuration-variables*/
+  var disqus_config = function () {
+    this.page.url = 'https://mincong.io/en/jekyll-i18n/';
+    this.page.identifier = '/en/jekyll-i18n';
+  };
+  (function() { // DON'T EDIT BELOW THIS LINE
+    var d = document, s = d.createElement('script');
+    s.src = 'https://mincong-h.disqus.com/embed.js';
+    s.setAttribute('data-timestamp', +new Date());
+    (d.head || d.body).appendChild(s);
+  })();
+  </script>
+  <noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript></section></article><!-- start custom main bottom snippet -->
+
+<!-- end custom main bottom snippet -->
+</div>
+            </div></div></div><div class="page__footer d-print-none">
+<footer class="footer py-4 js-page-footer">
+  <div class="main"><div itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Mincong Huang"><meta itemprop="url" content="/"><meta itemprop="description" content="I am an amazing person."><div class="footer__author-links"><div class="author-links">
+  <ul class="menu menu--nowrap menu--inline"><li title="Send me an Email.">
+      <a class="button button--circle mail-button" itemprop="email" href="mailto:mincong.h@gmail.com" target="_blank">
+        <i class="fas fa-envelope"></i>
+      </a><li title="Follow me on Twitter.">
+        <a class="button button--circle twitter-button" itemprop="sameAs" href="https://twitter.com/mincong_h" target="_blank">
+          <div class="icon"><svg fill="#000000" width="24px" height="24px" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg">
+  <path d="M1024.032 194.432c-37.664 16.704-78.176 28-120.672 33.088 43.36-26.016 76.672-67.168 92.384-116.224-40.608 24.064-85.568 41.568-133.408 50.976-38.336-40.832-92.928-66.336-153.344-66.336-116.032 0-210.08 94.048-210.08 210.08 0 16.48 1.856 32.512 5.44 47.872-174.592-8.768-329.408-92.416-433.024-219.52-18.08 31.04-28.448 67.104-28.448 105.632 0 72.896 37.088 137.184 93.472 174.88-34.432-1.088-66.816-10.528-95.168-26.272-0.032 0.864-0.032 1.76-0.032 2.656 0 101.792 72.416 186.688 168.512 205.984-17.632 4.8-36.192 7.36-55.36 7.36-13.536 0-26.688-1.312-39.52-3.776 26.72 83.456 104.32 144.192 196.256 145.888-71.904 56.352-162.496 89.92-260.928 89.92-16.96 0-33.664-0.992-50.112-2.944 92.96 59.616 203.392 94.4 322.048 94.4 386.432 0 597.728-320.128 597.728-597.76 0-9.12-0.192-18.176-0.608-27.168 41.056-29.632 76.672-66.624 104.832-108.736z" />
+</svg>
+</div>
+        </a>
+      </li><li title="Follow me on Linkedin.">
+        <a class="button button--circle linkedin-button" itemprop="sameAs" href="https://www.linkedin.com/in/mincong-huang" target="_blank">
+          <div class="icon"><svg fill="#000000" width="24px" height="24px" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg">
+  <path d="M260.096 155.648c0 27.307008-9.899008 50.516992-29.696 69.632-19.796992 19.115008-45.396992 28.672-76.8 28.672-30.036992 0-54.612992-9.556992-73.728-28.672-19.115008-19.115008-28.672-42.324992-28.672-69.632 0-28.672 9.556992-52.224 28.672-70.656 19.115008-18.432 44.372992-27.648 75.776-27.648 31.403008 0 56.32 9.216 74.752 27.648 18.432 18.432 28.331008 41.984 29.696 70.656 0 0 0 0 0 0m-202.752 808.96c0 0 0-632.832 0-632.832 0 0 196.608 0 196.608 0 0 0 0 632.832 0 632.832 0 0-196.608 0-196.608 0 0 0 0 0 0 0m313.344-430.08c0-58.708992-1.364992-126.292992-4.096-202.752 0 0 169.984 0 169.984 0 0 0 10.24 88.064 10.24 88.064 0 0 4.096 0 4.096 0 40.96-68.267008 105.812992-102.4 194.56-102.4 68.267008 0 123.220992 22.868992 164.864 68.608 41.643008 45.739008 62.464 113.664 62.464 203.776 0 0 0 374.784 0 374.784 0 0-196.608 0-196.608 0 0 0 0-350.208 0-350.208 0-91.476992-33.451008-137.216-100.352-137.216-47.787008 0-81.236992 24.576-100.352 73.728-4.096 8.192-6.144 24.576-6.144 49.152 0 0 0 364.544 0 364.544 0 0-198.656 0-198.656 0 0 0 0-430.08 0-430.08 0 0 0 0 0 0" />
+</svg>
+</div>
+        </a>
+      </li><li title="Follow me on Github.">
+        <a class="button button--circle github-button" itemprop="sameAs" href="https://github.com/mincong-h" target="_blank">
+          <div class="icon"><svg fill="#000000" width="24px" height="24px" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg">
+  <path class="svgpath" data-index="path_0" fill="#272636" d="M0 525.2c0 223.6 143.3 413.7 343 483.5 26.9 6.8 22.8-12.4 22.8-25.4l0-88.7c-155.3 18.2-161.5-84.6-172-101.7-21.1-36-70.8-45.2-56-62.3 35.4-18.2 71.4 4.6 113.1 66.3 30.2 44.7 89.1 37.2 119 29.7 6.5-26.9 20.5-50.9 39.7-69.6C248.8 728.2 181.7 630 181.7 513.2c0-56.6 18.7-108.7 55.3-150.7-23.3-69.3 2.2-128.5 5.6-137.3 66.5-6 135.5 47.6 140.9 51.8 37.8-10.2 80.9-15.6 129.1-15.6 48.5 0 91.8 5.6 129.8 15.9 12.9-9.8 77-55.8 138.8-50.2 3.3 8.8 28.2 66.7 6.3 135 37.1 42.1 56 94.6 56 151.4 0 117-67.5 215.3-228.8 243.7 26.9 26.6 43.6 63.4 43.6 104.2l0 128.8c0.9 10.3 0 20.5 17.2 20.5C878.1 942.4 1024 750.9 1024 525.3c0-282.9-229.3-512-512-512C229.1 13.2 0 242.3 0 525.2L0 525.2z" />
+</svg>
+</div>
+        </a>
+      </li></ul>
+</div>
+</div>
+    </div><div class="site-info mt-2">
+      <div>© Mincong Huang 2021,
+        Powered by <a title="Jekyll is a simple, blog-aware, static site generator." href="http://jekyllrb.com/">Jekyll</a> & <a
+        title="TeXt is a super customizable Jekyll theme." href="https://github.com/kitian616/jekyll-TeXt-theme">TeXt Theme</a>.
+      </div>
+    </div>
+  </div>
+</footer>
+</div></div>
+    </div><script>(function() {
+  var SOURCES = window.TEXT_VARIABLES.sources;
+  window.Lazyload.js(SOURCES.jquery, function() {
+    var $body = $('body'), $window = $(window);
+    var $pageRoot = $('.js-page-root'), $pageMain = $('.js-page-main');
+    var activeCount = 0;
+    function modal(options) {
+      var $root = this, visible, onChange, hideWhenWindowScroll = false;
+      var scrollTop;
+      function setOptions(options) {
+        var _options = options || {};
+        visible = _options.initialVisible === undefined ? false : show;
+        onChange = _options.onChange;
+        hideWhenWindowScroll = _options.hideWhenWindowScroll;
+      }
+      function init() {
+        setState(visible);
+      }
+      function setState(isShow) {
+        if (isShow === visible) {
+          return;
+        }
+        visible = isShow;
+        if (visible) {
+          activeCount++;
+          scrollTop = $(window).scrollTop() || $pageMain.scrollTop();
+          $root.addClass('modal--show');
+          $pageMain.scrollTop(scrollTop);
+          activeCount === 1 && ($pageRoot.addClass('show-modal'), $body.addClass('of-hidden'));
+          hideWhenWindowScroll && window.hasEvent('touchstart') && $window.on('scroll', hide);
+          $window.on('keyup', handleKeyup);
+        } else {
+          activeCount > 0 && activeCount--;
+          $root.removeClass('modal--show');
+          $window.scrollTop(scrollTop);
+          activeCount === 0 && ($pageRoot.removeClass('show-modal'), $body.removeClass('of-hidden'));
+          hideWhenWindowScroll && window.hasEvent('touchstart') && $window.off('scroll', hide);
+          $window.off('keyup', handleKeyup);
+        }
+        onChange && onChange(visible);
+      }
+      function show() {
+        setState(true);
+      }
+      function hide() {
+        setState(false);
+      }
+      function handleKeyup(e) {
+        // Char Code: 27  ESC
+        if (e.which ===  27) {
+          hide();
+        }
+      }
+      setOptions(options);
+      init();
+      return {
+        show: show,
+        hide: hide,
+        $el: $root
+      };
+    }
+    $.fn.modal = modal;
+  });
+})();
+</script><div class="modal modal--overflow page__search-modal d-print-none js-page-search-modal"><script>
+(function () {
+  var SOURCES = window.TEXT_VARIABLES.sources;
+  window.Lazyload.js(SOURCES.jquery, function() {
+    // search panel
+    var search = (window.search || (window.search = {}));
+    var useDefaultSearchBox = window.useDefaultSearchBox === undefined ?
+      true : window.useDefaultSearchBox ;
+
+    var $searchModal = $('.js-page-search-modal');
+    var $searchToggle = $('.js-search-toggle');
+    var searchModal = $searchModal.modal({ onChange: handleModalChange, hideWhenWindowScroll: true });
+    var modalVisible = false;
+    search.searchModal = searchModal;
+
+    var $searchBox = null;
+    var $searchInput = null;
+    var $searchClear = null;
+
+    function getModalVisible() {
+      return modalVisible;
+    }
+    search.getModalVisible = getModalVisible;
+
+    function handleModalChange(visible) {
+      modalVisible = visible;
+      if (visible) {
+        search.onShow && search.onShow();
+        useDefaultSearchBox && $searchInput[0] && $searchInput[0].focus();
+      } else {
+        search.onShow && search.onHide();
+        useDefaultSearchBox && $searchInput[0] && $searchInput[0].blur();
+        setTimeout(function() {
+          useDefaultSearchBox && ($searchInput.val(''), $searchBox.removeClass('not-empty'));
+          search.clear && search.clear();
+          window.pageAsideAffix && window.pageAsideAffix.refresh();
+        }, 400);
+      }
+    }
+
+    $searchToggle.on('click', function() {
+      modalVisible ? searchModal.hide() : searchModal.show();
+    });
+    // Char Code: 83  S, 191 /
+    $(window).on('keyup', function(e) {
+      if (!modalVisible && !window.isFormElement(e.target || e.srcElement) && (e.which === 83 || e.which === 191)) {
+        modalVisible || searchModal.show();
+      }
+    });
+
+    if (useDefaultSearchBox) {
+      $searchBox = $('.js-search-box');
+      $searchInput = $searchBox.children('input');
+      $searchClear = $searchBox.children('.js-icon-clear');
+      search.getSearchInput = function() {
+        return $searchInput.get(0);
+      };
+      search.getVal = function() {
+        return $searchInput.val();
+      };
+      search.setVal = function(val) {
+        $searchInput.val(val);
+      };
+
+      $searchInput.on('focus', function() {
+        $(this).addClass('focus');
+      });
+      $searchInput.on('blur', function() {
+        $(this).removeClass('focus');
+      });
+      $searchInput.on('input', window.throttle(function() {
+        var val = $(this).val();
+        if (val === '' || typeof val !== 'string') {
+          search.clear && search.clear();
+        } else {
+          $searchBox.addClass('not-empty');
+          search.onInputNotEmpty && search.onInputNotEmpty(val);
+        }
+      }, 400));
+      $searchClear.on('click', function() {
+        $searchInput.val(''); $searchBox.removeClass('not-empty');
+        search.clear && search.clear();
+      });
+    }
+  });
+})();
+</script><div class="search search--dark">
+  <div class="main">
+    <div class="search__header">Search</div>
+    <div class="search-bar">
+      <div class="search-box js-search-box">
+        <div class="search-box__icon-search"><i class="fas fa-search"></i></div>
+        <input type="text" />
+        <div class="search-box__icon-clear js-icon-clear">
+          <a><i class="fas fa-times"></i></a>
+        </div>
+      </div>
+      <button class="button button--theme-dark button--pill search__cancel js-search-toggle">
+        Cancel</button>
+    </div>
+    <div class="search-result js-search-result"></div>
+  </div>
+</div>
+<script>var SOURCES = window.TEXT_VARIABLES.sources;
+var PAHTS = window.TEXT_VARIABLES.paths;
+window.Lazyload.js([SOURCES.jquery, PAHTS.search_js], function() {
+  var search = (window.search || (window.search = {}));
+  var searchData = window.TEXT_SEARCH_DATA || {};
+
+  function memorize(f) {
+    var cache = {};
+    return function () {
+      var key = Array.prototype.join.call(arguments, ',');
+      if (key in cache) return cache[key];
+      else return cache[key] = f.apply(this, arguments);
+    };
+  }
+
+  /// search
+  function searchByQuery(query) {
+    var i, j, key, keys, cur, _title, result = {};
+    keys = Object.keys(searchData);
+    for (i = 0; i < keys.length; i++) {
+      key = keys[i];
+      for (j = 0; j < searchData[key].length; j++) {
+        cur = searchData[key][j], _title = cur.title;
+        if ((result[key] === undefined || result[key] && result[key].length < 4 )
+          && _title.toLowerCase().indexOf(query.toLowerCase()) >= 0) {
+          if (result[key] === undefined) {
+            result[key] = [];
+          }
+          result[key].push(cur);
+        }
+      }
+    }
+    return result;
+  }
+
+  var renderHeader = memorize(function(header) {
+    return $('<p class="search-result__header">' + header + '</p>');
+  });
+
+  var renderItem = function(index, title, url) {
+    return $('<li class="search-result__item" data-index="' + index + '"><a class="button" href="' + url + '">' + title + '</a></li>');
+  };
+
+  function render(data) {
+    if (!data) { return null; }
+    var $root = $('<ul></ul>'), i, j, key, keys, cur, itemIndex = 0;
+    keys = Object.keys(data);
+    for (i = 0; i < keys.length; i++) {
+      key = keys[i];
+      $root.append(renderHeader(key));
+      for (j = 0; j < data[key].length; j++) {
+        cur = data[key][j];
+        $root.append(renderItem(itemIndex++, cur.title, cur.url));
+      }
+    }
+    return $root;
+  }
+
+  // search box
+  var $result = $('.js-search-result'), $resultItems;
+  var lastActiveIndex, activeIndex;
+
+  function clear() {
+    $result.html(null);
+    $resultItems = $('.search-result__item'); activeIndex = 0;
+  }
+  function onInputNotEmpty(val) {
+    $result.html(render(searchByQuery(val)));
+    $resultItems = $('.search-result__item'); activeIndex = 0;
+    $resultItems.eq(0).addClass('active');
+  }
+
+  search.clear = clear;
+  search.onInputNotEmpty = onInputNotEmpty;
+
+  function updateResultItems() {
+    lastActiveIndex >= 0 && $resultItems.eq(lastActiveIndex).removeClass('active');
+    activeIndex >= 0 && $resultItems.eq(activeIndex).addClass('active');
+  }
+
+  function moveActiveIndex(direction) {
+    var itemsCount = $resultItems ? $resultItems.length : 0;
+    if (itemsCount > 1) {
+      lastActiveIndex = activeIndex;
+      if (direction === 'up') {
+        activeIndex = (activeIndex - 1 + itemsCount) % itemsCount;
+      } else if (direction === 'down') {
+        activeIndex = (activeIndex + 1 + itemsCount) % itemsCount;
+      }
+      updateResultItems();
+    }
+  }
+
+  // Char Code: 13  Enter, 37  ⬅, 38  ⬆, 39  ➡, 40  ⬇
+  $(window).on('keyup', function(e) {
+    var modalVisible = search.getModalVisible && search.getModalVisible();
+    if (modalVisible) {
+      if (e.which === 38) {
+        modalVisible && moveActiveIndex('up');
+      } else if (e.which === 40) {
+        modalVisible && moveActiveIndex('down');
+      } else if (e.which === 13) {
+        modalVisible && $resultItems && activeIndex >= 0 && $resultItems.eq(activeIndex).children('a')[0].click();
+      }
+    }
+  });
+
+  $result.on('mouseover', '.search-result__item > a', function() {
+    var itemIndex = $(this).parent().data('index');
+    itemIndex >= 0 && (lastActiveIndex = activeIndex, activeIndex = itemIndex, updateResultItems());
+  });
+});
+</script>
+</div></div>
+
+
+<script>(function() {
+  var SOURCES = window.TEXT_VARIABLES.sources;
+  window.Lazyload.js(SOURCES.jquery, function() {
+    function scrollToAnchor(anchor, duration, callback) {
+      var $root = this;
+      $root.animate({ scrollTop: $(anchor).position().top }, duration, function() {
+        window.history.replaceState(null, '', window.location.href.split('#')[0] + anchor);
+        callback && callback();
+      });
+    }
+    $.fn.scrollToAnchor = scrollToAnchor;
+  });
+})();
+(function() {
+  var SOURCES = window.TEXT_VARIABLES.sources;
+  window.Lazyload.js(SOURCES.jquery, function() {
+    function affix(options) {
+      var $root = this, $window = $(window), $scrollTarget, $scroll,
+        offsetBottom = 0, scrollTarget = window, scroll = window.document, disabled = false, isOverallScroller = true,
+        rootTop, rootLeft, rootHeight, scrollBottom, rootBottomTop,
+        hasInit = false, curState;
+
+      function setOptions(options) {
+        var _options = options || {};
+        _options.offsetBottom && (offsetBottom = _options.offsetBottom);
+        _options.scrollTarget && (scrollTarget = _options.scrollTarget);
+        _options.scroll && (scroll = _options.scroll);
+        _options.disabled !== undefined && (disabled = _options.disabled);
+        $scrollTarget = $(scrollTarget);
+        isOverallScroller = window.isOverallScroller($scrollTarget[0]);
+        $scroll = $(scroll);
+      }
+      function preCalc() {
+        top();
+        rootHeight = $root.outerHeight();
+        rootTop = $root.offset().top + (isOverallScroller ? 0 :  $scrollTarget.scrollTop());
+        rootLeft = $root.offset().left;
+      }
+      function calc(needPreCalc) {
+        needPreCalc && preCalc();
+        scrollBottom = $scroll.outerHeight() - offsetBottom - rootHeight;
+        rootBottomTop = scrollBottom - rootTop;
+      }
+      function top() {
+        if (curState !== 'top') {
+          $root.removeClass('fixed').css({
+            left: 0,
+            top: 0
+          });
+          curState = 'top';
+        }
+      }
+      function fixed() {
+        if (curState !== 'fixed') {
+          $root.addClass('fixed').css({
+            left: rootLeft + 'px',
+            top: 0
+          });
+          curState = 'fixed';
+        }
+      }
+      function bottom() {
+        if (curState !== 'bottom') {
+          $root.removeClass('fixed').css({
+            left: 0,
+            top: rootBottomTop + 'px'
+          });
+          curState = 'bottom';
+        }
+      }
+      function setState() {
+        var scrollTop = $scrollTarget.scrollTop();
+        if (scrollTop >= rootTop && scrollTop <= scrollBottom) {
+          fixed();
+        } else if (scrollTop < rootTop) {
+          top();
+        } else {
+          bottom();
+        }
+      }
+      function init() {
+        if(!hasInit) {
+          var interval, timeout;
+          calc(true); setState();
+          // run calc every 100 millisecond
+          interval = setInterval(function() {
+            calc();
+          }, 100);
+          timeout = setTimeout(function() {
+            clearInterval(interval);
+          }, 45000);
+          window.pageLoad.then(function() {
+            setTimeout(function() {
+              clearInterval(interval);
+              clearTimeout(timeout);
+            }, 3000);
+          });
+          $scrollTarget.on('scroll', function() {
+            disabled || setState();
+          });
+          $window.on('resize', function() {
+            disabled || (calc(true), setState());
+          });
+          hasInit = true;
+        }
+      }
+
+      setOptions(options);
+      if (!disabled) {
+        init();
+      }
+      $window.on('resize', window.throttle(function() {
+        init();
+      }, 200));
+      return {
+        setOptions: setOptions,
+        refresh: function() {
+          calc(true, { animation: false }); setState();
+        }
+      };
+    }
+    $.fn.affix = affix;
+  });
+})();
+(function() {
+  var SOURCES = window.TEXT_VARIABLES.sources;
+  window.Lazyload.js(SOURCES.jquery, function() {
+    function toc(options) {
+      var $root = this, $window = $(window), $scrollTarget, $scroller, $tocUl = $('<ul class="toc toc--ellipsis"></ul>'), $tocLi, $headings, $activeLast, $activeCur,
+        selectors = 'h1,h2,h3', container = 'body', scrollTarget = window, scroller = 'html, body', disabled = false,
+        headingsPos, scrolling = false, hasRendered = false, hasInit = false;
+
+      function setOptions(options) {
+        var _options = options || {};
+        _options.selectors && (selectors = _options.selectors);
+        _options.container && (container = _options.container);
+        _options.scrollTarget && (scrollTarget = _options.scrollTarget);
+        _options.scroller && (scroller = _options.scroller);
+        _options.disabled !== undefined && (disabled = _options.disabled);
+        $headings = $(container).find(selectors).filter('[id]');
+        $scrollTarget = $(scrollTarget);
+        $scroller = $(scroller);
+      }
+      function calc() {
+        headingsPos = [];
+        $headings.each(function() {
+          headingsPos.push(Math.floor($(this).position().top));
+        });
+      }
+      function setState(element, disabled) {
+        var scrollTop = $scrollTarget.scrollTop(), i;
+        if (disabled || !headingsPos || headingsPos.length < 1) { return; }
+        if (element) {
+          $activeCur = element;
+        } else {
+          for (i = 0; i < headingsPos.length; i++) {
+            if (scrollTop >= headingsPos[i]) {
+              $activeCur = $tocLi.eq(i);
+            } else {
+              $activeCur || ($activeCur = $tocLi.eq(i));
+              break;
+            }
+          }
+        }
+        $activeLast && $activeLast.removeClass('active');
+        ($activeLast = $activeCur).addClass('active');
+      }
+      function render() {
+        if(!hasRendered) {
+          $root.append($tocUl);
+          $headings.each(function() {
+            var $this = $(this);
+            $tocUl.append($('<li></li>').addClass('toc-' + $this.prop('tagName').toLowerCase())
+              .append($('<a></a>').text($this.text()).attr('href', '#' + $this.prop('id'))));
+          });
+          $tocLi = $tocUl.children('li');
+          $tocUl.on('click', 'a', function(e) {
+            e.preventDefault();
+            var $this = $(this);
+            scrolling = true;
+            setState($this.parent());
+            $scroller.scrollToAnchor($this.attr('href'), 400, function() {
+              scrolling = false;
+            });
+          });
+        }
+        hasRendered = true;
+      }
+      function init() {
+        var interval, timeout;
+        if(!hasInit) {
+          render(); calc(); setState(null, scrolling);
+          // run calc every 100 millisecond
+          interval = setInterval(function() {
+            calc();
+          }, 100);
+          timeout = setTimeout(function() {
+            clearInterval(interval);
+          }, 45000);
+          window.pageLoad.then(function() {
+            setTimeout(function() {
+              clearInterval(interval);
+              clearTimeout(timeout);
+            }, 3000);
+          });
+          $scrollTarget.on('scroll', function() {
+            disabled || setState(null, scrolling);
+          });
+          $window.on('resize', window.throttle(function() {
+            if (!disabled) {
+              render(); calc(); setState(null, scrolling);
+            }
+          }, 100));
+        }
+        hasInit = true;
+      }
+
+      setOptions(options);
+      if (!disabled) {
+        init();
+      }
+      $window.on('resize', window.throttle(function() {
+        init();
+      }, 200));
+      return {
+        setOptions: setOptions
+      };
+    }
+    $.fn.toc = toc;
+  });
+})();
+/*(function () {
+
+})();*/
+</script><script>
+  /* toc must before affix, since affix need to konw toc' height. */(function() {
+  var SOURCES = window.TEXT_VARIABLES.sources;
+  var TOC_SELECTOR = window.TEXT_VARIABLES.site.toc.selectors;
+  window.Lazyload.js(SOURCES.jquery, function() {
+    var $window = $(window);
+    var $articleContent = $('.js-article-content');
+    var $tocRoot = $('.js-toc-root'), $col2 = $('.js-col-aside');
+    var toc;
+    var tocDisabled = false;
+    var hasSidebar = $('.js-page-root').hasClass('layout--page--sidebar');
+    var hasToc = $articleContent.find(TOC_SELECTOR).length > 0;
+
+    function disabled() {
+      return $col2.css('display') === 'none' || !hasToc;
+    }
+
+    tocDisabled = disabled();
+
+    toc = $tocRoot.toc({
+      selectors: TOC_SELECTOR,
+      container: $articleContent,
+      scrollTarget: hasSidebar ? '.js-page-main' : null,
+      scroller: hasSidebar ? '.js-page-main' : null,
+      disabled: tocDisabled
+    });
+
+    $window.on('resize', window.throttle(function() {
+      tocDisabled = disabled();
+      toc && toc.setOptions({
+        disabled: tocDisabled
+      });
+    }, 100));
+
+  });
+})();
+(function() {
+  var SOURCES = window.TEXT_VARIABLES.sources;
+  window.Lazyload.js(SOURCES.jquery, function() {
+    var $window = $(window), $pageFooter = $('.js-page-footer');
+    var $pageAside = $('.js-page-aside');
+    var affix;
+    var tocDisabled = false;
+    var hasSidebar = $('.js-page-root').hasClass('layout--page--sidebar');
+
+    affix = $pageAside.affix({
+      offsetBottom: $pageFooter.outerHeight(),
+      scrollTarget: hasSidebar ? '.js-page-main' : null,
+      scroller: hasSidebar ? '.js-page-main' : null,
+      scroll: hasSidebar ? $('.js-page-main').children() : null,
+      disabled: tocDisabled
+    });
+
+    $window.on('resize', window.throttle(function() {
+      affix && affix.setOptions({
+        disabled: tocDisabled
+      });
+    }, 100));
+
+    window.pageAsideAffix = affix;
+  });
+})();
+</script>
+    </div>
+    <script>(function () {
+  var $root = document.getElementsByClassName('root')[0];
+  if (window.hasEvent('touchstart')) {
+    $root.dataset.isTouch = true;
+    document.addEventListener('touchstart', function(){}, false);
+  }
+})();
+</script>
+  </body>
+</html>
+

@@ -10,29 +10,29 @@
 		
 	</script><meta charset="utf-8">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
-<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no"><title>Lucene queries in Hibernate Search - Mincong Huang</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no"><title>Starting Hibernate Search - Mincong Huang</title>
 
-<meta name="description" content="Today, I want to share something about the search feature in Hiberante Search.As mentionned in the official guide Getting started with Hibernate Search :  No...">
+<meta name="description" content="This week I’ve started learning the Hibernate Search. Actually, this is myvery first experience in open source project, so I’m really excited about it.At the...">
 
 <!-- Begin Jekyll SEO tag v2.7.1 -->
-<title>Lucene queries in Hibernate Search | Mincong Huang</title>
+<title>Starting Hibernate Search | Mincong Huang</title>
 <meta name="generator" content="Jekyll v4.2.0" />
-<meta property="og:title" content="Lucene queries in Hibernate Search" />
+<meta property="og:title" content="Starting Hibernate Search" />
 <meta name="author" content="Mincong Huang" />
 <meta property="og:locale" content="en" />
-<meta name="description" content="Today, I want to share something about the search feature in Hiberante Search. As mentionned in the official guide Getting started with Hibernate Search : Now we’ll finally execute a first search. The general approach is to create a Lucene query, …, and then wrap this query into a org.hibernate.Query in order to get all the functionality one is used to from the Hibernate API. In this article, I will focus on the Apache Lucene queries and find out what features can we use on it." />
-<meta property="og:description" content="Today, I want to share something about the search feature in Hiberante Search. As mentionned in the official guide Getting started with Hibernate Search : Now we’ll finally execute a first search. The general approach is to create a Lucene query, …, and then wrap this query into a org.hibernate.Query in order to get all the functionality one is used to from the Hibernate API. In this article, I will focus on the Apache Lucene queries and find out what features can we use on it." />
-<link rel="canonical" href="https://mincong.io/2016/05/06/lucene-queries/" />
-<meta property="og:url" content="https://mincong.io/2016/05/06/lucene-queries/" />
+<meta name="description" content="This week I’ve started learning the Hibernate Search. Actually, this is my very first experience in open source project, so I’m really excited about it. At the first step, I started by Apache Lucene about the index and search. Then I learnt the Lucene query syntax, such as wildcard search, fuzzy search, proximatity search. Then I read a book about Hibernate Search, called Hibernate Search by Example. The book is quite good for beginers despite some methods are deprecated now. The essential of book reading, is to understand the mechanism about how hibernate search works, with hibernate ORM, JPA and Apache Lucene." />
+<meta property="og:description" content="This week I’ve started learning the Hibernate Search. Actually, this is my very first experience in open source project, so I’m really excited about it. At the first step, I started by Apache Lucene about the index and search. Then I learnt the Lucene query syntax, such as wildcard search, fuzzy search, proximatity search. Then I read a book about Hibernate Search, called Hibernate Search by Example. The book is quite good for beginers despite some methods are deprecated now. The essential of book reading, is to understand the mechanism about how hibernate search works, with hibernate ORM, JPA and Apache Lucene." />
+<link rel="canonical" href="https://mincong.io/2016/04/16/starting-hibernate-search/" />
+<meta property="og:url" content="https://mincong.io/2016/04/16/starting-hibernate-search/" />
 <meta property="og:site_name" content="Mincong Huang" />
 <meta property="og:type" content="article" />
-<meta property="article:published_time" content="2016-05-06T00:00:00+02:00" />
+<meta property="article:published_time" content="2016-04-17T00:00:00+02:00" />
 <meta name="twitter:card" content="summary" />
-<meta property="twitter:title" content="Lucene queries in Hibernate Search" />
+<meta property="twitter:title" content="Starting Hibernate Search" />
 <meta name="twitter:site" content="@mincong_h" />
 <meta name="twitter:creator" content="@mincong_h" />
 <script type="application/ld+json">
-{"mainEntityOfPage":{"@type":"WebPage","@id":"https://mincong.io/2016/05/06/lucene-queries/"},"author":{"@type":"Person","name":"Mincong Huang"},"description":"Today, I want to share something about the search feature in Hiberante Search. As mentionned in the official guide Getting started with Hibernate Search : Now we’ll finally execute a first search. The general approach is to create a Lucene query, …, and then wrap this query into a org.hibernate.Query in order to get all the functionality one is used to from the Hibernate API. In this article, I will focus on the Apache Lucene queries and find out what features can we use on it.","@type":"BlogPosting","url":"https://mincong.io/2016/05/06/lucene-queries/","headline":"Lucene queries in Hibernate Search","dateModified":"2016-05-06T00:00:00+02:00","datePublished":"2016-05-06T00:00:00+02:00","@context":"https://schema.org"}</script>
+{"mainEntityOfPage":{"@type":"WebPage","@id":"https://mincong.io/2016/04/16/starting-hibernate-search/"},"author":{"@type":"Person","name":"Mincong Huang"},"description":"This week I’ve started learning the Hibernate Search. Actually, this is my very first experience in open source project, so I’m really excited about it. At the first step, I started by Apache Lucene about the index and search. Then I learnt the Lucene query syntax, such as wildcard search, fuzzy search, proximatity search. Then I read a book about Hibernate Search, called Hibernate Search by Example. The book is quite good for beginers despite some methods are deprecated now. The essential of book reading, is to understand the mechanism about how hibernate search works, with hibernate ORM, JPA and Apache Lucene.","@type":"BlogPosting","url":"https://mincong.io/2016/04/16/starting-hibernate-search/","headline":"Starting Hibernate Search","dateModified":"2016-04-17T00:00:00+02:00","datePublished":"2016-04-17T00:00:00+02:00","@context":"https://schema.org"}</script>
 <!-- End Jekyll SEO tag -->
 
 
@@ -40,7 +40,7 @@
 
 <!-- Extra Open Graph :: End -->
 
-<link rel="canonical" href="https://mincong.io/2016/05/06/lucene-queries/"><link rel="alternate" type="application/rss+xml" title="Mincong Huang" href="/feed.xml"><!-- start favicons snippet, use https://realfavicongenerator.net/ --><link rel="apple-touch-icon" sizes="180x180" href="/assets/apple-touch-icon.png"><link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon-32x32.png"><link rel="icon" type="image/png" sizes="16x16" href="/assets/favicon-16x16.png"><link rel="manifest" href="/assets/site.webmanifest"><link rel="mask-icon" href="/assets/safari-pinned-tab.svg" color="#fc4d50"><link rel="shortcut icon" href="/assets/favicon.ico">
+<link rel="canonical" href="https://mincong.io/2016/04/16/starting-hibernate-search/"><link rel="alternate" type="application/rss+xml" title="Mincong Huang" href="/feed.xml"><!-- start favicons snippet, use https://realfavicongenerator.net/ --><link rel="apple-touch-icon" sizes="180x180" href="/assets/apple-touch-icon.png"><link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon-32x32.png"><link rel="icon" type="image/png" sizes="16x16" href="/assets/favicon-16x16.png"><link rel="manifest" href="/assets/site.webmanifest"><link rel="mask-icon" href="/assets/safari-pinned-tab.svg" color="#fc4d50"><link rel="shortcut icon" href="/assets/favicon.ico">
 
 <meta name="msapplication-TileColor" content="#ffc40d"><meta name="msapplication-config" content="/assets/browserconfig.xml">
 
@@ -344,7 +344,7 @@
           
             <li>
               <a class="button button--circle button--primary focus lang"
-                 href="/2016/05/06/lucene-queries/"><span>EN</span></a>
+                 href="/2016/04/16/starting-hibernate-search/"><span>EN</span></a>
 
               
 
@@ -359,9 +359,9 @@
             </li>
           
         
-      </ul><ul class="right-col menu"><li><i class="far fa-calendar-alt"></i> <span>May 06, 2016</span>
-            </li></ul></div><div class="article__header"><header><h1>Lucene queries in Hibernate Search</h1></header></div><div class="article__header">
-                        <p class="overlay__excerpt">Today, I want to share something about the search feature in Hiberante Search.As mentionned in the official guide Getting started with Hibernate Search :  Now we’ll finally execute a first search. ...</p>
+      </ul><ul class="right-col menu"><li><i class="far fa-calendar-alt"></i> <span>Apr 17, 2016</span>
+            </li></ul></div><div class="article__header"><header><h1>Starting Hibernate Search</h1></header></div><div class="article__header">
+                        <p class="overlay__excerpt">This week I’ve started learning the Hibernate Search. Actually, this is myvery first experience in open source project, so I’m really excited about it.At the first step, I started by Apache Lucene ...</p>
                       </div><div class="article__info clearfix">
   <ul class="left-col menu">
     <li>
@@ -385,366 +385,44 @@
               <div class="col-main cell cell--auto"><!-- start custom main top snippet -->
 
 <!-- end custom main top snippet -->
-<article itemscope itemtype="http://schema.org/Article"><meta itemprop="headline" content="Lucene queries in Hibernate Search"><meta itemprop="author" content="Mincong Huang"/><meta itemprop="datePublished" content="2016-05-06T00:00:00+02:00">
+<article itemscope itemtype="http://schema.org/Article"><meta itemprop="headline" content="Starting Hibernate Search"><meta itemprop="author" content="Mincong Huang"/><meta itemprop="datePublished" content="2016-04-17T00:00:00+02:00">
     <meta itemprop="keywords" content="hibernate-search"><div class="js-article-content"><div class="layout--article"><!-- start custom article top snippet -->
 
 
 <!-- end custom article top snippet -->
-<div class="article__content" itemprop="articleBody"><p>Today, I want to share something about the search feature in Hiberante Search.
-As mentionned in the official guide 
-<a href="http://hibernate.org/search/documentation/getting-started">Getting started with Hibernate Search</a> :</p>
-
-<blockquote>
-  <p>Now we’ll finally execute a first search. The general approach is to create a 
-Lucene query, …, and then wrap this query into a <code class="language-plaintext highlighter-rouge">org.hibernate.Query</code> in 
-order to get all the functionality one is used to from the Hibernate API.</p>
-</blockquote>
-
-<p>In this article, I will focus on the Apache Lucene queries and find out what 
-features can we use on it.</p>
+<div class="article__content" itemprop="articleBody"><p>This week I’ve started learning the Hibernate Search. Actually, this is my
+very first experience in open source project, so I’m really excited about it.
+At the first step, I started by Apache Lucene about the index and search.
+Then I learnt the Lucene query syntax, such as wildcard search, fuzzy search,
+proximatity search. Then I read a book about Hibernate Search, called 
+<em>Hibernate Search by Example</em>. The book is quite good for beginers despite
+some methods are deprecated now. The essential of book reading, is to 
+understand the mechanism about how hibernate search works, with hibernate ORM, 
+JPA and Apache Lucene.</p>
 
 <!--more-->
 
-<p>The first step it to obtain a <code class="language-plaintext highlighter-rouge">org.hibernate.search.query.dsl.QueryBuilder</code>
-object, configured for seraching on a given entity:</p>
-
-<figure class="highlight"><pre><code class="language-java" data-lang="java"><span class="c1">// construct a DSL query builder                                                </span>
-<span class="nc">QueryBuilder</span> <span class="n">queryBuilder</span> <span class="o">=</span> <span class="n">fullTextEntityManager</span>                               
-    <span class="o">.</span><span class="na">getSearchFactory</span><span class="o">()</span>                                                         
-    <span class="o">.</span><span class="na">buildQueryBuilder</span><span class="o">()</span>                                                        
-    <span class="o">.</span><span class="na">forEntity</span><span class="o">(</span><span class="nc">Address</span><span class="o">.</span><span class="na">class</span><span class="o">)</span>                                                   
-    <span class="o">.</span><span class="na">get</span><span class="o">();</span></code></pre></figure>
-
-<p>Once done, we can go on to study different kinds of queries.</p>
-
-<h2 id="keyword-query">Keyword query</h2>
-
-<p>The most basic form of search. As the name suggests, this query type searches
-for one or more particular words.</p>
-
-<figure class="highlight"><pre><code class="language-java" data-lang="java"><span class="nc">Query</span> <span class="n">luceneQuery</span> <span class="o">=</span> <span class="n">queryBuilder</span>
-    <span class="o">.</span><span class="na">keyword</span><span class="o">()</span>
-    <span class="o">.</span><span class="na">onFields</span><span class="o">(</span><span class="s">"name"</span><span class="o">,</span> <span class="s">"type"</span><span class="o">)</span>
-    <span class="o">.</span><span class="na">matching</span><span class="o">(</span><span class="n">searchString</span><span class="o">)</span>
-    <span class="o">.</span><span class="na">createQuery</span><span class="o">();</span></code></pre></figure>
-
-<h3 id="example-usage">Example usage</h3>
-
-<p>I have built a webapp example based on US addresses. If I set <code class="language-plaintext highlighter-rouge">searchString</code> to
-<code class="language-plaintext highlighter-rouge">san francisco rd</code>, then here are the top 10 results returned :</p>
-
-<table>
-  <thead>
-    <tr>
-      <th style="text-align: left">id</th>
-      <th style="text-align: left">name</th>
-      <th>type</th>
-      <th>Left zip</th>
-      <th>Right zip</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td style="text-align: left">6002503</td>
-      <td style="text-align: left">San Francisco</td>
-      <td>Rd</td>
-      <td>62901</td>
-      <td>62901</td>
-    </tr>
-    <tr>
-      <td style="text-align: left">6002504</td>
-      <td style="text-align: left">San Francisco</td>
-      <td>Rd</td>
-      <td>62901</td>
-      <td>62901</td>
-    </tr>
-    <tr>
-      <td style="text-align: left">6002505</td>
-      <td style="text-align: left">San Francisco</td>
-      <td>Rd</td>
-      <td>62901</td>
-      <td>62901</td>
-    </tr>
-    <tr>
-      <td style="text-align: left">6002506</td>
-      <td style="text-align: left">San Francisco</td>
-      <td>Rd</td>
-      <td>62901</td>
-      <td>62901</td>
-    </tr>
-    <tr>
-      <td style="text-align: left">6002507</td>
-      <td style="text-align: left">San Francisco</td>
-      <td>Rd</td>
-      <td>62901</td>
-      <td>62901</td>
-    </tr>
-    <tr>
-      <td style="text-align: left">6002508</td>
-      <td style="text-align: left">San Francisco</td>
-      <td>Rd</td>
-      <td>62901</td>
-      <td>62901</td>
-    </tr>
-    <tr>
-      <td style="text-align: left">6002509</td>
-      <td style="text-align: left">San Francisco</td>
-      <td>Rd</td>
-      <td>62901</td>
-      <td>62901</td>
-    </tr>
-    <tr>
-      <td style="text-align: left">6002510</td>
-      <td style="text-align: left">San Francisco</td>
-      <td>Rd</td>
-      <td>62901</td>
-      <td>62901</td>
-    </tr>
-    <tr>
-      <td style="text-align: left">8210917</td>
-      <td style="text-align: left">Francisco</td>
-      <td>Rd</td>
-      <td>49089</td>
-      <td>49089</td>
-    </tr>
-    <tr>
-      <td style="text-align: left">8210919</td>
-      <td style="text-align: left">Francisco</td>
-      <td>Rd</td>
-      <td>49089</td>
-      <td>49089</td>
-    </tr>
-  </tbody>
-</table>
-
-<p>We can see that the records 6002503, 6002504, 6002505, 6002506, 6002507, 
-6002508, 6002509, 6002510 match all the 3 keywords <code class="language-plaintext highlighter-rouge">san</code>, <code class="language-plaintext highlighter-rouge">francisco</code> and <code class="language-plaintext highlighter-rouge">rd</code>.
-By the way, in default configuration of Apache Lucene query, keywords are not
-case sensitive. That is why they have been returned first. Then the record
-8210917 and 8210919 come, with 2 words matched: <code class="language-plaintext highlighter-rouge">francisco</code> and <code class="language-plaintext highlighter-rouge">rd</code>.</p>
-
-<h2 id="fuzzy-query">Fuzzy query</h2>
-
-<p>With a fuzzy search, keywords match against fields even when they are off by 
-one or more characters. Check <a href="https://en.wikipedia.org/wiki/Edit_distance">wikipedia</a> to know more about the 
-<em>Edit Distance</em>.</p>
-
-<figure class="highlight"><pre><code class="language-java" data-lang="java"><span class="nc">Query</span> <span class="n">luceneQuery</span> <span class="o">=</span> <span class="n">queryBuilder</span>
-    <span class="o">.</span><span class="na">keyword</span><span class="o">()</span>
-    <span class="o">.</span><span class="na">fuzzy</span><span class="o">()</span>
-    <span class="o">.</span><span class="na">withEditDistanceUpTo</span><span class="o">(</span><span class="mi">2</span><span class="o">)</span>   <span class="c1">// default 2 (can be 0, 1, 2)</span>
-    <span class="o">.</span><span class="na">onFields</span><span class="o">(</span><span class="s">"name"</span><span class="o">,</span> <span class="s">"type"</span><span class="o">)</span>
-    <span class="o">.</span><span class="na">matching</span><span class="o">(</span><span class="n">searchString</span><span class="o">)</span>
-    <span class="o">.</span><span class="na">createQuery</span><span class="o">();</span></code></pre></figure>
-
-<h3 id="example-usage-1">Example usage</h3>
-
-<p>With <code class="language-plaintext highlighter-rouge">searchString = "san francsco"</code>, we can still find a similar result thanks
-to fuzzy query :</p>
-
-<table>
-  <thead>
-    <tr>
-      <th style="text-align: left">id</th>
-      <th style="text-align: left">name</th>
-      <th>type</th>
-      <th>Left zip</th>
-      <th>Right zip</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td style="text-align: left">6002503</td>
-      <td style="text-align: left">San Francisco</td>
-      <td>Rd</td>
-      <td>62901</td>
-      <td>62901</td>
-    </tr>
-    <tr>
-      <td style="text-align: left">6002504</td>
-      <td style="text-align: left">San Francisco</td>
-      <td>Rd</td>
-      <td>62901</td>
-      <td>62901</td>
-    </tr>
-    <tr>
-      <td style="text-align: left">6002505</td>
-      <td style="text-align: left">San Francisco</td>
-      <td>Rd</td>
-      <td>62901</td>
-      <td>62901</td>
-    </tr>
-    <tr>
-      <td style="text-align: left">6002506</td>
-      <td style="text-align: left">San Francisco</td>
-      <td>Rd</td>
-      <td>62901</td>
-      <td>62901</td>
-    </tr>
-    <tr>
-      <td style="text-align: left">6002507</td>
-      <td style="text-align: left">San Francisco</td>
-      <td>Rd</td>
-      <td>62901</td>
-      <td>62901</td>
-    </tr>
-    <tr>
-      <td style="text-align: left">6002508</td>
-      <td style="text-align: left">San Francisco</td>
-      <td>Rd</td>
-      <td>62901</td>
-      <td>62901</td>
-    </tr>
-    <tr>
-      <td style="text-align: left">6002509</td>
-      <td style="text-align: left">San Francisco</td>
-      <td>Rd</td>
-      <td>62901</td>
-      <td>62901</td>
-    </tr>
-    <tr>
-      <td style="text-align: left">6002510</td>
-      <td style="text-align: left">San Francisco</td>
-      <td>Rd</td>
-      <td>62901</td>
-      <td>62901</td>
-    </tr>
-    <tr>
-      <td style="text-align: left">8210917</td>
-      <td style="text-align: left">Francisco</td>
-      <td>Rd</td>
-      <td>49089</td>
-      <td>49089</td>
-    </tr>
-    <tr>
-      <td style="text-align: left">8210919</td>
-      <td style="text-align: left">Francisco</td>
-      <td>Rd</td>
-      <td>49089</td>
-      <td>49089</td>
-    </tr>
-  </tbody>
-</table>
-
-<p>Even if the character <code class="language-plaintext highlighter-rouge">i</code> is missing in the word <code class="language-plaintext highlighter-rouge">francsco</code>, the word is
-reachable because its edit distance is 1. That means we only need to do 1
-edition to transform <code class="language-plaintext highlighter-rouge">francsco</code> to <code class="language-plaintext highlighter-rouge">francisco</code>.</p>
-
-<blockquote>
-  <p>Can we set up an edit distance greater than 2 ?</p>
-</blockquote>
-
-<p>No, we can’t. According to the <a href="https://docs.jboss.org/hibernate/search/5.0/api/org/hibernate/search/query/dsl/FuzzyContext.html#withEditDistanceUpTo(int)">Hibernate search javadoc</a>, this is 
-not allowed. Maximum value of the edit distance. Roughly speaking, the number 
-of changes between two terms to be considered close enough. Can be either 1 or 
-2 (0 would mean no fuzziness). Defaults to 2.</p>
-
-<h2 id="wildcard-search">Wildcard Search</h2>
-
-<p>Lucene supports single and multiple character wildcard searches within single 
-terms (not within phrase queries),</p>
+<p>Sanne has assgined me to the issue <a href="https://hibernate.atlassian.net/browse/HSEARCH-2207">HSEARCH-2207 Treat BooleanQuery as an 
+immutable Query</a> at the beginning of this week. Now, there’re some
+advances: some modifications were made to these classes :</p>
 
 <ul>
-  <li>To perform a single character wildcard search, use the <code class="language-plaintext highlighter-rouge">?</code> symbol</li>
-  <li>To perform a multiple character wildcard search, use the <code class="language-plaintext highlighter-rouge">*</code> symbol</li>
+  <li><code class="language-plaintext highlighter-rouge">engine/src/main/java/org/hibernate/search/query/dsl/impl/ConnectedAllContext.java</code></li>
+  <li><code class="language-plaintext highlighter-rouge">orm/src/test/java/org/hibernate/search/test/bridge/BridgeTest.java</code></li>
 </ul>
 
-<figure class="highlight"><pre><code class="language-java" data-lang="java"><span class="nc">Query</span> <span class="n">luceneQuery</span> <span class="o">=</span> <span class="n">queryBuilder</span>
-    <span class="o">.</span><span class="na">keyword</span><span class="o">()</span>
-    <span class="o">.</span><span class="na">wildcard</span><span class="o">()</span>
-    <span class="o">.</span><span class="na">onFields</span><span class="o">(</span><span class="s">"name"</span><span class="o">,</span> <span class="s">"type"</span><span class="o">)</span>
-    <span class="o">.</span><span class="na">matching</span><span class="o">(</span><span class="n">searchString</span><span class="o">)</span>
-    <span class="o">.</span><span class="na">createQuery</span><span class="o">();</span></code></pre></figure>
+<p><img src="https://mincong.io/assets/20160417-hsearch-2207-code-changes.png" alt="HSEARCH-2207 - code changes" /></p>
 
-<h3 id="example-usage-2">Example usage</h3>
+<p>Tests have been validated as following</p>
 
-<p>Set <code class="language-plaintext highlighter-rouge">searchString = "franci?co"</code> and search with wildcard option:</p>
+<p><img src="https://mincong.io/assets/20140417-hsearch-2207-maven-result.png" alt="HSEARCH-2207 - Maven clean install" /></p>
 
-<table>
-  <thead>
-    <tr>
-      <th style="text-align: left">id</th>
-      <th style="text-align: left">name</th>
-      <th>type</th>
-      <th>Left zip</th>
-      <th>Right zip</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td style="text-align: left">3758060</td>
-      <td style="text-align: left">Francisco</td>
-      <td>Cir</td>
-      <td>6706</td>
-      <td>6706</td>
-    </tr>
-    <tr>
-      <td style="text-align: left">6002503</td>
-      <td style="text-align: left">San Francisco</td>
-      <td>Rd</td>
-      <td>62901</td>
-      <td>62901</td>
-    </tr>
-    <tr>
-      <td style="text-align: left">6002504</td>
-      <td style="text-align: left">San Francisco</td>
-      <td>Rd</td>
-      <td>62901</td>
-      <td>62901</td>
-    </tr>
-    <tr>
-      <td style="text-align: left">6002505</td>
-      <td style="text-align: left">San Francisco</td>
-      <td>Rd</td>
-      <td>62901</td>
-      <td>62901</td>
-    </tr>
-    <tr>
-      <td style="text-align: left">6002506</td>
-      <td style="text-align: left">San Francisco</td>
-      <td>Rd</td>
-      <td>62901</td>
-      <td>62901</td>
-    </tr>
-    <tr>
-      <td style="text-align: left">6002507</td>
-      <td style="text-align: left">San Francisco</td>
-      <td>Rd</td>
-      <td>62901</td>
-      <td>62901</td>
-    </tr>
-    <tr>
-      <td style="text-align: left">6002508</td>
-      <td style="text-align: left">San Francisco</td>
-      <td>Rd</td>
-      <td>62901</td>
-      <td>62901</td>
-    </tr>
-    <tr>
-      <td style="text-align: left">6002509</td>
-      <td style="text-align: left">San Francisco</td>
-      <td>Rd</td>
-      <td>62901</td>
-      <td>62901</td>
-    </tr>
-    <tr>
-      <td style="text-align: left">6002510</td>
-      <td style="text-align: left">San Francisco</td>
-      <td>Rd</td>
-      <td>62901</td>
-      <td>62901</td>
-    </tr>
-    <tr>
-      <td style="text-align: left">15410367</td>
-      <td style="text-align: left">Francisco</td>
-      <td>St</td>
-      <td>46360</td>
-      <td>46360</td>
-    </tr>
-  </tbody>
-</table>
+<p>These modifications will be doned tommorrow or Monday. 
+I feel tired now … So good night everybody</p>
 
-</div><section class="article__sharing d-print-none"></section><div class="d-print-none"><footer class="article__footer"><meta itemprop="dateModified" content="2016-05-06T00:00:00+02:00"><!-- start custom article footer snippet -->
+<p>(∪｡∪)｡｡｡zzz</p>
+
+</div><section class="article__sharing d-print-none"></section><div class="d-print-none"><footer class="article__footer"><meta itemprop="dateModified" content="2016-04-17T00:00:00+02:00"><!-- start custom article footer snippet -->
 
 <!-- end custom article footer snippet -->
 <div class="article__subscribe"><div class="subscribe">
@@ -757,7 +435,7 @@ terms (not within phrase queries),</p>
       </a>
     </p>
   </div></div></footer>
-<div class="article__section-navigator clearfix"><div class="previous"><span>PREVIOUS</span><a href="/2016/05/05/how-to-use-the-public-dataset-twilio-wigle-net-street-vector-in-amazon-aws/">How to use the public dataset Twilio Wigle.net Street Vector in Amazon AWS</a></div><div class="next"><span>NEXT</span><a href="/2016/05/19/massindexer-in-hibernate-search/">MassIndexer in Hibernate Search</a></div></div></div>
+<div class="article__section-navigator clearfix"><div class="previous"><span>PREVIOUS</span><a href="/2016/04/12/boolean-query-in-lucene/">Boolean query in Apache Lucene</a></div><div class="next"><span>NEXT</span><a href="/2016/05/05/how-to-use-the-public-dataset-twilio-wigle-net-street-vector-in-amazon-aws/">How to use the public dataset Twilio Wigle.net Street Vector in Amazon AWS</a></div></div></div>
 
 </div>
 
@@ -786,23 +464,7 @@ terms (not within phrase queries),</p>
   });
 })();
 </script>
-</div><section class="page__comments d-print-none"><div id="disqus_thread"></div>
-  <script>
-  /**
-  *  RECOMMENDED CONFIGURATION VARIABLES: EDIT AND UNCOMMENT THE SECTION BELOW TO INSERT DYNAMIC VALUES FROM YOUR PLATFORM OR CMS.
-  *  LEARN WHY DEFINING THESE VARIABLES IS IMPORTANT: https://disqus.com/admin/universalcode/#configuration-variables*/
-  var disqus_config = function () {
-    this.page.url = 'https://mincong.io/2016/05/06/lucene-queries/';
-    this.page.identifier = '/2016/05/06/lucene-queries';
-  };
-  (function() { // DON'T EDIT BELOW THIS LINE
-    var d = document, s = d.createElement('script');
-    s.src = 'https://mincong-h.disqus.com/embed.js';
-    s.setAttribute('data-timestamp', +new Date());
-    (d.head || d.body).appendChild(s);
-  })();
-  </script>
-  <noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript></section></article><!-- start custom main bottom snippet -->
+</div></article><!-- start custom main bottom snippet -->
 
 <!-- end custom main bottom snippet -->
 </div>
