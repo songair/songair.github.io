@@ -34,7 +34,7 @@
 <meta name="twitter:site" content="@mincong_h" />
 <meta name="twitter:creator" content="@mincong_h" />
 <script type="application/ld+json">
-{"author":{"@type":"Person","name":"Mincong Huang"},"image":"https://mincong.io/assets/bg-chuttersnap-aku7Zlj_x_o-unsplash.jpg","description":"One blog and two languages: bringing a better reading experience for the readers! This article shares how I internationalize my blog https://mincong.io","headline":"Custom Internationalization (i18n) with Jekyll","dateModified":"2021-07-11T22:02:53+02:00","@type":"BlogPosting","datePublished":"2021-07-11T22:02:53+02:00","mainEntityOfPage":{"@type":"WebPage","@id":"https://mincong.io/en/jekyll-i18n/"},"url":"https://mincong.io/en/jekyll-i18n/","@context":"https://schema.org"}</script>
+{"mainEntityOfPage":{"@type":"WebPage","@id":"https://mincong.io/en/jekyll-i18n/"},"author":{"@type":"Person","name":"Mincong Huang"},"image":"https://mincong.io/assets/bg-chuttersnap-aku7Zlj_x_o-unsplash.jpg","description":"One blog and two languages: bringing a better reading experience for the readers! This article shares how I internationalize my blog https://mincong.io","@type":"BlogPosting","url":"https://mincong.io/en/jekyll-i18n/","headline":"Custom Internationalization (i18n) with Jekyll","dateModified":"2021-07-11T22:02:53+02:00","datePublished":"2021-07-11T22:02:53+02:00","@context":"https://schema.org"}</script>
 <!-- End Jekyll SEO tag -->
 
 
@@ -808,7 +808,7 @@ append_content <span class="s2">"</span><span class="nv">$filepath_cn</span><spa
 - {%- assign _post_count = site.posts | size -%}
 <span class="gi">+ {%- assign _post_count = paginator.total_posts -%}
 </span>      {%- assign _page_count = paginator.total_pages -%}
-      &lt;p&gt;&lt;/p&gt;
+      &lt;p&gt;{{ _locale_statistics | replace: '[POST_COUNT]', _post_count | replace: '[PAGE_COUNT]', _page_count }}&lt;/p&gt;
       &lt;div class="pagination__menu"&gt;
 <span class="p">@@ -51,7 +51,7 @@</span>
               &lt;/li&gt;
@@ -819,7 +819,11 @@ append_content <span class="s2">"</span><span class="nv">$filepath_cn</span><spa
 </span>              {%- include snippets/prepend-baseurl.html path=_home_path -%} 
 </code></pre></div></div>
 
-<p>There are actually some other modifications to consider, but I won’t expand on them due to the timing. For more details see: <a href="https://github.com/mincong-h/mincong-h.github.io/pull/32">https://github.com/mincong-h/mincong-h.github.io/pull/32</a></p>
+<p>There are actually some other modifications to consider, but I won’t expand on them due to the timing. Here is the final result for the home page, a comparison between English and Chinese:</p>
+
+<p><img src="/assets/20210711-diff-home.png" alt="comparison for the home page between English and Chinese" /></p>
+
+<p>For more details see: <a href="https://github.com/mincong-h/mincong-h.github.io/pull/32">https://github.com/mincong-h/mincong-h.github.io/pull/32</a></p>
 
 <h3 id="task-4-modifying-build-and-deployment">Task 4: Modifying Build and Deployment</h3>
 
@@ -920,9 +924,9 @@ https://mincong.io/archive/ -&gt; https://mincong.io/en/archive/
 <p>The header (<code class="language-plaintext highlighter-rouge">_includes/header.html</code>) should include this element as well.</p>
 
 <div class="language-html highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nt">&lt;li&gt;</span>
-  <span class="nt">&lt;a</span> <span class="na">href=</span><span class="s">""</span><span class="nt">&gt;</span>
-    <span class="nt">&lt;img</span> <span class="na">src=</span><span class="s">""</span>
-         <span class="na">alt=</span><span class="s">""</span>
+  <span class="nt">&lt;a</span> <span class="na">href=</span><span class="s">"{{ _site_root2 }}"</span><span class="nt">&gt;</span>
+    <span class="nt">&lt;img</span> <span class="na">src=</span><span class="s">"{{ _site_root2_src }}"</span>
+         <span class="na">alt=</span><span class="s">"{{ _site_roo2_alt }}"</span>
          <span class="na">class=</span><span class="s">"navigation__lang_img"</span><span class="nt">&gt;</span>
   <span class="nt">&lt;/a&gt;</span>
 <span class="nt">&lt;/li&gt;</span>

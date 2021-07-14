@@ -34,7 +34,7 @@
 <meta name="twitter:site" content="@mincong_h" />
 <meta name="twitter:creator" content="@mincong_h" />
 <script type="application/ld+json">
-{"author":{"@type":"Person","name":"Mincong Huang"},"image":"https://mincong.io/assets/bg-chuttersnap-aku7Zlj_x_o-unsplash.jpg","description":"一个博客两种语言！这篇文章跟大家分享我是如何把个人博客 https://mincong.io 国际化，以此带给读者更好的阅读体验。","headline":"自定义 Jekyll 国际化实践","dateModified":"2021-07-11T22:02:53+02:00","@type":"BlogPosting","datePublished":"2021-07-11T22:02:53+02:00","mainEntityOfPage":{"@type":"WebPage","@id":"https://mincong.io/cn/jekyll-i18n/"},"url":"https://mincong.io/cn/jekyll-i18n/","@context":"https://schema.org"}</script>
+{"mainEntityOfPage":{"@type":"WebPage","@id":"https://mincong.io/cn/jekyll-i18n/"},"author":{"@type":"Person","name":"Mincong Huang"},"image":"https://mincong.io/assets/bg-chuttersnap-aku7Zlj_x_o-unsplash.jpg","description":"一个博客两种语言！这篇文章跟大家分享我是如何把个人博客 https://mincong.io 国际化，以此带给读者更好的阅读体验。","@type":"BlogPosting","url":"https://mincong.io/cn/jekyll-i18n/","headline":"自定义 Jekyll 国际化实践","dateModified":"2021-07-11T22:02:53+02:00","datePublished":"2021-07-11T22:02:53+02:00","@context":"https://schema.org"}</script>
 <!-- End Jekyll SEO tag -->
 
 
@@ -806,7 +806,7 @@ append_content <span class="s2">"</span><span class="nv">$filepath_cn</span><spa
 -     {%- assign _post_count = site.posts | size -%}
 <span class="gi">+     {%- assign _post_count = paginator.total_posts -%}
 </span>      {%- assign _page_count = paginator.total_pages -%}
-      &lt;p&gt;&lt;/p&gt;
+      &lt;p&gt;{{ _locale_statistics | replace: '[POST_COUNT]', _post_count | replace: '[PAGE_COUNT]', _page_count }}&lt;/p&gt;
       &lt;div class="pagination__menu"&gt;
 <span class="p">@@ -51,7 +51,7 @@</span>
               &lt;/li&gt;
@@ -817,7 +817,11 @@ append_content <span class="s2">"</span><span class="nv">$filepath_cn</span><spa
 </span>              {%- include snippets/prepend-baseurl.html path=_home_path -%}
 </code></pre></div></div>
 
-<p>其实还有一些其他修改需要考虑，不过由于篇幅问题不再展开。详情见：<a href="https://github.com/mincong-h/mincong-h.github.io/pull/32">https://github.com/mincong-h/mincong-h.github.io/pull/32</a></p>
+<p>其实还有一些其他修改需要考虑，不过由于篇幅问题不再展开。最后做出来的效果：首页的中英文对比图。</p>
+
+<p><img src="/assets/20210711-diff-home.png" alt="首页的中英文对比图" /></p>
+
+<p>详情见：<a href="https://github.com/mincong-h/mincong-h.github.io/pull/32">https://github.com/mincong-h/mincong-h.github.io/pull/32</a></p>
 
 <h3 id="任务四修改构建和部署方式">任务四：修改构建和部署方式</h3>
 
@@ -918,9 +922,9 @@ https://mincong.io/archive/ -&gt; https://mincong.io/en/archive/
 <p>生成页眉（<code class="language-plaintext highlighter-rouge">_includes/header.html</code>）时调用这些信息：</p>
 
 <div class="language-html highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nt">&lt;li&gt;</span>
-  <span class="nt">&lt;a</span> <span class="na">href=</span><span class="s">""</span><span class="nt">&gt;</span>
-    <span class="nt">&lt;img</span> <span class="na">src=</span><span class="s">""</span>
-         <span class="na">alt=</span><span class="s">""</span>
+  <span class="nt">&lt;a</span> <span class="na">href=</span><span class="s">"{{ _site_root2 }}"</span><span class="nt">&gt;</span>
+    <span class="nt">&lt;img</span> <span class="na">src=</span><span class="s">"{{ _site_root2_src }}"</span>
+         <span class="na">alt=</span><span class="s">"{{ _site_roo2_alt }}"</span>
          <span class="na">class=</span><span class="s">"naviation__lang_img"</span><span class="nt">&gt;</span>
   <span class="nt">&lt;/a&gt;</span>
 <span class="nt">&lt;/li&gt;</span>
