@@ -431,18 +431,21 @@
 <ul>
   <li>该集群没有使用 Elasticsearch Snapshot 进行备份</li>
   <li>索引没有正在被写入新数据，数据都是两周之前的旧数据，基本属于只读状态。</li>
-  <li>重启相应的数据节点没有作用</li>
+  <li>试过重启相应的数据节点，没有好转</li>
 </ul>
 
 <p>在 Elastic 论坛搜到类似的情况，有人遇到损坏的索引需要修复 <a href="https://discuss.elastic.co/t/corrupted-elastic-index/135932" title="Corrupted Elastic Index">Corrupted elastic index</a>：</p>
 
 <p><img src="/assets/20210714-question.png" alt="论坛问题" /></p>
 
+<p>论坛问题中，Thiago Souza 先生和 Yannick Welsch 先生各提供了一个解决方案。下面我们一起看看。</p>
+
 <p><strong>Thiago Souza 提供的潜在解决方案：</strong></p>
 
 <p>This is an indication of either hardware errors (check <code class="language-plaintext highlighter-rouge">dmesg</code>) or that it maybe ran out of disk space.
 At this point segments are corrupted and data is lost, meaning that you can’t recover the whole index anymore. Unless you have a snapshot (which is recommended for production).
 There are a couple of options to try to partially recover this index:</p>
+
 <ol>
   <li>Try to partially recover the corrupted shard:
     <ol>
@@ -457,13 +460,13 @@ There are a couple of options to try to partially recover this index:</p>
 
 <p>None of these are guaranteed to work as it is highly dependent of the type of damage.</p>
 
-<p><strong>Yannick WelschElastic 提供的潜在解决方案：</strong></p>
+<p><strong>Yannick Welsch 提供的潜在解决方案：</strong></p>
 
 <p>Note that the corruption marker file <code class="language-plaintext highlighter-rouge">corrupted_*</code> will prevent the shard from being allocated as primary. This file is managed by Elasticsearch, and is unaware of the fact that you’ve fixed the index using Lucene’s CheckIndex. Removing this failure marker file should allow this shard to be allocated again.</p>
 
 <h2 id="解决步骤">解决步骤</h2>
 
-<p class="warning">如果您决定使用以下步骤，造成的潜在损失请自行负责，本站不承担任何责任。</p>
+<p>接下来，我们尝试以下两位大神的方案。</p>
 
 <h3 id="第一步尝试修复索引">第一步：尝试修复索引</h3>
 
@@ -484,7 +487,7 @@ There are a couple of options to try to partially recover this index:</p>
 <div class="language-sh highlighter-rouge"><div class="highlight"><pre class="highlight"><code>curl <span class="nt">-X</span> POST localhost:9200/MY_INDEX/_close
 </code></pre></div></div>
 
-<p>关闭索引后，索引将无法写入新的数据。</p>
+<p>注意，在关闭索引后，索引将无法写入新的数据。</p>
 
 <blockquote>
   <ol>
@@ -504,7 +507,7 @@ There are a couple of options to try to partially recover this index:</p>
   <thead>
     <tr>
       <th style="text-align: left">选项</th>
-      <th style="text-align: left">评论</th>
+      <th style="text-align: left">描述</th>
     </tr>
   </thead>
   <tbody>
@@ -522,7 +525,7 @@ There are a couple of options to try to partially recover this index:</p>
     </tr>
     <tr>
       <td style="text-align: left">fix</td>
-      <td style="text-align: left">The same as false. This option is deprecated and will be completely removed in 7.0. 跟 false 一样。这个选项已经被废弃，在 7.0 以后被永久移除（注：在 <a href="https://github.com/elastic/elasticsearch/pull/32279/files" title="PR-32279">PR-32279</a>被废弃）</td>
+      <td style="text-align: left">The same as false. This option is deprecated and will be completely removed in 7.0. 跟 false 一样。这个选项已经被废弃，在 7.0 以后被永久移除（注：在 <a href="https://github.com/elastic/elasticsearch/pull/32279/files" title="PR-32279">PR-32279</a> 被废弃）</td>
     </tr>
   </tbody>
 </table>
@@ -537,7 +540,7 @@ There are a couple of options to try to partially recover this index:</p>
 '</span>
 </code></pre></div></div>
 
-<p>不过我认为这个选项已经无效了，因为 false 意味着什么损坏都没有检查和修复。而且上文排查问题的时候已经说过，重启数据节点都没有用，问题一直存在。我也尝试了 true，也没有修复任何东西。</p>
+<p>不过我认为这个选项已经无效了，因为 false 意味着什么损坏都没有检查和修复。而且在文章开头【排查问题】部分的时候已经说过，重启数据节点都没有使情况好转，问题一直存在。我也尝试了 true，也没有修复任何东西。</p>
 
 <blockquote>
   <ol>
@@ -555,7 +558,7 @@ There are a couple of options to try to partially recover this index:</p>
   </ol>
 </blockquote>
 
-<p>作为一个数据工程师怎么能随便接受数据丢失？（微笑脸）不能接受！先看看 Yannick WelschElastic 先生的建议吧。先不考虑这个</p>
+<p>作为一个数据工程师怎么能随便接受数据丢失？（微笑脸）不能接受！先看看 Yannick Welsch 先生的建议吧。</p>
 
 <h3 id="第三步通过-lucene-层面修复">第三步：通过 Lucene 层面修复</h3>
 
@@ -582,7 +585,7 @@ There are a couple of options to try to partially recover this index:</p>
 
 
 -exorcise: actually write a new segments_N file, removing any problematic segments. *LOSES DATA*
--segment X: only check the specified segment(s). This can be specified multiple times, to check more than one segment, eg -segment _2 -segment _a. You can't use this with the -exorcise option. 
+-segment X: only check the specified segment(s). This can be specified multiple times, to check more than one segment, eg -segment _2 -segment _a. You can't use this with the -exorcise option.
 </code></pre></div>  </div>
 
   <p>WARNING: <code class="language-plaintext highlighter-rouge">-exorcise</code> should only be used on an emergency basis as it will cause documents (perhaps many) to be permanently removed from the index. Always make a backup copy of your index before running this! Do not run this tool on an index that is actively being written to. You have been warned!</p>
@@ -592,23 +595,23 @@ There are a couple of options to try to partially recover this index:</p>
   <p>This tool exits with exit code 1 if the index cannot be opened or has any corruption, else 0.</p>
 </blockquote>
 
-<p>警告：如果分片在被写入的情况下不要使用 <code class="language-plaintext highlighter-rouge">-exorcise</code>，可能造成数据损坏！而且建议先把数据备份再操作。具体自己阅读英语原文。</p>
+<p>警告：如果分片在被写入的情况下不要使用 <code class="language-plaintext highlighter-rouge">-exorcise</code>，可能造成数据损坏！而且建议先把数据备份再操作。具体描述，请见英语原文。</p>
 
-<p>确定想执行修复工具以后，还需要确认：</p>
+<p>确定想使用修复工具 CheckIndex 以后，还需要确认：</p>
 
 <ul>
-  <li>Elasticsearch 分片的具体位置。如果一台机器只有一个 Elasticsearch 服务器运行的化，那应该是在 <code class="language-plaintext highlighter-rouge">${ES_HOME}/data/nodes/0/indices/...</code> 下面的某个文件夹。这个准确路径，在在 Explain API 那边应该已经给出过（见文章开头的 JSON 节选）。</li>
-  <li>Elasticsearch library 的具体位置。应该是在 <code class="language-plaintext highlighter-rouge">${ES_HOME}/lib</code>。我们需要这个因为 Lucene Core 的 JAR 文件存放在那里。</li>
-  <li>决定是否要备份分片再执行修复。</li>
+  <li>Elasticsearch 分片的具体位置。如果一台机器只有一个 Elasticsearch 服务器运行的话，那应该是在 <code class="language-plaintext highlighter-rouge">${ES_HOME}/data/nodes/0/indices/...</code> 下面的某个文件夹。具体路径可以在 Explain API 那边看到（见文章开头的 JSON 节选）。</li>
+  <li>Elasticsearch library 的具体位置。应该是在 <code class="language-plaintext highlighter-rouge">${ES_HOME}/lib</code>。我们需要这个位置，因为它是 Lucene Core 的 JAR 文件存放地点。</li>
+  <li>决定是否要先备份分片，再执行修复。</li>
 </ul>
 
-<p>一切都准备好以后，执行以下命令。注意 Lucene 后面的三个点是三个字符 dot，不是一个字符，因为有些操作系统/博客会“智能”把它们切换成另一个类似的字符。</p>
+<p>一切都准备好以后，执行以下命令。注意 Lucene 后面的三个点是三个字符 dot，不是一个字符，因为有些操作系统/博客会把它们切换成另一个类似的字符。</p>
 
 <div class="language-sh highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nb">cd</span> /usr/share/elasticsearch/lib
 java <span class="nt">-cp</span> lucene-core<span class="k">*</span>.jar <span class="nt">-ea</span>:org.apache.lucene... org.apache.lucene.index.CheckIndex /usr/share/elasticsearch/data/nodes/0/indices/w76sdoDFRm-xxxxxxxxxxx/0/index <span class="nt">-verbose</span> <span class="nt">-exorcise</span>
 </code></pre></div></div>
 
-<p>我自己的话，执行完命令，CheckIndex 返回：</p>
+<p>执行完命令，CheckIndex 返回：</p>
 
 <div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>No problems were detected with this index.
 
@@ -617,11 +620,13 @@ Took 118.609 sec total.
 
 <p>呃。。。所以什么问题都没有？根本没有数据损坏？可能是遇到一个意外的情况，然后 Elasticsearch 没有正确地处理异常？</p>
 
-<p>好吧。既然数据没有损坏，那下一步将数据损坏的标记文件 <code class="language-plaintext highlighter-rouge">corrupted_*</code> 移动到另一个文件夹（相当于移除）。不一会儿，Elasticsearch 的这个分片恢复了：它成功地被 allocated，在 Explain API 中再看不到它的存在。这个过程无需重启服务器。然后登录其他机器，对所有的相关分片进行同样的操作。最后，集群又变回了绿色，oh yeah！</p>
+<p>好吧。既然数据没有损坏，那下一步将数据损坏的标记文件 <code class="language-plaintext highlighter-rouge">corrupted_*</code> 移动到另一个文件夹（相当于移除）。不一会儿，Elasticsearch 的这个分片恢复了：它成功地被分配，在 Explain API 中再看不到它的存在。这个过程无需重启服务器。接下来，登录其他机器，对所有的相关红色分片（未成功分配的分片）进行同样的操作。最后，集群又变回了绿色，oh yeah！</p>
 
 <h2 id="结论">结论</h2>
 
-<p>在本文中，我们看到了由于使用 Force Merge API 造成的红色索引。在 Elastic 论坛的帮助下，尝试通过 <code class="language-plaintext highlighter-rouge">index.shard.check_on_startup: fix</code> 进行数据修复，但是该选项在 Elasticsearch 7 中已经不复存在。我们看到了通过 <code class="language-plaintext highlighter-rouge">allocate_empty_primary</code> 可以接受部分数据丢失，并保留剩余健康的分片，但是我们没有这么做因为想拿回所有的数据。接下来，我们在 Lucene 层面通过 CheckIndex 工具进行修复，发现并没有数据损坏，其实是虚惊一场。最后移除数据损坏标签 <code class="language-plaintext highlighter-rouge">corrupted_*</code> 实现恢复。希望这篇关于 Elasticsearch 实战的文章，能给你带来一些新的启发。如果你有兴趣了解更多关于 Elasticsearch 的资讯，欢迎关注我的 GitHub 账号 <a href="https://github.com/mincong-h">mincong-h</a> 或者微信订阅号【码农小黄】。谢谢大家！</p>
+<p>在本文中，我们看到了由于使用 Force Merge API 造成的红色索引。在 Elastic 论坛的帮助下，尝试通过 <code class="language-plaintext highlighter-rouge">index.shard.check_on_startup: fix</code> 进行数据修复，但是该选项在 Elasticsearch 7 中已经不复存在。我们看到了通过 <code class="language-plaintext highlighter-rouge">allocate_empty_primary</code> 可以接受部分数据丢失，并保留剩余健康的分片，但是我们没有这么做因为想拿回所有的数据。接下来，我们在 Lucene 层面通过 CheckIndex 工具进行修复，发现并没有数据损坏，其实是虚惊一场。最后移除数据损坏标签文件 <code class="language-plaintext highlighter-rouge">corrupted_*</code> 实现恢复。</p>
+
+<p>希望这篇关于 Elasticsearch 实战的文章，能给你带来一些新的启发。如果你有兴趣了解更多关于 Elasticsearch 的资讯，欢迎关注我的 GitHub 账号 <a href="https://github.com/mincong-h" title="mincong-h">mincong-h</a> 或者微信订阅号【码农小黄】。谢谢大家！</p>
 
 <h2 id="参考文献">参考文献</h2>
 
@@ -634,7 +639,9 @@ Took 118.609 sec total.
  写作不易，希望大家点个赞、点个在看支持一下，谢谢(花)
  ![](https://mincong.io/assets/wechat-QR-code.jpg)
 -->
-</div><section class="article__sharing d-print-none"></section><div class="d-print-none"><footer class="article__footer"><meta itemprop="dateModified" content="2021-07-14T16:57:49+02:00"><!-- start custom article footer snippet -->
+</div><section class="article__sharing d-print-none"></section><div class="d-print-none"><footer class="article__footer"><span>更新于
+      <time itemprop="dateModified" datetime="2021-07-16T22:42:03+02:00">2021年 07月16日</time>
+    </span><!-- start custom article footer snippet -->
 
 <!-- end custom article footer snippet -->
 <div class="article__subscribe"><div class="subscribe">
