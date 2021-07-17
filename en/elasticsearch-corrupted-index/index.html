@@ -10,37 +10,42 @@
 		
 	</script><meta charset="utf-8">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
-<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no"><title>Java Testing - Mincong Huang</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no"><title>Fix Corrupted Index in Elasticsearch - Mincong Huang</title>
 
-<meta name="description" content="">
+<meta name="description" content="How to fix corrupted index in Elasticsearch cluster without snapshot?">
 
 <!-- Begin Jekyll SEO tag v2.7.1 -->
-<title>Java Testing | Mincong Huang</title>
+<title>Fix Corrupted Index in Elasticsearch | Mincong Huang</title>
 <meta name="generator" content="Jekyll v4.2.0" />
-<meta property="og:title" content="Java Testing" />
+<meta property="og:title" content="Fix Corrupted Index in Elasticsearch" />
 <meta name="author" content="Mincong Huang" />
 <meta property="og:locale" content="en" />
-<meta name="description" content="Hi, welcome to my blog! I’m a software engineer at Datadog. I write blog posts in my free time. My blogs are bits and pieces of my tech journey. Most of them are related to Java. Hope you enjoy them! My opinions are my own, not Datadog’s. This blog is powered by Jekyll, a simple, blog-aware, static sites solution." />
-<meta property="og:description" content="Hi, welcome to my blog! I’m a software engineer at Datadog. I write blog posts in my free time. My blogs are bits and pieces of my tech journey. Most of them are related to Java. Hope you enjoy them! My opinions are my own, not Datadog’s. This blog is powered by Jekyll, a simple, blog-aware, static sites solution." />
-<link rel="canonical" href="https://mincong.io/en/categories/java-testing/" />
-<meta property="og:url" content="https://mincong.io/en/categories/java-testing/" />
+<meta name="description" content="How to fix corrupted index in Elasticsearch cluster without snapshot?" />
+<meta property="og:description" content="How to fix corrupted index in Elasticsearch cluster without snapshot?" />
+<link rel="canonical" href="https://mincong.io/en/elasticsearch-corrupted-index/" />
+<meta property="og:url" content="https://mincong.io/en/elasticsearch-corrupted-index/" />
 <meta property="og:site_name" content="Mincong Huang" />
+<meta property="og:image" content="https://mincong.io/assets/bg-jonnica-hill-V5nq6u-Ce_U-unsplash.jpg" />
 <meta property="og:type" content="article" />
-<meta property="article:published_time" content="2021-07-17T09:34:52+02:00" />
-<meta name="twitter:card" content="summary" />
-<meta property="twitter:title" content="Java Testing" />
+<meta property="article:published_time" content="2021-07-14T16:57:49+02:00" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta property="twitter:image" content="https://mincong.io/assets/bg-jonnica-hill-V5nq6u-Ce_U-unsplash.jpg" />
+<meta property="twitter:title" content="Fix Corrupted Index in Elasticsearch" />
 <meta name="twitter:site" content="@mincong_h" />
 <meta name="twitter:creator" content="@mincong_h" />
 <script type="application/ld+json">
-{"mainEntityOfPage":{"@type":"WebPage","@id":"https://mincong.io/en/categories/java-testing/"},"author":{"@type":"Person","name":"Mincong Huang"},"description":"Hi, welcome to my blog! I’m a software engineer at Datadog. I write blog posts in my free time. My blogs are bits and pieces of my tech journey. Most of them are related to Java. Hope you enjoy them! My opinions are my own, not Datadog’s. This blog is powered by Jekyll, a simple, blog-aware, static sites solution.","@type":"BlogPosting","url":"https://mincong.io/en/categories/java-testing/","headline":"Java Testing","dateModified":"2021-07-17T09:34:52+02:00","datePublished":"2021-07-17T09:34:52+02:00","@context":"https://schema.org"}</script>
+{"mainEntityOfPage":{"@type":"WebPage","@id":"https://mincong.io/en/elasticsearch-corrupted-index/"},"author":{"@type":"Person","name":"Mincong Huang"},"image":"https://mincong.io/assets/bg-jonnica-hill-V5nq6u-Ce_U-unsplash.jpg","description":"How to fix corrupted index in Elasticsearch cluster without snapshot?","@type":"BlogPosting","url":"https://mincong.io/en/elasticsearch-corrupted-index/","headline":"Fix Corrupted Index in Elasticsearch","dateModified":"2021-07-14T16:57:49+02:00","datePublished":"2021-07-14T16:57:49+02:00","@context":"https://schema.org"}</script>
 <!-- End Jekyll SEO tag -->
 
 
 <!-- Extra Open Graph :: Start -->
 
+<meta property="og:image:width" content="1280"/>
+<meta property="og:image:height" content="1920"/>
+
 <!-- Extra Open Graph :: End -->
 
-<link rel="canonical" href="https://mincong.io/en/categories/java-testing/"><link rel="alternate" type="application/rss+xml" title="Mincong Huang" href="/feed.xml"><!-- start favicons snippet, use https://realfavicongenerator.net/ --><link rel="apple-touch-icon" sizes="180x180" href="/assets/apple-touch-icon.png"><link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon-32x32.png"><link rel="icon" type="image/png" sizes="16x16" href="/assets/favicon-16x16.png"><link rel="manifest" href="/assets/site.webmanifest"><link rel="mask-icon" href="/assets/safari-pinned-tab.svg" color="#fc4d50"><link rel="shortcut icon" href="/assets/favicon.ico">
+<link rel="canonical" href="https://mincong.io/en/elasticsearch-corrupted-index/"><link rel="alternate" type="application/rss+xml" title="Mincong Huang" href="/feed.xml"><!-- start favicons snippet, use https://realfavicongenerator.net/ --><link rel="apple-touch-icon" sizes="180x180" href="/assets/apple-touch-icon.png"><link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon-32x32.png"><link rel="icon" type="image/png" sizes="16x16" href="/assets/favicon-16x16.png"><link rel="manifest" href="/assets/site.webmanifest"><link rel="mask-icon" href="/assets/safari-pinned-tab.svg" color="#fc4d50"><link rel="shortcut icon" href="/assets/favicon.ico">
 
 <meta name="msapplication-TileColor" content="#ffc40d"><meta name="msapplication-config" content="/assets/browserconfig.xml">
 
@@ -290,18 +295,7 @@
 </head>
   <body>
     <div class="root" data-is-touch="false">
-      <div class="layout--page layout--page--sidebar clearfix js-page-root">
-  <div class="page__mask d-print-none js-page-mask js-sidebar-hide"></div>
-  <div class="page__viewport">
-    <div class="page__actions d-print-none">
-      <div class="button button--circle button--lg box-shadow-2 sidebar-button js-sidebar-show">
-        <i class="fas fa-bars icon--show"></i>
-      </div>
-    </div>
-
-    <div class="grid page__grid">
-
-      <div class="page__sidebar d-print-none"><div class="sidebar-toc"><ul class="toc toc--navigator"><li class="toc-h1">Categories</li><li class="toc-h2"><a href="/en/categories/build/">Build Tools</a></li><li class="toc-h2"><a href="/en/categories/elasticsearch/">Elasticsearch</a></li><li class="toc-h2"><a href="/en/categories/git/">Git</a></li><li class="toc-h2"><a href="/en/categories/java-concurrency/">Java Concurrency</a></li><li class="toc-h2"><a href="/en/categories/java-core/">Java Core</a></li><li class="toc-h2"><a href="/en/categories/java-rest/">Java RESTful APIs</a></li><li class="toc-h2"><a href="/en/categories/java-serialization/">Java Serialization</a></li><li class="toc-h2 active"><a href="/en/categories/java-testing/">Java Testing</a></li><li class="toc-h2"><a href="/en/categories/python/">Python</a></li><li class="toc-h2"><a href="/en/categories/reliability/">Reliability</a></li><li class="toc-h2"><a href="/en/categories/review/">Review</a></li></ul></div></div><div class="page__main js-page-main cell cell--auto">
+      <div class="layout--page js-page-root"><div class="page__main js-page-main page__viewport has-aside cell cell--auto">
 
       <div class="page__main-inner"><div class="page__header d-print-none"><header class="header"><div class="main">
       <div class="header__title">
@@ -344,122 +338,360 @@
         </ul>
       </nav></div>
   </header>
-</div><div class="page__content"><div class ="main"><div class="grid grid--reverse">
-
-              <div class="col-aside d-print-none js-col-aside"></div>
-
-              <div class="col-main cell cell--auto"><!-- start custom main top snippet -->
-
-<!-- end custom main top snippet -->
-<article itemscope itemtype="http://schema.org/WebPage"><div class="article__header"><header><h1>Java Testing</h1></header></div><meta itemprop="headline" content="Java Testing">
+</div><div class="page__content"><div class="article__header--overlay"><div class="hero hero--dark overlay" style="background-image:linear-gradient(135deg, rgba(0, 0, 0, .6), rgba(0, 0, 0, .4)),url(/assets/bg-jonnica-hill-V5nq6u-Ce_U-unsplash.jpg);background-color:#203028;"><div class="hero__content"><div class ="main">
 
   
   <div class="article__info clearfix">
       <ul class="left-col menu">
+        <li>
+              <a class="button button--secondary button--pill button--sm"
+                href="/en/archive/?tag=elasticsearch">elasticsearch</a>
+            </li><li>
+              <a class="button button--secondary button--pill button--sm"
+                href="/en/archive/?tag=elasticsearch-7">elasticsearch-7</a>
+            </li><li>
+              <a class="button button--secondary button--pill button--sm"
+                href="/en/archive/?tag=java">java</a>
+            </li>
+
+        <li class="separator">|</li>
+          
+            <li>
+              <a class="button button--circle button--primary focus lang"
+                 href="/en/elasticsearch-corrupted-index/"><span>EN</span></a>
+
+              
+
+
+
+
+
+
+              
+
+              
+                <a class="button button--circle button--secondary lang"
+                   href="/cn/elasticsearch-corrupted-index/"><span>CN</span></a>
+              
+            </li>
+          
         
-
-        
-      </ul><ul class="right-col menu"><li><i class="far fa-calendar-alt"></i> <span>Jul 17, 2021</span>
-            </li></ul></div><meta itemprop="author" content="Mincong Huang"/><meta itemprop="datePublished" content="2021-07-17T09:34:52+02:00"><div class="js-article-content">
-
-
-<div class="layout--articles">
-  <section class="my-5">
-    <div class="article-list grid grid--p-3"><div class="cell cell--12 cell--md-6 cell--lg-4">
-          <div class="card card--flat"><div class="card__image"><div class="card__background_image card__background_image_md" style="background-image: url('/assets/bg-mike-kenneally-tNALoIZhqVM-unsplash.jpg')"></div></div><div class="card__content">
-                <header>
-                  <a href="/2021/04/09/junit-5-dynamic-tests/"><h2 class="card__header">JUnit 5: Dynamic Tests with TestFactory</h2></a>
-                </header>
-              </div>
-          </div>
-        </div><div class="cell cell--12 cell--md-6 cell--lg-4">
-          <div class="card card--flat"><div class="card__image"><div class="card__background_image card__background_image_md" style="background-image: url('/assets/bg-sonja-langford-eIkbSc3SDtI-unsplash.jpg')"></div></div><div class="card__content">
-                <header>
-                  <a href="/2020/05/24/java-clock/"><h2 class="card__header">Controlling Time with Java Clock</h2></a>
-                </header>
-              </div>
-          </div>
-        </div><div class="cell cell--12 cell--md-6 cell--lg-4">
-          <div class="card card--flat"><div class="card__image"><div class="card__background_image card__background_image_md" style="background-image: url('/assets/bg-mike-kenneally-tNALoIZhqVM-unsplash.jpg')"></div></div><div class="card__content">
-                <header>
-                  <a href="/2020/05/10/completablefuture-test/"><h2 class="card__header">How CompletableFuture is tested in OpenJDK?</h2></a>
-                </header>
-              </div>
-          </div>
-        </div><div class="cell cell--12 cell--md-6 cell--lg-4">
-          <div class="card card--flat"><div class="card__image"><div class="card__background_image card__background_image_md" style="background-image: url('/assets/bg-edward-howell-hYcriIw0gHc-unsplash.jpg')"></div></div><div class="card__content">
-                <header>
-                  <a href="/2020/04/19/mockito-junit5/"><h2 class="card__header">Mockito: 3 Ways to Init Mock in JUnit 5</h2></a>
-                </header>
-              </div>
-          </div>
-        </div><div class="cell cell--12 cell--md-6 cell--lg-4">
-          <div class="card card--flat"><div class="card__image"><div class="card__background_image card__background_image_md" style="background-image: url('/assets/bg-erwan-hesry-RJjY5Hpnifk-unsplash.jpg')"></div></div><div class="card__content">
-                <header>
-                  <a href="/2020/04/05/testing-elasticsearch-with-docker-and-java-client/"><h2 class="card__header">Testing Elasticsearch With Docker And Java High Level REST Client</h2></a>
-                </header>
-              </div>
-          </div>
-        </div><div class="cell cell--12 cell--md-6 cell--lg-4">
-          <div class="card card--flat"><div class="card__image"><div class="card__background_image card__background_image_md" style="background-image: url('/assets/bg-adrian-korte-5gn2soeAc40-unsplash.jpg')"></div></div><div class="card__content">
-                <header>
-                  <a href="/2020/02/02/logback-test-logging-event/"><h2 class="card__header">Logback: Test Logging Event</h2></a>
-                </header>
-              </div>
-          </div>
-        </div><div class="cell cell--12 cell--md-6 cell--lg-4">
-          <div class="card card--flat"><div class="card__image"><div class="card__background_image card__background_image_md" style="background-image: url('/assets/bg-romet-tagobert-ytrbFQSJBxw-unsplash.jpg')"></div></div><div class="card__content">
-                <header>
-                  <a href="/2019/12/15/mockito-argument-captor/"><h2 class="card__header">Mockito: ArgumentCaptor</h2></a>
-                </header>
-              </div>
-          </div>
-        </div><div class="cell cell--12 cell--md-6 cell--lg-4">
-          <div class="card card--flat"><div class="card__image"><div class="card__background_image card__background_image_md" style="background-image: url('/assets/bg-alex-block-eicoRD590x4-unsplash.jpg')"></div></div><div class="card__content">
-                <header>
-                  <a href="/2019/09/22/mockito-verify/"><h2 class="card__header">Mockito: 4 Ways to Verify Interactions</h2></a>
-                </header>
-              </div>
-          </div>
-        </div><div class="cell cell--12 cell--md-6 cell--lg-4">
-          <div class="card card--flat"><div class="card__image"><div class="card__background_image card__background_image_md" style="background-image: url('/assets/bg-mike-kenneally-tNALoIZhqVM-unsplash.jpg')"></div></div><div class="card__content">
-                <header>
-                  <a href="/2019/09/13/init-mock/"><h2 class="card__header">Mockito: 3 Ways to Init Mock in JUnit 4</h2></a>
-                </header>
-              </div>
-          </div>
-        </div><div class="cell cell--12 cell--md-6 cell--lg-4">
-          <div class="card card--flat"><div class="card__image"><div class="card__background_image card__background_image_md" style="background-image: url('/assets/bg-boy-666803_1280.jpg')"></div></div><div class="card__content">
-                <header>
-                  <a href="/2019/08/13/how-to-fix-bug-with-legacy-framework/"><h2 class="card__header">6 Tips for Fixing Bugs with Legacy Frameworks</h2></a>
-                </header>
-              </div>
-          </div>
-        </div><div class="cell cell--12 cell--md-6 cell--lg-4">
-          <div class="card card--flat"><div class="card__image"><div class="card__background_image card__background_image_md" style="background-image: url('/assets/bg-dog-2785074_1280.jpg')"></div></div><div class="card__content">
-                <header>
-                  <a href="/2019/02/05/tdd-after-3-months-practice/"><h2 class="card__header">TDD: After 3 Months' Practice</h2></a>
-                </header>
-              </div>
-          </div>
-        </div><div class="cell cell--12 cell--md-6 cell--lg-4">
-          <div class="card card--flat"><div class="card__image"><div class="card__background_image card__background_image_md" style="background-image: url('/assets/bg-coffee-171653_1280.jpg')"></div></div><div class="card__content">
-                <header>
-                  <a href="/2018/12/18/testing-jax-rs-resources/"><h2 class="card__header">Testing JAX-RS Resources</h2></a>
-                </header>
-              </div>
-          </div>
-        </div><div class="cell cell--12 cell--md-6 cell--lg-4">
-          <div class="card card--flat"><div class="card__image"><div class="card__background_image card__background_image_md" style="background-image: url('/assets/bg-board-2450236_1280.jpg')"></div></div><div class="card__content">
-                <header>
-                  <a href="/2018/04/03/learning-selenium-webdriver/"><h2 class="card__header">Introduction to Selenium WebDriver</h2></a>
-                </header>
-              </div>
-          </div>
-        </div></div>
-</section>
+      </ul><ul class="right-col menu"><li><i class="far fa-calendar-alt"></i> <span>Jul 14, 2021</span>
+            </li></ul></div><div class="article__header"><header><h1>Fix Corrupted Index in Elasticsearch</h1></header></div><div class="article__header">
+                        <p class="overlay__excerpt">How to fix corrupted index in Elasticsearch cluster without snapshot?</p>
+                      </div><div class="article__info clearfix">
+  <ul class="left-col menu">
+    <li>
+      <i class="fas fa-camera"></i>
+      
+      Photo by
+      <a href="https://unsplash.com/@jonnicaahill" target="_blank">Jonnica Hill</a>
+      
+      on
+      <a href="https://unsplash.com/license" target="_blank">Unplash </a>
+    </li>
+  </ul>
 </div>
-</div></article><!-- start custom main bottom snippet -->
+</div></div>
+              </div>
+            </div><div class ="main"><div class="grid grid--reverse">
+
+              <div class="col-aside d-print-none js-col-aside"><aside class="page__aside js-page-aside"><div class="toc-aside js-toc-root"></div>
+</aside></div>
+
+              <div class="col-main cell cell--auto"><!-- start custom main top snippet -->
+
+<!-- end custom main top snippet -->
+<article itemscope itemtype="http://schema.org/Article"><meta itemprop="headline" content="Fix Corrupted Index in Elasticsearch"><meta itemprop="author" content="Mincong Huang"/><meta itemprop="datePublished" content="2021-07-14T16:57:49+02:00">
+    <meta itemprop="keywords" content="elasticsearch,elasticsearch-7,java"><div class="js-article-content"><div class="layout--article"><!-- start custom article top snippet -->
+
+
+<!-- end custom article top snippet -->
+<div class="article__content" itemprop="articleBody"><p class="info">This article is translated with Google Translate and reviewed by Mincong.</p>
+
+<h2 id="problem">Problem</h2>
+
+<p>A red index appeared on the production line because of the use of <a href="https://www.elastic.co/guide/en/elasticsearch/reference/7.x/indices-forcemerge.html" title="Force Merge API">Force Merge API</a>:</p>
+
+<div class="language-json highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nl">"store_exception"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w">
+    </span><span class="nl">"type"</span><span class="p">:</span><span class="w"> </span><span class="s2">"corrupt_index_exception"</span><span class="p">,</span><span class="w">
+    </span><span class="nl">"reason"</span><span class="p">:</span><span class="w"> </span><span class="s2">"failed engine (reason: [corrupt file (source: [force merge])]) (resource=preexisting_corruption)"</span><span class="p">,</span><span class="w">
+        </span><span class="nl">"caused_by"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w">
+        </span><span class="nl">"type"</span><span class="p">:</span><span class="w"> </span><span class="s2">"i_o_exception"</span><span class="p">,</span><span class="w">
+        </span><span class="nl">"reason"</span><span class="p">:</span><span class="w"> </span><span class="s2">"failed engine (reason: [corrupt file (source: [force merge])])"</span><span class="p">,</span><span class="w">
+        </span><span class="nl">"caused_by"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w">
+            </span><span class="nl">"type"</span><span class="p">:</span><span class="w"> </span><span class="s2">"corrupt_index_exception"</span><span class="p">,</span><span class="w">
+            </span><span class="nl">"reason"</span><span class="p">:</span><span class="w"> </span><span class="s2">"checksum failed (hardware problem?): expected=70193aa8 actual=c48ab092 (resource=BufferedChecksumIndexInput(NIOFSIndexInput(path=</span><span class="se">\"</span><span class="s2">/usr/share/elasticsearch/data/nodes/0/indices/w76sdoDFRm-xxxxxxxxxxx/0 /index/_ke.fdt</span><span class="se">\"</span><span class="s2">)))"</span><span class="w">
+        </span><span class="p">}</span><span class="w">
+    </span><span class="p">}</span><span class="w">
+</span><span class="p">}</span><span class="w">
+</span></code></pre></div></div>
+
+<p>Because of this index, the health of the Elasticsearch cluster is in red, and an urgent fix is needed.</p>
+
+<h2 id="situation-analysis">Situation Analysis</h2>
+
+<p>Preliminary investigation:</p>
+
+<ul>
+  <li>The cluster does not use Elasticsearch Snapshot for backup</li>
+  <li>The index is not being written with new data, and the data is old data two weeks ago, which is basically read-only.</li>
+  <li>Tried restarting the corresponding data node, but it didn’t get better</li>
+</ul>
+
+<p>A similar situation was found on the Elastic forum, and someone encountered a damaged index that needed to be repaired <a href="https://discuss.elastic.co/t/corrupted-elastic-index/135932" title="Corrupted Elastic Index">Corrupted elastic index</a>:</p>
+
+<p><img src="/assets/20210714-question.png" alt="Forum Questions" /></p>
+
+<p>In the forum question, Mr. Thiago Souza and Mr. Yannick Welsch each provided a solution. Let’s take a look together.</p>
+
+<p><strong>Potential solution provided by Thiago Souza:</strong></p>
+
+<p>This is an indication of either hardware errors (check <code class="language-plaintext highlighter-rouge">dmesg</code>) or that it maybe ran out of disk space.
+At this point segments are corrupted and data is lost, meaning that you can’t recover the whole index anymore. Unless you have a snapshot (which is recommended for production).
+There are a couple of options to try to partially recover this index:</p>
+
+<ol>
+  <li>Try to partially recover the corrupted shard:
+    <ol>
+      <li>Close the index.</li>
+      <li>Set <code class="language-plaintext highlighter-rouge">index.shard.check_on_startup: fix</code> for this index.</li>
+      <li>Open the index. At this time index will start to be verified and may take a long time.</li>
+      <li>If it recovers, then you need to redo step 1 to 3 but set <code class="language-plaintext highlighter-rouge">index.shard.check_on_startup: false</code> otherwise it will always try to fix when it opens again.</li>
+    </ol>
+  </li>
+  <li>If shard can’t be partially recovered then the only way is to completely drop it so at least the index can be recovered with the other healthy shards. For doing that you could try the <code class="language-plaintext highlighter-rouge">allocate_empty_primary</code> command of Cluster Reroute API 109.</li>
+</ol>
+
+<p>None of these are guaranteed to work as it is highly dependent of the type of damage.</p>
+
+<p><strong>Potential solution provided by Yannick Welsch:</strong></p>
+
+<p>Note that the corruption marker file <code class="language-plaintext highlighter-rouge">corrupted_*</code> will prevent the shard from being allocated as primary. This file is managed by Elasticsearch, and is unaware of the fact that you’ve fixed the index using Lucene’s CheckIndex. Removing this failure marker file should allow this shard to be allocated again.</p>
+
+<h2 id="resolution-steps">Resolution Steps</h2>
+
+<p>Next, we will try the solutions suggested by these two engieers.</p>
+
+<h3 id="step-1-try-to-fix-the-index">Step 1: Try to Fix The index</h3>
+
+<p>Try Thiago Souza’s suggestion to partially repair the corrupted shards:</p>
+
+<blockquote>
+  <ol>
+    <li>Try to partially recover the corrupted shard:
+      <ol>
+        <li>Close the index.</li>
+      </ol>
+    </li>
+  </ol>
+</blockquote>
+
+<p>1.1 Use <a href="https://www.elastic.co/guide/en/elasticsearch/reference/7.x/indices-close.html" title="Close Index API (7.x)">Close Index API (7.x)</a> Close the index:</p>
+
+<div class="language-sh highlighter-rouge"><div class="highlight"><pre class="highlight"><code>curl <span class="nt">-X</span> POST localhost:9200/MY_INDEX/_close
+</code></pre></div></div>
+
+<p>Note that after closing the index, the index will not be able to write new data.</p>
+
+<blockquote>
+  <p>\2. Set <code class="language-plaintext highlighter-rouge">index.shard.check_on_startup: fix</code> for this index.</p>
+</blockquote>
+
+<p>1.2 Add the configuration <code class="language-plaintext highlighter-rouge">index.shard.check_on_startup: fix</code> to configure the index level configuration so that the corresponding check can be performed when the index is started. However, after Elasticsearch 7.0, the <code class="language-plaintext highlighter-rouge">fix</code> option has been permanently removed and can no longer be used. Let’s take a look at the official document <a href="https://www.elastic.co/guide/en/elasticsearch/reference/6.8/index-modules.html" title="Index Modules (6.8)">Index Modules (6.8)</a> to better understand the configuration <code class="language-plaintext highlighter-rouge">index.shard.check_on_startup</code>:</p>
+
+<blockquote>
+  <p>Whether or not shards should be checked for corruption before opening. When corruption is detected, it will prevent the shard from being opened.</p>
+</blockquote>
+
+<p>It accepts the following options:</p>
+
+<table>
+  <thead>
+    <tr>
+      <th style="text-align: left">Option</th>
+      <th style="text-align: left">Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td style="text-align: left">false</td>
+      <td style="text-align: left">(default) Don’t check for corruption when opening a shard.</td>
+    </tr>
+    <tr>
+      <td style="text-align: left">checksum</td>
+      <td style="text-align: left">Check for physical corruption.</td>
+    </tr>
+    <tr>
+      <td style="text-align: left">true</td>
+      <td style="text-align: left">Check for both physical and logical corruption. This is much more expensive in terms of CPU and memory usage.</td>
+    </tr>
+    <tr>
+      <td style="text-align: left">fix</td>
+      <td style="text-align: left">The same as false. This option is deprecated and will be completely removed in 7.0. Same as false. (Note: it was deprecated in <a href="https://github.com/elastic/elasticsearch/pull/32279/files" title="PR-32279">PR-32279</a>)</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>So for an Elasticsearch 7.x cluster, you should try:</p>
+
+<div class="language-sh highlighter-rouge"><div class="highlight"><pre class="highlight"><code>curl <span class="nt">-X</span> PUT localhost:9200/MY_INDEX/_settings <span class="se">\</span>
+  <span class="nt">-H</span><span class="s1">'Content-Type: application/json'</span> <span class="nt">-d</span><span class="s1">'
+{
+  "index.shard.check_on_startup": false
+}
+'</span>
+</code></pre></div></div>
+
+<p>But I think this option is invalid, because <code class="language-plaintext highlighter-rouge">false</code> means that no corruption will be checked and fixed. Moreover, as mentioned in the <a href="#problem">Problem</a> section at the beginning of the article, restarting the data node did not improve the situation and the problem persists. I also tried <code class="language-plaintext highlighter-rouge">true</code> and didn’t fix anything.</p>
+
+<blockquote>
+  <p>\4. If it recovers, then you need to redo step 1 to 3 but set <code class="language-plaintext highlighter-rouge">index.shard.check_on_startup: false</code> otherwise it will always try to fix when it opens again.</p>
+</blockquote>
+
+<p>1.4 Skip this step, because the previous step was unsuccessful and there is no need to continue. Before proceeding to the next step, clear the configuration set above and restore the default configuration.</p>
+
+<h3 id="step-2-accept-data-loss">Step 2: Accept data loss?</h3>
+
+<blockquote>
+  <ol>
+    <li>If shard can’t be partially recovered then the only way is to completely drop it so at least the index can be recovered with the other healthy shards. For doing that you could try the <code class="language-plaintext highlighter-rouge">allocate_empty_primary</code> command of <a href="https://www.elastic.co/guide/en/elasticsearch/reference/7.x/cluster-reroute.html" title="Cluster Reroute API (7.x)">Cluster Reroute API (7.x)</a>.</li>
+  </ol>
+</blockquote>
+
+<p>As a data engineer, how can we accept data loss casually? Can’t accept it! Let’s take a look at Mr. Yannick Welsch’s advice first.</p>
+
+<h3 id="step-3-fix-through-lucene-level">Step 3: Fix through Lucene level</h3>
+
+<p>Try to fix the data according to the original steps provided by Mr. Matthias Wilhelm, that is:</p>
+
+<ol>
+  <li>Log in to the data node remotely</li>
+  <li>Run Lucene repair tool CheckIndex</li>
+  <li>Remove the corrupted flag file <code class="language-plaintext highlighter-rouge">corrupted_*</code> so that Elasticsearch can start normally</li>
+</ol>
+
+<p>The specific operations are as follows.</p>
+
+<p>First, you can use Elasticsearch’s <a href="https://www.elastic.co/guide/en/elasticsearch/reference/7.x/search-explain.html" title="Explain API (7. .x)">Explain API (7.x)</a> Find the corresponding shard that cannot be allocated and the machine where it is located. Then log in to the machine remotely.</p>
+
+<p>The second point is to repair shards (also known as Lucene Index). This is detailed in Lucene’s Javadoc, such as <a href="https://lucene.apache.org/core/6_4_0/core/org/apache/lucene/index/CheckIndex.html#main -java.lang.String:A-" title="CheckIndex (Lucene 6.4.0 API)">CheckIndex (Lucene 6.4.0 API)</a></p>
+
+<blockquote>
+  <p>Command-line interface to check and exorcise corrupt segments from an index.</p>
+
+  <p>Run it like this:</p>
+
+  <div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>java -ea:org.apache.lucene... org.apache.lucene.index.CheckIndex pathToIndex [-exorcise] [-verbose] [-segment X] [-segment Y]
+
+
+-exorcise: actually write a new segments_N file, removing any problematic segments. *LOSES DATA*
+-segment X: only check the specified segment(s). This can be specified multiple times, to check more than one segment, eg -segment _2 -segment _a. You can't use this with the -exorcise option.
+</code></pre></div>  </div>
+
+  <p>WARNING: <code class="language-plaintext highlighter-rouge">-exorcise</code> should only be used on an emergency basis as it will cause documents (perhaps many) to be permanently removed from the index. Always make a backup copy of your index before running this! Do not run this tool on an index that is actively being written to. You have been warned!</p>
+
+  <p>Run without <code class="language-plaintext highlighter-rouge">-exorcise</code>, this tool will open the index, report version information and report any exceptions it hits and what action it would take if -exorcise were specified. With <code class="language-plaintext highlighter-rouge">-exorcise</code>, this tool will remove any segments that have issues and write a new segments_N file. This means all documents contained in the affected segments will be removed.</p>
+
+  <p>This tool exits with exit code 1 if the index cannot be opened or has any corruption, else 0.</p>
+</blockquote>
+
+<p>After confirming that you want to use the repair tool <code class="language-plaintext highlighter-rouge">CheckIndex</code>, you need to confirm:</p>
+
+<ul>
+  <li>The specific location of Elasticsearch shards. If a machine has only one Elasticsearch server running, it should be in a folder under <code class="language-plaintext highlighter-rouge">${ES_HOME}/data/nodes/0/indices/...</code>. The specific path can be seen in the Explain API reponse (see the JSON excerpt at the beginning of the article).</li>
+  <li>The specific location of the Elasticsearch library. It should be in <code class="language-plaintext highlighter-rouge">${ES_HOME}/lib</code>. We need this location because it is where Lucene Core’s JAR files are stored.</li>
+  <li>Decide whether to back up the shards first, and then perform the fix.</li>
+</ul>
+
+<p>After everything is ready, execute the following command. Note that the three dots after Lucene are three characters dot, not one character, because some operating systems/blogs will switch them to another similar character.</p>
+
+<div class="language-sh highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nb">cd</span> /usr/share/elasticsearch/lib
+java <span class="nt">-cp</span> lucene-core<span class="k">*</span>.jar <span class="nt">-ea</span>:org.apache.lucene... org.apache.lucene.index.CheckIndex /usr/share/elasticsearch/data/nodes/0/indices/w76sdoDFRm-xxxxxxxxxxx/0/ index <span class="nt">-verbose</span> <span class="nt">-exorcise</span>
+</code></pre></div></div>
+
+<p>After executing the command, CheckIndex returns:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>No problems were detected with this index.
+
+Took 118.609 sec total.
+</code></pre></div></div>
+
+<p>Uh. . . So there are no problems? No data corruption at all? Could it be an unexpected situation, and Elasticsearch did not handle the exception correctly?</p>
+
+<p>Ok. Since the data is not corrupted, the next step is to move the corrupted flag file <code class="language-plaintext highlighter-rouge">corrupted_*</code> to another folder (equivalent to removal). After a while, this shard was restored: it was successfully allocated, and it does not appear in the Explain API. There is no need to restart the server during this process. Next, connect to other machines and perform the same operation on all related red shards (shards that were not successfully allocated). Finally, the cluster turned back to green again, oh yeah!</p>
+
+<h2 id="conclusion">Conclusion</h2>
+
+<p>In this article, we saw the red index caused by the use of Force Merge API. With the help of the Elastic forum, I tried to fix the data through <code class="language-plaintext highlighter-rouge">index.shard.check_on_startup: fix</code>, but this option no longer exists in Elasticsearch 7. We saw that through <code class="language-plaintext highlighter-rouge">allocate_empty_primary</code> it is possible to accept partial data loss and keep the remaining healthy fragments, but we did not do this because we wanted to get all the data back. Next, we used the CheckIndex tool to repair at the Lucene level and found that there was no data corruption, which was actually a false alarm. Finally, remove the data corruption label file <code class="language-plaintext highlighter-rouge">corrupted_*</code> to realize recovery.</p>
+
+<p>I hope this article about Elasticsearch in practice can bring you some new inspiration. If you are interested in learning more about Elasticsearch, please follow my GitHub account <a href="https://github.com/mincong-h" title="mincong-h">mincong-h</a>. Thank you all!</p>
+
+<h2 id="references">References</h2>
+
+<ul>
+  <li>Matthias Wilhelm, “Corrupted elastic index”, <em>Elastic.co</em>, 2021.
+<a href="https://discuss.elastic.co/t/corrupted-elastic-index/135932">https://discuss.elastic.co/t/corrupted-elastic-index/135932</a></li>
+</ul>
+</div><section class="article__sharing d-print-none"></section><div class="d-print-none"><footer class="article__footer"><meta itemprop="dateModified" content="2021-07-14T16:57:49+02:00"><!-- start custom article footer snippet -->
+
+<!-- end custom article footer snippet -->
+<div class="article__subscribe"><div class="subscribe">
+  <i class="fas fa-rss"></i>
+  <a type="application/rss+xml" href="/feed.xml">Subscribe</a>
+</div></div><div class="article__license"><div class="license">
+    <p>This work is licensed under a <a itemprop="license" rel="license" href="https://creativecommons.org/licenses/by/4.0/">Attribution 4.0 International</a> license.
+      <a rel="license" href="https://creativecommons.org/licenses/by/4.0/">
+        <img alt="Attribution 4.0 International" src="https://i.creativecommons.org/l/by/4.0/88x31.png" />
+      </a>
+    </p>
+  </div></div></footer>
+<div class="article__section-navigator clearfix"><div class="previous"><span>PREVIOUS</span><a href="/en/jekyll-i18n/">Custom Internationalization (i18n) with Jekyll</a></div></div></div>
+
+</div>
+
+<script>(function() {
+  var SOURCES = window.TEXT_VARIABLES.sources;
+  window.Lazyload.js(SOURCES.jquery, function() {
+    $(function() {
+      var $this ,$scroll;
+      var $articleContent = $('.js-article-content');
+      var hasSidebar = $('.js-page-root').hasClass('layout--page--sidebar');
+      var scroll = hasSidebar ? '.js-page-main' : 'html, body';
+      $scroll = $(scroll);
+
+      $articleContent.find('.highlight').each(function() {
+        $this = $(this);
+        $this.attr('data-lang', $this.find('code').attr('data-lang'));
+      });
+      $articleContent.find('h1[id], h2[id], h3[id], h4[id], h5[id], h6[id]').each(function() {
+        $this = $(this);
+        $this.append($('<a class="anchor d-print-none" aria-hidden="true"></a>').html('<i class="fas fa-anchor"></i>'));
+      });
+      $articleContent.on('click', '.anchor', function() {
+        $scroll.scrollToAnchor('#' + $(this).parent().attr('id'), 400);
+      });
+    });
+  });
+})();
+</script>
+</div><section class="page__comments d-print-none"><div id="disqus_thread"></div>
+  <script>
+  /**
+  *  RECOMMENDED CONFIGURATION VARIABLES: EDIT AND UNCOMMENT THE SECTION BELOW TO INSERT DYNAMIC VALUES FROM YOUR PLATFORM OR CMS.
+  *  LEARN WHY DEFINING THESE VARIABLES IS IMPORTANT: https://disqus.com/admin/universalcode/#configuration-variables*/
+  var disqus_config = function () {
+    this.page.url = 'https://mincong.io/en/elasticsearch-corrupted-index/';
+    this.page.identifier = '/en/elasticsearch-corrupted-index';
+  };
+  (function() { // DON'T EDIT BELOW THIS LINE
+    var d = document, s = d.createElement('script');
+    s.src = 'https://mincong-h.disqus.com/embed.js';
+    s.setAttribute('data-timestamp', +new Date());
+    (d.head || d.body).appendChild(s);
+  })();
+  </script>
+  <noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript></section></article><!-- start custom main bottom snippet -->
 
 <!-- end custom main bottom snippet -->
 </div>
@@ -503,7 +735,7 @@
   </div>
 </footer>
 </div></div>
-    </div></div></div><script>(function() {
+    </div><script>(function() {
   var SOURCES = window.TEXT_VARIABLES.sources;
   window.Lazyload.js(SOURCES.jquery, function() {
     var $body = $('body'), $window = $(window);
@@ -1020,34 +1252,66 @@ window.Lazyload.js([SOURCES.jquery, PAHTS.search_js], function() {
 /*(function () {
 
 })();*/
-</script><script>(function() {
+</script><script>
+  /* toc must before affix, since affix need to konw toc' height. */(function() {
   var SOURCES = window.TEXT_VARIABLES.sources;
-
+  var TOC_SELECTOR = window.TEXT_VARIABLES.site.toc.selectors;
   window.Lazyload.js(SOURCES.jquery, function() {
-    var $pageMask = $('.js-page-mask');
-    var $pageRoot = $('.js-page-root');
-    var $sidebarShow = $('.js-sidebar-show');
-    var $sidebarHide = $('.js-sidebar-hide');
+    var $window = $(window);
+    var $articleContent = $('.js-article-content');
+    var $tocRoot = $('.js-toc-root'), $col2 = $('.js-col-aside');
+    var toc;
+    var tocDisabled = false;
+    var hasSidebar = $('.js-page-root').hasClass('layout--page--sidebar');
+    var hasToc = $articleContent.find(TOC_SELECTOR).length > 0;
 
-    function freeze(e) {
-      if (e.target === $pageMask[0]) {
-        e.preventDefault();
-      }
-    }
-    function stopBodyScrolling(bool) {
-      if (bool === true) {
-        window.addEventListener('touchmove', freeze, { passive: false });
-      } else {
-        window.removeEventListener('touchmove', freeze, { passive: false });
-      }
+    function disabled() {
+      return $col2.css('display') === 'none' || !hasToc;
     }
 
-    $sidebarShow.on('click', function() {
-      stopBodyScrolling(true); $pageRoot.addClass('show-sidebar');
+    tocDisabled = disabled();
+
+    toc = $tocRoot.toc({
+      selectors: TOC_SELECTOR,
+      container: $articleContent,
+      scrollTarget: hasSidebar ? '.js-page-main' : null,
+      scroller: hasSidebar ? '.js-page-main' : null,
+      disabled: tocDisabled
     });
-    $sidebarHide.on('click', function() {
-      stopBodyScrolling(false); $pageRoot.removeClass('show-sidebar');
+
+    $window.on('resize', window.throttle(function() {
+      tocDisabled = disabled();
+      toc && toc.setOptions({
+        disabled: tocDisabled
+      });
+    }, 100));
+
+  });
+})();
+(function() {
+  var SOURCES = window.TEXT_VARIABLES.sources;
+  window.Lazyload.js(SOURCES.jquery, function() {
+    var $window = $(window), $pageFooter = $('.js-page-footer');
+    var $pageAside = $('.js-page-aside');
+    var affix;
+    var tocDisabled = false;
+    var hasSidebar = $('.js-page-root').hasClass('layout--page--sidebar');
+
+    affix = $pageAside.affix({
+      offsetBottom: $pageFooter.outerHeight(),
+      scrollTarget: hasSidebar ? '.js-page-main' : null,
+      scroller: hasSidebar ? '.js-page-main' : null,
+      scroll: hasSidebar ? $('.js-page-main').children() : null,
+      disabled: tocDisabled
     });
+
+    $window.on('resize', window.throttle(function() {
+      affix && affix.setOptions({
+        disabled: tocDisabled
+      });
+    }, 100));
+
+    window.pageAsideAffix = affix;
   });
 })();
 </script>
