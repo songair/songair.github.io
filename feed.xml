@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" xml:lang="en"><generator uri="https://jekyllrb.com/" version="4.2.0">Jekyll</generator><link href="https://mincong.io/feed.xml" rel="self" type="application/atom+xml" /><link href="https://mincong.io/" rel="alternate" type="text/html" hreflang="en" /><updated>2021-07-24T19:17:08+02:00</updated><id>https://mincong.io/feed.xml</id><title type="html">Mincong Huang</title><subtitle>Hi, welcome to my blog! I'm a software engineer at Datadog. I write blog posts in my free time. My blogs are bits and pieces of my tech journey. Most of them are related to Java. Hope you enjoy them! My opinions are my own, not Datadog's. This blog is powered by Jekyll, a simple, blog-aware, static sites solution.
+<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" xml:lang="en"><generator uri="https://jekyllrb.com/" version="4.2.0">Jekyll</generator><link href="https://mincong.io/feed.xml" rel="self" type="application/atom+xml" /><link href="https://mincong.io/" rel="alternate" type="text/html" hreflang="en" /><updated>2021-07-25T07:53:09+02:00</updated><id>https://mincong.io/feed.xml</id><title type="html">Mincong Huang</title><subtitle>Hi, welcome to my blog! I'm a software engineer at Datadog. I write blog posts in my free time. My blogs are bits and pieces of my tech journey. Most of them are related to Java. Hope you enjoy them! My opinions are my own, not Datadog's. This blog is powered by Jekyll, a simple, blog-aware, static sites solution.
 </subtitle><author><name>Mincong Huang</name><email>mincong.h@gmail.com</email></author><entry xml:lang="en"><title type="html">Fix Corrupted Index in Elasticsearch</title><link href="https://mincong.io/en/elasticsearch-corrupted-index/" rel="alternate" type="text/html" title="Fix Corrupted Index in Elasticsearch" /><published>2021-07-14T16:57:49+02:00</published><updated>2021-07-14T16:57:49+02:00</updated><id>https://mincong.io/en/elasticsearch-corrupted-index</id><content type="html" xml:base="https://mincong.io/en/elasticsearch-corrupted-index/">&lt;p class=&quot;info&quot;&gt;This article is translated with Google Translate and reviewed by Mincong.&lt;/p&gt;
 
 &lt;h2 id=&quot;problem&quot;&gt;Problem&lt;/h2&gt;
@@ -542,10 +542,10 @@ https://mincong.io/{country}/{page}
 &lt;span class=&quot;k&quot;&gt;for &lt;/span&gt;path &lt;span class=&quot;k&quot;&gt;in&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;${&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;paths&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;[@]&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;}&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;&lt;/span&gt;
 &lt;span class=&quot;k&quot;&gt;do
     &lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;filename&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;${&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;path&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;##*/&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;}&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;&lt;/span&gt;
-    &lt;span class=&quot;nv&quot;&gt;year&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;si&quot;&gt;$(&lt;/span&gt;&lt;span class=&quot;nb&quot;&gt;echo&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;$filename&lt;/span&gt;  | &lt;span class=&quot;nb&quot;&gt;sed&lt;/span&gt; &lt;span class=&quot;nt&quot;&gt;-E&lt;/span&gt; &lt;span class=&quot;s1&quot;&gt;'s/^([[:digit:]]+)-([[:digit:]]+)-([[:digit:]]+)-(. *)\.md/\1/'&lt;/span&gt;&lt;span class=&quot;si&quot;&gt;)&lt;/span&gt;
+    &lt;span class=&quot;nv&quot;&gt;year&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;si&quot;&gt;$(&lt;/span&gt;&lt;span class=&quot;nb&quot;&gt;echo&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;$filename&lt;/span&gt; | &lt;span class=&quot;nb&quot;&gt;sed&lt;/span&gt; &lt;span class=&quot;nt&quot;&gt;-E&lt;/span&gt; &lt;span class=&quot;s1&quot;&gt;'s/^([[:digit:]]+)-([[:digit:]]+)-([[:digit:]]+)-(. *)\.md/\1/'&lt;/span&gt;&lt;span class=&quot;si&quot;&gt;)&lt;/span&gt;
     &lt;span class=&quot;nv&quot;&gt;month&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;si&quot;&gt;$(&lt;/span&gt;&lt;span class=&quot;nb&quot;&gt;echo&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;$filename&lt;/span&gt; | &lt;span class=&quot;nb&quot;&gt;sed&lt;/span&gt; &lt;span class=&quot;nt&quot;&gt;-E&lt;/span&gt; &lt;span class=&quot;s1&quot;&gt;'s/^([[:digit:]]+)-([[:digit:]]+)-([[:digit:]]+)-(. *)\.md/\2/'&lt;/span&gt;&lt;span class=&quot;si&quot;&gt;)&lt;/span&gt;
-    &lt;span class=&quot;nv&quot;&gt;day&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;si&quot;&gt;$(&lt;/span&gt;&lt;span class=&quot;nb&quot;&gt;echo&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;$filename&lt;/span&gt;   | &lt;span class=&quot;nb&quot;&gt;sed&lt;/span&gt; &lt;span class=&quot;nt&quot;&gt;-E&lt;/span&gt; &lt;span class=&quot;s1&quot;&gt;'s/^([[:digit:]]+)-([[:digit:]]+)-([[:digit:]]+)-(. *)\.md/\3/'&lt;/span&gt;&lt;span class=&quot;si&quot;&gt;)&lt;/span&gt;
-    &lt;span class=&quot;nv&quot;&gt;name&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;si&quot;&gt;$(&lt;/span&gt;&lt;span class=&quot;nb&quot;&gt;echo&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;$filename&lt;/span&gt;  | &lt;span class=&quot;nb&quot;&gt;sed&lt;/span&gt; &lt;span class=&quot;nt&quot;&gt;-E&lt;/span&gt; &lt;span class=&quot;s1&quot;&gt;'s/^([[:digit:]]+)-([[:digit:]]+)-([[:digit:]]+)-(. *)\.md/\4/'&lt;/span&gt;&lt;span class=&quot;si&quot;&gt;)&lt;/span&gt;
+    &lt;span class=&quot;nv&quot;&gt;day&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;si&quot;&gt;$(&lt;/span&gt;&lt;span class=&quot;nb&quot;&gt;echo&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;$filename&lt;/span&gt; | &lt;span class=&quot;nb&quot;&gt;sed&lt;/span&gt; &lt;span class=&quot;nt&quot;&gt;-E&lt;/span&gt; &lt;span class=&quot;s1&quot;&gt;'s/^([[:digit:]]+)-([[:digit:]]+)-([[:digit:]]+)-(. *)\.md/\3/'&lt;/span&gt;&lt;span class=&quot;si&quot;&gt;)&lt;/span&gt;
+    &lt;span class=&quot;nv&quot;&gt;name&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;si&quot;&gt;$(&lt;/span&gt;&lt;span class=&quot;nb&quot;&gt;echo&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;$filename&lt;/span&gt; | &lt;span class=&quot;nb&quot;&gt;sed&lt;/span&gt; &lt;span class=&quot;nt&quot;&gt;-E&lt;/span&gt; &lt;span class=&quot;s1&quot;&gt;'s/^([[:digit:]]+)-([[:digit:]]+)-([[:digit:]]+)-(. *)\.md/\4/'&lt;/span&gt;&lt;span class=&quot;si&quot;&gt;)&lt;/span&gt;
     &lt;span class=&quot;nv&quot;&gt;permalink&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;/&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;${&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;year&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;}&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;/&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;${&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;month&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;}&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;/&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;${&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;day&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;}&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;/&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;${&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;name&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;}&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;/&quot;&lt;/span&gt;
     &lt;span class=&quot;nb&quot;&gt;echo&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;${&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;i&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;}&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;: year=&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;${&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;year&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;}&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;, month=&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;${&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;month&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;}&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;, day=&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;${&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;day&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;}&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;, name=&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;${&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;name&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;}&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;, permalink=&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;${&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;permalink&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;}&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;&lt;/span&gt;
     &lt;span class=&quot;nb&quot;&gt;sed&lt;/span&gt; &lt;span class=&quot;nt&quot;&gt;-i&lt;/span&gt; &lt;span class=&quot;s1&quot;&gt;''&lt;/span&gt; &lt;span class=&quot;nt&quot;&gt;-E&lt;/span&gt; &lt;span class=&quot;s1&quot;&gt;'/comments:/i\
@@ -609,8 +609,8 @@ append_content &lt;span class=&quot;s2&quot;&gt;&quot;&lt;/span&gt;&lt;span clas
 &lt;div class=&quot;language-diff highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;gd&quot;&gt;- paginate: 8
 - paginate_path: /page:num # don't change this unless for special need
 &lt;/span&gt;&lt;span class=&quot;gi&quot;&gt;+ pagination:
-+   enabled: true
-+   per_page: 8
++ enabled: true
++ per_page: 8
 &lt;/span&gt;
 
   ## =&amp;gt; Sources
@@ -618,8 +618,8 @@ append_content &lt;span class=&quot;s2&quot;&gt;&quot;&lt;/span&gt;&lt;span clas
   ##############################
   plugins:
     - jekyll-feed
-&lt;span class=&quot;gd&quot;&gt;-   - jekyll-paginate
-&lt;/span&gt;&lt;span class=&quot;gi&quot;&gt;+   - jekyll-paginate-v2
+&lt;span class=&quot;gd&quot;&gt;- jekyll-paginate
+&lt;/span&gt;&lt;span class=&quot;gi&quot;&gt;+ - jekyll-paginate-v2
 &lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
 
 &lt;p&gt;Modified the paginator of the TeXt Theme theme itself to avoid using &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;site.posts&lt;/code&gt; directly as a source for posts. And also add a specific prefix to the homepage, so that English and Chinese have their own homepage, i.e. &lt;a href=&quot;https://mincong.io/&quot;&gt;https://mincong.io/&lt;/a&gt; and &lt;a href=&quot;https://mincong.io/cn/&quot;&gt;https://mincong.io/cn/&lt;/a&gt;.&lt;/p&gt;
@@ -634,8 +634,8 @@ append_content &lt;span class=&quot;s2&quot;&gt;&quot;&lt;/span&gt;&lt;span clas
               &amp;lt;/li&amp;gt;
 
             {%- elsif page == 1 -%}
-&lt;span class=&quot;gd&quot;&gt;-             {%- assign _home_path = site.paths.home | default: site.data.variables.default.paths.home -%}
-&lt;/span&gt;&lt;span class=&quot;gi&quot;&gt;+             {%- assign _home_path = site.paths.home | default: site.data.variables.default.paths.home | append: include.baseurl -%} 
+&lt;span class=&quot;gd&quot;&gt;- {%- assign _home_path = site.paths.home | default: site.data.variables.default.paths.home -%}
+&lt;/span&gt;&lt;span class=&quot;gi&quot;&gt;+ {%- assign _home_path = site.paths.home | default: site.data.variables.default.paths.home | append: include.baseurl -%} 
 &lt;/span&gt;              {%- include snippets/prepend-baseurl.html path=_home_path -%} 
 &lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
 
@@ -647,9 +647,9 @@ append_content &lt;span class=&quot;s2&quot;&gt;&quot;&lt;/span&gt;&lt;span clas
 
 &lt;h3 id=&quot;task-4-modifying-build-and-deployment&quot;&gt;Task 4: Modifying Build and Deployment&lt;/h3&gt;
 
-&lt;p&gt;You can no longer use the old automatic deployment method because of jekyll-paginate-v2, a plugin that is not officially supported by GitHub. Now you need to deploy it manually or via the CI. That is, you no longer deploy from the &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;master&lt;/code&gt; branch. After the code is merged into &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;master&lt;/code&gt;, the new pages are generated manually or by CI (core command: &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;jekyll build&lt;/code&gt;). Then, the generated content, which is in the folder &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;_site&lt;/code&gt;, is uploaded to the &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;gh-pages&lt;/code&gt; branch for deployment.&lt;/p&gt;
+&lt;p&gt;You can no longer use the old automatic deployment method because of jekyll-paginate-v2, a plugin that is not officially supported by GitHub. Now you need to deploy it manually. That is, you no longer deploy from the &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;master&lt;/code&gt; branch. After the code is merged into &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;master&lt;/code&gt;, the new pages are generated manually or by CI (core command: &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;jekyll build&lt;/code&gt;). Then, the generated content, which is in the folder &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;_site&lt;/code&gt;, is uploaded to the &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;gh-pages&lt;/code&gt; branch for deployment.&lt;/p&gt;
 
-&lt;p&gt;To do it manually, the main steps are as follows: create a new, master-independent branch &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;gh-pages&lt;/code&gt;, add an empty commit as the start of the branch, then empty the local Jekyll generated files folder &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;_site&lt;/code&gt; and connect it to the new branch &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;gh-pages&lt;/code&gt;&lt;/p&gt;
+&lt;p&gt;The main steps to achieve this are as follows: create a new, master-independent branch &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;gh-pages&lt;/code&gt;, add an empty commit as the start of the branch, then empty the local Jekyll generated files folder &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;_site&lt;/code&gt; and connect it to the new branch &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;gh-pages&lt;/code&gt;&lt;/p&gt;
 
 &lt;div class=&quot;language-sh highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;git checkout &lt;span class=&quot;nt&quot;&gt;--orphan&lt;/span&gt; gh-pages
 git commit &lt;span class=&quot;nt&quot;&gt;--allow-empty&lt;/span&gt; &lt;span class=&quot;nt&quot;&gt;-m&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot;Initialize gh-pages&quot;&lt;/span&gt;
@@ -663,45 +663,6 @@ git worktree add _site gh-pages
 &lt;p&gt;&lt;img src=&quot;/assets/20210711-deploy-via-gh-pages.png&quot; alt=&quot;Change the deployment method: no longer use master branch but gh-pages branch deployment&quot; /&gt;&lt;/p&gt;
 
 &lt;p&gt;For more information, see: Sangsoo Nam, &lt;a href=&quot;https://sangsoonam.github.io/2019/02/08/using-git-worktree-to-deploy- github-pages.html&quot;&gt;Using Git Worktree to Deploy GitHub Pages&lt;/a&gt;, 2019.&lt;/p&gt;
-
-&lt;p&gt;To do it via the CI (GitHub Actions in my case), you can use the following workflow：&lt;/p&gt;
-
-&lt;div class=&quot;language-yml highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;na&quot;&gt;name&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;Deploy to GitHub Pages&lt;/span&gt;
-&lt;span class=&quot;na&quot;&gt;on&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt;
-  &lt;span class=&quot;na&quot;&gt;push&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt;
-    &lt;span class=&quot;na&quot;&gt;branches&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt;
-      &lt;span class=&quot;pi&quot;&gt;-&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;master&lt;/span&gt;
-      &lt;span class=&quot;pi&quot;&gt;-&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;docker&lt;/span&gt; &lt;span class=&quot;c1&quot;&gt;# testing&lt;/span&gt;
-
-&lt;span class=&quot;na&quot;&gt;jobs&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt;
-  &lt;span class=&quot;na&quot;&gt;build-and-deploy&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt;
-    &lt;span class=&quot;na&quot;&gt;runs-on&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;ubuntu-latest&lt;/span&gt;
-    &lt;span class=&quot;na&quot;&gt;env&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt;
-      &lt;span class=&quot;na&quot;&gt;JEKYLL_ENV&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;production&lt;/span&gt;
-    &lt;span class=&quot;na&quot;&gt;steps&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt;
-    &lt;span class=&quot;pi&quot;&gt;-&lt;/span&gt; &lt;span class=&quot;na&quot;&gt;name&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;Checkout source code&lt;/span&gt;
-      &lt;span class=&quot;na&quot;&gt;uses&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;actions/checkout@v2&lt;/span&gt;
-      &lt;span class=&quot;na&quot;&gt;with&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt;
-        &lt;span class=&quot;na&quot;&gt;persist-credentials&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;no&quot;&gt;false&lt;/span&gt;
-    &lt;span class=&quot;pi&quot;&gt;-&lt;/span&gt; &lt;span class=&quot;na&quot;&gt;name&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;Set up Ruby&lt;/span&gt;
-      &lt;span class=&quot;na&quot;&gt;uses&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;ruby/setup-ruby@v1&lt;/span&gt;
-      &lt;span class=&quot;na&quot;&gt;with&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt;
-        &lt;span class=&quot;na&quot;&gt;ruby-version&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;m&quot;&gt;2.6&lt;/span&gt; &lt;span class=&quot;c1&quot;&gt;# Not needed with a .ruby-version file&lt;/span&gt;
-        &lt;span class=&quot;na&quot;&gt;bundler-cache&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;no&quot;&gt;true&lt;/span&gt; &lt;span class=&quot;c1&quot;&gt;# runs 'bundle install' and caches installed gems automatically&lt;/span&gt;
-    &lt;span class=&quot;pi&quot;&gt;-&lt;/span&gt; &lt;span class=&quot;na&quot;&gt;name&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;Install dependencies in the Gemfile&lt;/span&gt;
-      &lt;span class=&quot;na&quot;&gt;run&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;pi&quot;&gt;|&lt;/span&gt;
-         &lt;span class=&quot;s&quot;&gt;bundler install --path vendor/bundle&lt;/span&gt;
-    &lt;span class=&quot;pi&quot;&gt;-&lt;/span&gt; &lt;span class=&quot;na&quot;&gt;name&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;Build Jekyll website&lt;/span&gt;
-      &lt;span class=&quot;na&quot;&gt;run&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;pi&quot;&gt;|&lt;/span&gt;
-         &lt;span class=&quot;s&quot;&gt;bundle exec jekyll build&lt;/span&gt;
-    &lt;span class=&quot;pi&quot;&gt;-&lt;/span&gt; &lt;span class=&quot;na&quot;&gt;name&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;Deploy GitHub Pages&lt;/span&gt;
-      &lt;span class=&quot;na&quot;&gt;uses&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;JamesIves/github-pages-deploy-action@4.1.4&lt;/span&gt;
-      &lt;span class=&quot;na&quot;&gt;with&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt;
-        &lt;span class=&quot;na&quot;&gt;ACCESS_TOKEN&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;$&lt;/span&gt;
-        &lt;span class=&quot;na&quot;&gt;BRANCH&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;gh-pages&lt;/span&gt; &lt;span class=&quot;c1&quot;&gt;# The branch the action should deploy to.&lt;/span&gt;
-        &lt;span class=&quot;na&quot;&gt;FOLDER&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;_site&lt;/span&gt; &lt;span class=&quot;c1&quot;&gt;# The folder the action should deploy.&lt;/span&gt;
-        &lt;span class=&quot;na&quot;&gt;REPOSITORY_NAME&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;mincong-h/mincong-h.github.io&lt;/span&gt;
-&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
 
 &lt;h3 id=&quot;task-5-modifying-more-pages&quot;&gt;Task 5: Modifying More Pages&lt;/h3&gt;
 
