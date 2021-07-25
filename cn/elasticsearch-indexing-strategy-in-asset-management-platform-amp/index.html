@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en">
+<!DOCTYPE html><html lang="zh">
   <head><!-- Global site tag (gtag.js) - Google Analytics -->
 	<script async src="https://www.googletagmanager.com/gtag/js?id=UA-87129300-1"></script>
 	<script>
@@ -10,37 +10,42 @@
 		
 	</script><meta charset="utf-8">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
-<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no"><title>Java Serialization - Mincong Huang</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no"><title>Netflix 资产管理平台 (AMP) 中的 Elasticsearch 索引策略 - Mincong Huang</title>
 
-<meta name="description" content="">
+<meta name="description" content="Netflix 资产管理平台（AMP）在多类资产的大数据场景下，对于 Elasticsearch 的应用：如何设计初版索引策略、在业务增长后如何将策略改造成按时间建立索引、如何避开字段上限、性能比较等。">
 
 <!-- Begin Jekyll SEO tag v2.7.1 -->
-<title>Java Serialization | Mincong Huang</title>
+<title>Netflix 资产管理平台 (AMP) 中的 Elasticsearch 索引策略 | Mincong Huang</title>
 <meta name="generator" content="Jekyll v4.2.0" />
-<meta property="og:title" content="Java Serialization" />
+<meta property="og:title" content="Netflix 资产管理平台 (AMP) 中的 Elasticsearch 索引策略" />
 <meta name="author" content="Mincong Huang" />
-<meta property="og:locale" content="en" />
-<meta name="description" content="Hi, welcome to my blog! I’m a software engineer at Datadog. I write blog posts in my free time. My blogs are bits and pieces of my tech journey. Most of them are related to Java. Hope you enjoy them! My opinions are my own, not Datadog’s. This blog is powered by Jekyll, a simple, blog-aware, static sites solution." />
-<meta property="og:description" content="Hi, welcome to my blog! I’m a software engineer at Datadog. I write blog posts in my free time. My blogs are bits and pieces of my tech journey. Most of them are related to Java. Hope you enjoy them! My opinions are my own, not Datadog’s. This blog is powered by Jekyll, a simple, blog-aware, static sites solution." />
-<link rel="canonical" href="https://mincong.io/en/categories/java-serialization/" />
-<meta property="og:url" content="https://mincong.io/en/categories/java-serialization/" />
+<meta property="og:locale" content="zh" />
+<meta name="description" content="Netflix 资产管理平台（AMP）在多类资产的大数据场景下，对于 Elasticsearch 的应用：如何设计初版索引策略、在业务增长后如何将策略改造成按时间建立索引、如何避开字段上限、性能比较等。" />
+<meta property="og:description" content="Netflix 资产管理平台（AMP）在多类资产的大数据场景下，对于 Elasticsearch 的应用：如何设计初版索引策略、在业务增长后如何将策略改造成按时间建立索引、如何避开字段上限、性能比较等。" />
+<link rel="canonical" href="https://mincong.io/cn/elasticsearch-indexing-strategy-in-asset-management-platform-amp/" />
+<meta property="og:url" content="https://mincong.io/cn/elasticsearch-indexing-strategy-in-asset-management-platform-amp/" />
 <meta property="og:site_name" content="Mincong Huang" />
+<meta property="og:image" content="https://mincong.io/assets/bg-mollie-sivaram-yubCnXAA3H8-unsplash.jpg" />
 <meta property="og:type" content="article" />
-<meta property="article:published_time" content="2021-07-25T21:26:55+02:00" />
-<meta name="twitter:card" content="summary" />
-<meta property="twitter:title" content="Java Serialization" />
+<meta property="article:published_time" content="2021-07-20T22:11:22+02:00" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta property="twitter:image" content="https://mincong.io/assets/bg-mollie-sivaram-yubCnXAA3H8-unsplash.jpg" />
+<meta property="twitter:title" content="Netflix 资产管理平台 (AMP) 中的 Elasticsearch 索引策略" />
 <meta name="twitter:site" content="@mincong_h" />
 <meta name="twitter:creator" content="@mincong_h" />
 <script type="application/ld+json">
-{"description":"Hi, welcome to my blog! I’m a software engineer at Datadog. I write blog posts in my free time. My blogs are bits and pieces of my tech journey. Most of them are related to Java. Hope you enjoy them! My opinions are my own, not Datadog’s. This blog is powered by Jekyll, a simple, blog-aware, static sites solution.","@type":"BlogPosting","headline":"Java Serialization","dateModified":"2021-07-25T21:26:55+02:00","datePublished":"2021-07-25T21:26:55+02:00","url":"https://mincong.io/en/categories/java-serialization/","mainEntityOfPage":{"@type":"WebPage","@id":"https://mincong.io/en/categories/java-serialization/"},"author":{"@type":"Person","name":"Mincong Huang"},"@context":"https://schema.org"}</script>
+{"description":"Netflix 资产管理平台（AMP）在多类资产的大数据场景下，对于 Elasticsearch 的应用：如何设计初版索引策略、在业务增长后如何将策略改造成按时间建立索引、如何避开字段上限、性能比较等。","@type":"BlogPosting","image":"https://mincong.io/assets/bg-mollie-sivaram-yubCnXAA3H8-unsplash.jpg","headline":"Netflix 资产管理平台 (AMP) 中的 Elasticsearch 索引策略","dateModified":"2021-07-20T22:11:22+02:00","datePublished":"2021-07-20T22:11:22+02:00","url":"https://mincong.io/cn/elasticsearch-indexing-strategy-in-asset-management-platform-amp/","mainEntityOfPage":{"@type":"WebPage","@id":"https://mincong.io/cn/elasticsearch-indexing-strategy-in-asset-management-platform-amp/"},"author":{"@type":"Person","name":"Mincong Huang"},"@context":"https://schema.org"}</script>
 <!-- End Jekyll SEO tag -->
 
 
 <!-- Extra Open Graph :: Start -->
 
+<meta property="og:image:width" content="1280"/>
+<meta property="og:image:height" content="1920"/>
+
 <!-- Extra Open Graph :: End -->
 
-<link rel="canonical" href="https://mincong.io/en/categories/java-serialization/"><link rel="alternate" type="application/rss+xml" title="Mincong Huang" href="/feed.xml"><!-- start favicons snippet, use https://realfavicongenerator.net/ --><link rel="apple-touch-icon" sizes="180x180" href="/assets/apple-touch-icon.png"><link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon-32x32.png"><link rel="icon" type="image/png" sizes="16x16" href="/assets/favicon-16x16.png"><link rel="manifest" href="/assets/site.webmanifest"><link rel="mask-icon" href="/assets/safari-pinned-tab.svg" color="#fc4d50"><link rel="shortcut icon" href="/assets/favicon.ico">
+<link rel="canonical" href="https://mincong.io/cn/elasticsearch-indexing-strategy-in-asset-management-platform-amp/"><link rel="alternate" type="application/rss+xml" title="Mincong Huang" href="/feed.xml"><!-- start favicons snippet, use https://realfavicongenerator.net/ --><link rel="apple-touch-icon" sizes="180x180" href="/assets/apple-touch-icon.png"><link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon-32x32.png"><link rel="icon" type="image/png" sizes="16x16" href="/assets/favicon-16x16.png"><link rel="manifest" href="/assets/site.webmanifest"><link rel="mask-icon" href="/assets/safari-pinned-tab.svg" color="#fc4d50"><link rel="shortcut icon" href="/assets/favicon.ico">
 
 <meta name="msapplication-TileColor" content="#ffc40d"><meta name="msapplication-config" content="/assets/browserconfig.xml">
 
@@ -290,18 +295,7 @@
 </head>
   <body>
     <div class="root" data-is-touch="false">
-      <div class="layout--page layout--page--sidebar clearfix js-page-root">
-  <div class="page__mask d-print-none js-page-mask js-sidebar-hide"></div>
-  <div class="page__viewport">
-    <div class="page__actions d-print-none">
-      <div class="button button--circle button--lg box-shadow-2 sidebar-button js-sidebar-show">
-        <i class="fas fa-bars icon--show"></i>
-      </div>
-    </div>
-
-    <div class="grid page__grid">
-
-      <div class="page__sidebar d-print-none"><div class="sidebar-toc"><ul class="toc toc--navigator"><li class="toc-h1">Categories</li><li class="toc-h2"><a href="/en/categories/build/">Build Tools</a></li><li class="toc-h2"><a href="/en/categories/elasticsearch/">Elasticsearch</a></li><li class="toc-h2"><a href="/en/categories/git/">Git</a></li><li class="toc-h2"><a href="/en/categories/java-concurrency/">Java Concurrency</a></li><li class="toc-h2"><a href="/en/categories/java-core/">Java Core</a></li><li class="toc-h2"><a href="/en/categories/java-rest/">Java RESTful APIs</a></li><li class="toc-h2 active"><a href="/en/categories/java-serialization/">Java Serialization</a></li><li class="toc-h2"><a href="/en/categories/java-testing/">Java Testing</a></li><li class="toc-h2"><a href="/en/categories/python/">Python</a></li><li class="toc-h2"><a href="/en/categories/reliability/">Reliability</a></li><li class="toc-h2"><a href="/en/categories/review/">Review</a></li></ul></div></div><div class="page__main js-page-main cell cell--auto">
+      <div class="layout--page js-page-root"><div class="page__main js-page-main page__viewport has-aside cell cell--auto">
 
       <div class="page__main-inner"><div class="page__header d-print-none"><header class="header"><div class="main">
       <div class="header__title">
@@ -330,13 +324,13 @@
           
           
 
-          <a href="/">Mincong Huang</a>
+          <a href="/cn/">码农小黄</a>
         </div><button class="button button--secondary button--circle search-button js-search-toggle">
             <i class="fas fa-search"></i>
           </button></div><nav class="navigation">
-        <ul><li class="navigation__item"><a href="/en/categories/">Categories</a></li><li class="navigation__item"><a href="/en/series/">Series</a></li><li class="navigation__item"><a href="/en/archive/">Archive</a></li><li class="navigation__item"><a href="/en/about/">About</a></li><li><button class="button button--secondary button--circle search-button js-search-toggle"><i class="fas fa-search"></i></button></li><li>
-            <a href="/cn/">
-             <img src="/assets/flag-CN.png"
+        <ul><li class="navigation__item"><a href="/cn/categories/">分类</a></li><li class="navigation__item"><a href="/cn/series/">系列</a></li><li class="navigation__item"><a href="/cn/archive/">归档</a></li><li class="navigation__item"><a href="/cn/about/">关于</a></li><li><button class="button button--secondary button--circle search-button js-search-toggle"><i class="fas fa-search"></i></button></li><li>
+            <a href="/">
+             <img src="/assets/flag-US.png"
                   alt=""
                   class="naviation__lang_img">
             </a>
@@ -344,59 +338,242 @@
         </ul>
       </nav></div>
   </header>
-</div><div class="page__content"><div class ="main"><div class="grid grid--reverse">
-
-              <div class="col-aside d-print-none js-col-aside"></div>
-
-              <div class="col-main cell cell--auto"><!-- start custom main top snippet -->
-
-<!-- end custom main top snippet -->
-<article itemscope itemtype="http://schema.org/WebPage"><div class="article__header"><header><h1>Java Serialization</h1></header></div><meta itemprop="headline" content="Java Serialization">
+</div><div class="page__content"><div class="article__header--overlay"><div class="hero hero--dark overlay" style="background-image:linear-gradient(135deg, rgba(0, 0, 0, .4), rgba(0, 0, 0, .6)),url(/assets/bg-mollie-sivaram-yubCnXAA3H8-unsplash.jpg);background-color:#203028;"><div class="hero__content"><div class ="main">
 
   
   <div class="article__info clearfix">
       <ul class="left-col menu">
+        <li>
+              <a class="button button--secondary button--pill button--sm"
+                href="/cn/archive/?tag=elasticsearch">elasticsearch</a>
+            </li><li>
+              <a class="button button--secondary button--pill button--sm"
+                href="/cn/archive/?tag=translation">translation</a>
+            </li><li>
+              <a class="button button--secondary button--pill button--sm"
+                href="/cn/archive/?tag=system-design">system-design</a>
+            </li>
+
+        <li class="separator">|</li>
+          
+            <li>
+              
+
+
+
+
+
+
+              
+
+              
+
+              <a class="button button--circle button--primary focus lang"
+                 href="/cn/elasticsearch-indexing-strategy-in-asset-management-platform-amp/"><span>CN</span></a>
+            </li>
+          
         
-
-        
-      </ul><ul class="right-col menu"><li><i class="far fa-calendar-alt"></i> <span>Jul 25, 2021</span>
-            </li></ul></div><meta itemprop="author" content="Mincong Huang"/><meta itemprop="datePublished" content="2021-07-25T21:26:55+02:00"><div class="js-article-content">
-
-
-<div class="layout--articles">
-  <section class="my-5">
-    <div class="article-list grid grid--p-3"><div class="cell cell--12 cell--md-6 cell--lg-4">
-          <div class="card card--flat"><div class="card__image"><div class="card__background_image card__background_image_md" style="background-image: url('/assets/bg-bence-sandor-sztrecska-wIs-mjKMiw4-unsplash.jpg')"></div></div><div class="card__content">
-                <header>
-                  <a href="/2021/02/27/mongodb-schema-compatibility/"><h2 class="card__header">Making Backward-Compatible Schema Changes in MongoDB</h2></a>
-                </header>
-              </div>
-          </div>
-        </div><div class="cell cell--12 cell--md-6 cell--lg-4">
-          <div class="card card--flat"><div class="card__image"><div class="card__background_image card__background_image_md" style="background-image: url('/assets/bg-aaron-burden-GFpxQ2ZyNc0-unsplash.jpg')"></div></div><div class="card__content">
-                <header>
-                  <a href="/2020/07/11/vavr-jackson-1.0.0-alpha-3/"><h2 class="card__header">Vavr Jackson 1.0.0 Alpha 3</h2></a>
-                </header>
-              </div>
-          </div>
-        </div><div class="cell cell--12 cell--md-6 cell--lg-4">
-          <div class="card card--flat"><div class="card__image"><div class="card__background_image card__background_image_md" style="background-image: url('/assets/bg-coffee-2242213_1280.jpg')"></div></div><div class="card__content">
-                <header>
-                  <a href="/2019/03/19/jackson-xml-mapper/"><h2 class="card__header">Jackson XML Mapper</h2></a>
-                </header>
-              </div>
-          </div>
-        </div><div class="cell cell--12 cell--md-6 cell--lg-4">
-          <div class="card card--flat"><div class="card__image"><div class="card__background_image card__background_image_md" style="background-image: url('/assets/bg-coffee-1030971_1280.jpg')"></div></div><div class="card__content">
-                <header>
-                  <a href="/2018/06/19/auto-value-and-jackson/"><h2 class="card__header">Use Auto Value and Jackson in REST API</h2></a>
-                </header>
-              </div>
-          </div>
-        </div></div>
-</section>
+      </ul><ul class="right-col menu"><li><i class="far fa-calendar-alt"></i> <span>2021年 07月20日</span>
+            </li></ul></div><div class="article__header"><header><h1>Netflix 资产管理平台 (AMP) 中的 Elasticsearch 索引策略</h1></header></div><div class="article__header">
+                        <p class="overlay__excerpt">【译】在 7TB 的大数据场景下，如何优化 ES 索引策略？</p>
+                      </div><div class="article__info clearfix">
+  <ul class="left-col menu">
+    <li>
+      <i class="fas fa-camera"></i>
+      
+      照片由
+      <a href="https://unsplash.com/@molliesivaram" target="_blank">Mollie Sivaram</a>
+      
+      提供 /
+      <a href="https://unsplash.com/license" target="_blank">Unplash </a>
+    </li>
+  </ul>
 </div>
-</div></article><!-- start custom main bottom snippet -->
+</div></div>
+              </div>
+            </div><div class ="main"><div class="grid grid--reverse">
+
+              <div class="col-aside d-print-none js-col-aside"><aside class="page__aside js-page-aside"><div class="toc-aside js-toc-root"></div>
+</aside></div>
+
+              <div class="col-main cell cell--auto"><!-- start custom main top snippet -->
+
+<!-- end custom main top snippet -->
+<article itemscope itemtype="http://schema.org/Article"><meta itemprop="headline" content="Netflix 资产管理平台 (AMP) 中的 Elasticsearch 索引策略"><meta itemprop="author" content="Mincong Huang"/><meta itemprop="datePublished" content="2021-07-20T22:11:22+02:00">
+    <meta itemprop="keywords" content="elasticsearch,translation,system-design"><div class="js-article-content"><div class="layout--article"><!-- start custom article top snippet -->
+
+
+<!-- end custom article top snippet -->
+<div class="article__content" itemprop="articleBody"><!--
+  Replace asset link with following on Chinese Platforms:
+  https://github.com/mincong-h/mincong-h.github.io/raw/master/
+ -->
+
+<h2 id="前言">前言</h2>
+
+<p>本文是对于在 Medium 平台上由 Netflix Technology Blog 首发的博文 <a href="https://netflixtechblog.medium.com/elasticsearch-indexing-strategy-in-asset-management-platform-amp-99332231e541" title="Medium">Elasticsearch Indexing Strategy in Asset Management Platform (AMP)</a> 的翻译。原文作者为 <a href="https://www.linkedin.com/in/burakbacioglu/" title="Burak Bacioglu">Burak Bacioglu</a> 和 <a href="https://www.linkedin.com/in/meenakshijindal/" title="Meenakshi Jindal">Meenakshi Jindal</a>。翻译如有不当之处，欢迎大家在评论区指正，我将尽快修复。</p>
+
+<h2 id="netflix-的资产管理">Netflix 的资产管理</h2>
+
+<p>在 Netflix，我们所有的数字媒体资产（图像、视频、文本等）都存储在安全的存储层中。我们构建了一个代号为“阿姆斯特丹”的资产管理平台 (AMP)，以便轻松组织和管理这些资产的元数据（metadata）、架构（schema）、关系（relations）和权限（permissions）。这个平台还负责资产发现、验证、共享和触发工作流。</p>
+
+<p>阿姆斯特丹服务使用了各种解决方案，例如 Cassandra、Kafka、Zookeeper、EvCache 等。在这篇博客中，我们将重点介绍我们如何利用 Elasticsearch 来索引和搜索资产。</p>
+
+<p>阿姆斯特丹建立在三个存储层之上。</p>
+
+<p>第一层 <strong>Cassandra</strong> 是我们的真相之源。它由近一百个表（列族）组成，其中大部分是反向索引，以帮助以更优化的方式查询资产。</p>
+
+<p>第二层是 <strong>Elasticsearch</strong>，用于根据用户查询发现资产。这是我们希望在本文中关注的层。更具体地说，我们会讨论如何在读取密集且持续增长的环境中索引和查询超过 7TB 的数据，并保持我们的 Elasticsearch 集群健康。</p>
+
+<p>最后，我们有一个 <strong>Apache Iceberg</strong> 层，它以非规范化的方式存储资产，以帮助回答分析用例的繁重查询。</p>
+
+<h2 id="elasticsearch-集成">Elasticsearch 集成</h2>
+
+<p>Elasticsearch 是最佳且被广泛使用的的分布式开源搜索和分析引擎之一，它适用于所有类型数据，包括文本、数值、地理空间、结构化或非结构化数据。它提供了简单的 API 用于创建索引、索引或搜索文档，使其易于集成。无论您是使用内部部署还是托管解决方案，您都可以快速建立一个 Elasticsearch 集群，并使用基于您的编程语言提供的客户端之一从您的应用程序开始集成它（Elasticsearch 有一组丰富的语言支持：Java、Python、.Net、Ruby、Perl 等）。</p>
+
+<p>集成 Elasticsearch 时的首要决定之一是设计索引、它们的设置和映射。设置（settings）包括索引特定的属性，如分片数、分析器等。映射（mappings）用于定义文档及其字段应该如何存储和索引。您可以为每个字段定义数据类型，或者对未知字段使用动态映射。您可以在 <a href="https://www.elastic.co/guide/en/elasticsearch/reference/7.x/mapping.html" title="Mapping (7.x)">Elasticsearch</a> 网站上找到有关设置和映射的更多信息。</p>
+
+<p>Netflix 内容和工作室工程中的大多数应用程序都处理资产（assets）：比如视频、图片、文字等。这些应用都是建立在微服务架构上的，资产管理平台 AMP 为这十几种针对不同资产类型的微服务提供资产管理。平台有一个集中式架构注册服务（schema registry service），专门负责存储资产类型的分类系统（taxonomies）和资产类型之间的关系，每个资产类型都在这个注册服务中被定义。因此，针对每种资产类型创建不同的索引似乎是一件顺理成章的事情。我们也知道，在 Elasticsearch 中创建索引映射时，必须为每个字段定义数据类型。由于不同的资产类型可能具有名称相同但类型不同的字段，而为每种类型设置单独的索引可以防止这样的冲突。于是，我们为每个资产类型各创建了十几个索引，并根据资产类型创建了相应的字段映射。随着更多的应用加入平台，我们不断为新资产类型创建新索引。我们有一个架构管理（schema management）的微服务，用于存储每种资产类型的分类系统（taxonomy）。每当在此服务中有新的资产类型被创建时，新的索引也会被自动创建。对于特定类型的所有资产，它们均使用其专有索引来创建或更新资产文档。</p>
+
+<p><img src="/assets/medium-1*DQfg8USKquc3t9tdayuvQA.png" alt="Fig 1. Indices based on Asset Types" title="Fig 1. Indices based on Asset Types" /></p>
+
+<p align="center">Fig 1. Indices based on Asset Types</p>
+
+<p>由于 Netflix 现在制作的原创作品比几年前我们开始这个项目时要多得多，不仅资产数量急剧增长，<mark>而且资产类型的数量也从几十个增加到了几千个</mark>。因此，Elasticsearch 索引（每个资产类型）的数量、资产文档索引数量、搜索 RPS（每秒请求数）的数量也随着时间的推移而增长。尽管这种索引策略运行了一段时间很顺利，但有趣的挑战开始出现了。随着时间的推移，我们开始注意到性能问题。我们也开始观察到 CPU 激增、长时间运行的查询、节点状态变为黄色/红色。</p>
+
+<p><em>译者：那怎么解决这个问题呢？</em></p>
+
+<p>通常首先要尝试的是通过增加节点数量来横向扩展 Elasticsearch 集群，或者通过升级实例类型来纵向扩展 Elasticsearch 集群。我们尝试了这两种方法，在许多情况下它会有所帮助，但有时这是一个短期修复，一段时间后性能问题又会出现，至少地对我们是这样。所以这也是时候进一步研究，以了解其根本原因了。</p>
+
+<p>是时候退一步，重新评估我们的 Elasticsearch 数据索引和分片策略了。每个索引都分配了固定数量的 6 个分片和 2 个副本（在索引模板中定义）。随着资产类型数量的增加，我们最终拥有大约 900 个索引（即 16200 个分片）。其中一些索引有数百万个文档，而其中许多索引非常小，只有数千个文档。我们发现 CPU 峰值的根本原因是分片大小不平衡。存储这些大分片的 Elasticsearch 节点成为热节点，并且由于线程繁忙，命中这些实例的查询超时或非常慢。</p>
+
+<p>我们改变了索引策略并决定基于时间段而不是资产类型创建索引。这意味着，在 t1 和 t2 之间创建的资产将进入 T1 存储桶，在 t2 和 t3 之间创建的资产将进入 T2 存储桶，依此类推。因此，与其根据资产类型来持久化资产，我们将使用它们的 id（也就是它的创建时间，因为资产 id 是在资产创建时生成的基于时间的 UUID）来确定文档应该持久化到哪个时间段。 Elasticsearch 建议每个分片小于 65GB（AWS 建议小于 50GB），因此我们可以创建基于时间的索引，其中每个索引保存 16-20GB 之间的数据，为数据增长提供一些缓冲。现有资产可以适当地重新分配到这些预先创建的分片，而新资产将始终转到当前索引。一旦当前索引的大小超过某个阈值 (16GB)，我们将为下一个存储桶（分钟/小时/天）创建一个新索引，并开始将资产索引到创建的新索引。我们在 Elasticsearch 中创建了一个<a href="https://www.elastic.co/guide/en/elasticsearch/reference/7.x/index-templates.html" title="Index Templates (7.x)">索引模板</a>，以便新索引始终使用存储在模板中的相同设置和映射。</p>
+
+<p>我们选择在同一个存储桶中索引一个资产的所有版本 - 使用第一个版本所在的那个存储桶。因此，即使新资产永远不会被持久化到旧索引（由于我们基于时间的 id 生成逻辑，它们总是会被转到最新/当前索引），已有资产会在同一个存储桶更新：从而导致在这些旧索引中，仍然有新的文档被创建。因此，我们为滚动选择了一个较低的阈值，这样即使在这些更新之后，旧的分片仍然远低于 50GB。</p>
+
+<p><img src="/assets/medium-1*j4I2cKE2MQlnziZPSzTrJA.png" alt="Fig 2. Indices based on Time Buckets" /></p>
+
+<p align="center">Fig 2. Indices based on Time Buckets</p>
+
+<p>出于搜索目的，我们有一个指向所有创建的索引的读取别名。执行查询时，我们总是在别名上执行它。这确保无论文档在哪里，都将返回与查询匹配的所有文档。但是，对于索引/更新文档，我们不能使用别名，我们使用确切的索引名称来执行索引操作。</p>
+
+<p>为了避免 ES 针对每个索引请求（indexing request）都遍历所有的索引列表，我们将索引列表保存在分布式缓存中。每当为下一个时间桶创建新索引时，我们都会刷新此缓存，以便新资产找到它所对应的索引。对于每个资产索引请求，我们查看缓存以确定资产相应的存储桶。缓存按排序顺序存储所有基于时间的索引（为简单起见，我们根据索引的开始时间以 yyyyMMddHHmmss 格式命名），以便我们可以根据资产创建时间轻松确定应使用哪个索引。如果不使用时间段策略，同一个资产可能会被索引到多个索引中，因为 Elasticsearch doc id 对于每个索引是唯一的，而不是对于集群是唯一的。或者我们必须执行两个 API 调用：首先找到特定索引，然后对该特定索引执行资产更新/删除操作。</p>
+
+<p>如果一个索引发生数百万次更新，那么这个索引仍有可能超过 50GB。为了解决这个问题，我们添加了一个 API，可以以通过程序将旧索引一分为二。为了将给定的桶 T1（存储 t1 和 t2 之间的所有资产）一分为二，我们选择 t1 和 t2 之间的时间 t1.5，并创建一个新的桶 T1_5，然后重新索引在 t1.5 和 t2 之间创建的所有资产，让它们从桶 T1 转移到桶 T1_5。当重新索引发生时，查询/读取仍然由 T1 回答，因此任何创建的新文档（通过资产更新）将被双重写入 T1 和 T1.5，前提是它们的时间戳落在 t1.5 和 t2 之间。最后，一旦重新索引完成，我们启用从 T1_5 读取，停止双重写入并从 T1 删除重新索引的文档。</p>
+
+<p>实际上，Elasticsearch 提供了 <a href="https://www.elastic.co/guide/en/elasticsearch/reference/7.x/index-rollover.html" title="Index Rollover (7.x)">Index Rollover</a> 功能来处理日益增长的索引问题。使用此功能，当当前索引大小达到阈值时会创建一个新索引，并且通过写别名（write alias），写入请求将指向刚创建的新索引。这意味着，所有未来的写入请求调用都将转到创建的新索引。但是，这会给我们的更新流程带来问题：因为我们必须查询多个索引以确定哪个索引包含特定文档，以便我们可以正确地更新它。因为我们向 Elasticsearch 的写入请求可能不是按时间顺序的：这意味着在 T1 创建的资产 a1 可能在 T2 创建的另一个资产 a2 被写入 ES 以后才被写入（T2&gt;T1）。这样一来，旧的资产 a1 可能会被储存在新的索引中，而新的资产 a2 则被储存在旧索引中。然而，在我们团队当前的实现中，仅通过查看资产 id（和资产创建时间），我们就可以找出要访问的索引，并且它始终是确定的。（译者：换句话说，也就是使用 Elasticsearch 提供的 Index Rollover 功能无法按照 Netflow 团队的要求实现幂等 idempotence）。</p>
+
+<p>值得一提的是，Elasticsearch 的默认限制是每个索引 1000 个字段。如果我们将所有类型索引到一个索引，我们会不会轻易超过这个数字？那么我们上面提到的数据类型冲突呢？当两种资产类型为同一字段定义不同的数据类型时，对所有数据类型使用单个索引可能会导致冲突。因此，我们改变了我们的映射策略来克服这些问题。我们没有为资产类型中定义的每个元数据字段创建单独的 Elasticsearch 字段，而是创建了一个嵌套类型（nested），其中包含一个名为 “key” 的必填字段以表示资产类型上的字段名称，以及跟数据类型相关的特定字段，例如：<code class="language-plaintext highlighter-rouge">string_value</code>、<code class="language-plaintext highlighter-rouge">long_value</code>、<code class="language-plaintext highlighter-rouge">date_value</code> 等。我们根据值的实际数据类型填充相应的数据类型特定字段（data-type specific field）。您可以在下面看到我们模板中定义的索引映射的节选，以及来自具有四个元数据字段的资产文档的示例：</p>
+
+<p><img src="/assets/medium-1*QkEOoJ9VcNLEJH_ksK7H6g.png" alt="Fig 3. Snippet of the index mapping" /></p>
+
+<p align="center">Fig 3. Snippet of the index mapping</p>
+
+<p><img src="/assets/medium-1*uIWtMJ0qsmhBW_KMBOhoLQ.png" alt="Fig 4. Snippet of nested metadata field on a stored document" /></p>
+
+<p align="center">Fig 4. Snippet of nested metadata field on a stored document</p>
+
+<p>正如您在上面看到的，所有资产属性都在同一个嵌套字段元数据 <code class="language-plaintext highlighter-rouge">metadata</code> 下，带有一个强制性的 <code class="language-plaintext highlighter-rouge">key</code> 字段，以及相应的数据类型特定字段（data-type specific field）。这确保了无论有多少资产类型或属性被索引，我们都只需要在映射中定义固定数量的字段。在搜索这些字段时，我们不是查询单个值（cameraId == 42323243），而是执行嵌套查询，其中我们同时查询键和值（key == cameraId AND long_value == 42323243）。 有关嵌套查询的更多信息，请参阅此<a href="https://www.elastic.co/guide/en/elasticsearch/reference/7.x/query-dsl-nested-query.html" title="Nested query (7.x)">链接</a>。</p>
+
+<p><img src="/assets/medium-1*KGLLQdbQ0T_yrAs6-8E52w.png" alt="Fig 5. Search/Indexing RPS" /></p>
+
+<p align="center">Fig 5. Search/Indexing RPS</p>
+
+<p>在这一系列变化之后，我们创建的索引现在在数据大小方面是平衡的。CPU 使用率从峰值平均 70% 下降到 10%。此外，我们能够将这些索引的刷新间隔时间从我们之前设置的 30 秒减少到 1 秒，以支持先读后写等用例，使用户能够在文档创建一秒后就能搜索并获取它。（译者：下面是新旧架构下的 CPU 使用率比较）</p>
+
+<p><img src="/assets/medium-1*lKUZG-y1rtGZm14TyA5MtA.png" alt="Fig 6. CPU Spike with Old indexing strategy" /></p>
+
+<p align="center">Fig 6. CPU Spike with Old indexing strategy</p>
+
+<p><img src="/assets/medium-1*ymOY_mRG303ZD_5ZdO3tog.png" alt="Fig 7. CPU Usage with New indexing strategy" /></p>
+
+<p align="center">Fig 7. CPU Usage with New indexing strategy</p>
+
+<p>（在使用新的架构个之前）我们必须一次性将现有文档迁移到新索引。幸运的是，我们已经有了一个现成的框架，可以从 Cassandra 查询所有资产并在 Elasticsearch 中索引它们。 由于通常不建议在 Cassandra 中对数据量大的表进行全表扫描（可能会超时），我们的 Cassandra schema 包含几个反向索引，可帮助我们有效地查询所有数据。 我们还使用 Kafka 异步处理这些资产，使我们的实时流量不受影响。 这套设施不仅用于将资产索引到 Elasticsearch，还用于对所有或部分资产执行管理操作，例如批量更新资产、扫描/修复它们的问题等。由于我们在本文中只关注 Elasticsearch 索引， 我们计划稍后再写另一篇文章来讨论此套设施。</p>
+
+<h2 id="结论">结论</h2>
+
+<p>译者：在本文中，我们看到了 Netflix 的工程师团队对于他们的资产管理平台（AMP）介绍。看到他们多类资产的大数据场景下对于 Elasticsearch 的应用：如何按资产类型设计索引策略、在业务增长后遇到的困难、如何将索引策略改造成按时间建立索引并且保证幂等、如何避开1000个字段的限制、在变更以后性能上的优化，以及这套系统的其他用例。希望这篇文章能够给你带来一些思考，让你的搜索系统变得更高效好用。如果你有兴趣了解更多的资讯，欢迎关注我的 GitHub 账号 <a href="https://github.com/mincong-h">mincong-h</a> 或者微信订阅号【码农小黄】。谢谢大家！</p>
+
+<h2 id="参考文献">参考文献</h2>
+
+<ul>
+  <li>Burak Bacioglu and Meenakshi Jindal, “Elasticsearch Indexing Strategy in Asset Management Platform (AMP)”, Medium, 2021. <a href="https://netflixtechblog.medium.com/elasticsearch-indexing-strategy-in-asset-management-platform-amp-99332231e541">https://netflixtechblog.medium.com/elasticsearch-indexing-strategy-in-asset-management-platform-amp-99332231e541</a></li>
+</ul>
+
+<!--
+ WeChat:
+   写作不易，希望大家点个赞、点个在看支持一下，谢谢(花)
+   ![](https://mincong.io/assets/wechat-QR-code.jpg)
+
+ CSDN:
+   ![扫码关注](https://img-blog.csdnimg.cn/img_convert/f07c6cc9272c721180bad20c599e4ff7.png#pic_center =600x333)
+-->
+</div><section class="article__sharing d-print-none"></section><div class="d-print-none"><footer class="article__footer"><meta itemprop="dateModified" content="2021-07-20T22:11:22+02:00"><!-- start custom article footer snippet -->
+
+<!-- end custom article footer snippet -->
+<div class="article__subscribe"><div class="subscribe">
+  <i class="fas fa-rss"></i>
+  <a type="application/rss+xml" href="/feed.xml">订阅</a>
+</div><div style="text-align: center">
+  <img
+    src="/assets/wechat-QR-code.jpg"
+    alt="WeChat QR Code"
+    width="400px"
+    style="max-width: 100%">
+</div></div><div class="article__license"><div class="license">
+    <p>本文遵守 <a itemprop="license" rel="license" href="https://creativecommons.org/licenses/by/4.0/">Attribution 4.0 International</a> 许可协议。
+      <a rel="license" href="https://creativecommons.org/licenses/by/4.0/">
+        <img alt="Attribution 4.0 International" src="https://i.creativecommons.org/l/by/4.0/88x31.png" />
+      </a>
+    </p>
+  </div></div></footer>
+<div class="article__section-navigator clearfix"><div class="previous"><span>上篇</span><a href="/cn/elasticsearch-corrupted-index/">修复 Elasticsearch 中损坏的索引</a></div></div></div>
+
+</div>
+
+<script>(function() {
+  var SOURCES = window.TEXT_VARIABLES.sources;
+  window.Lazyload.js(SOURCES.jquery, function() {
+    $(function() {
+      var $this ,$scroll;
+      var $articleContent = $('.js-article-content');
+      var hasSidebar = $('.js-page-root').hasClass('layout--page--sidebar');
+      var scroll = hasSidebar ? '.js-page-main' : 'html, body';
+      $scroll = $(scroll);
+
+      $articleContent.find('.highlight').each(function() {
+        $this = $(this);
+        $this.attr('data-lang', $this.find('code').attr('data-lang'));
+      });
+      $articleContent.find('h1[id], h2[id], h3[id], h4[id], h5[id], h6[id]').each(function() {
+        $this = $(this);
+        $this.append($('<a class="anchor d-print-none" aria-hidden="true"></a>').html('<i class="fas fa-anchor"></i>'));
+      });
+      $articleContent.on('click', '.anchor', function() {
+        $scroll.scrollToAnchor('#' + $(this).parent().attr('id'), 400);
+      });
+    });
+  });
+})();
+</script>
+</div><section class="page__comments d-print-none"><div id="disqus_thread"></div>
+  <script>
+  /**
+  *  RECOMMENDED CONFIGURATION VARIABLES: EDIT AND UNCOMMENT THE SECTION BELOW TO INSERT DYNAMIC VALUES FROM YOUR PLATFORM OR CMS.
+  *  LEARN WHY DEFINING THESE VARIABLES IS IMPORTANT: https://disqus.com/admin/universalcode/#configuration-variables*/
+  var disqus_config = function () {
+    this.page.url = 'https://mincong.io/cn/elasticsearch-indexing-strategy-in-asset-management-platform-amp/';
+    this.page.identifier = '/cn/elasticsearch-indexing-strategy-in-asset-management-platform-amp';
+  };
+  (function() { // DON'T EDIT BELOW THIS LINE
+    var d = document, s = d.createElement('script');
+    s.src = 'https://mincong-h.disqus.com/embed.js';
+    s.setAttribute('data-timestamp', +new Date());
+    (d.head || d.body).appendChild(s);
+  })();
+  </script>
+  <noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript></section></article><!-- start custom main bottom snippet -->
 
 <!-- end custom main bottom snippet -->
 </div>
@@ -404,24 +581,24 @@
 <footer class="footer py-4 js-page-footer">
   <div class="main"><div itemscope itemtype="http://schema.org/Person">
       <meta itemprop="name" content="Mincong Huang"><meta itemprop="url" content="/"><meta itemprop="description" content="I am an amazing person."><div class="footer__author-links"><div class="author-links">
-  <ul class="menu menu--nowrap menu--inline"><li title="Send me an Email.">
+  <ul class="menu menu--nowrap menu--inline"><li title="给我发邮件。">
       <a class="button button--circle mail-button" itemprop="email" href="mailto:mincong.h@gmail.com" target="_blank">
         <i class="fas fa-envelope"></i>
-      </a><li title="Follow me on Twitter.">
+      </a><li title="在 Twitter 上关注我。">
         <a class="button button--circle twitter-button" itemprop="sameAs" href="https://twitter.com/mincong_h" target="_blank">
           <div class="icon"><svg fill="#000000" width="24px" height="24px" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg">
   <path d="M1024.032 194.432c-37.664 16.704-78.176 28-120.672 33.088 43.36-26.016 76.672-67.168 92.384-116.224-40.608 24.064-85.568 41.568-133.408 50.976-38.336-40.832-92.928-66.336-153.344-66.336-116.032 0-210.08 94.048-210.08 210.08 0 16.48 1.856 32.512 5.44 47.872-174.592-8.768-329.408-92.416-433.024-219.52-18.08 31.04-28.448 67.104-28.448 105.632 0 72.896 37.088 137.184 93.472 174.88-34.432-1.088-66.816-10.528-95.168-26.272-0.032 0.864-0.032 1.76-0.032 2.656 0 101.792 72.416 186.688 168.512 205.984-17.632 4.8-36.192 7.36-55.36 7.36-13.536 0-26.688-1.312-39.52-3.776 26.72 83.456 104.32 144.192 196.256 145.888-71.904 56.352-162.496 89.92-260.928 89.92-16.96 0-33.664-0.992-50.112-2.944 92.96 59.616 203.392 94.4 322.048 94.4 386.432 0 597.728-320.128 597.728-597.76 0-9.12-0.192-18.176-0.608-27.168 41.056-29.632 76.672-66.624 104.832-108.736z" />
 </svg>
 </div>
         </a>
-      </li><li title="Follow me on Linkedin.">
+      </li><li title="在 Linkedin 上关注我。">
         <a class="button button--circle linkedin-button" itemprop="sameAs" href="https://www.linkedin.com/in/mincong-huang" target="_blank">
           <div class="icon"><svg fill="#000000" width="24px" height="24px" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg">
   <path d="M260.096 155.648c0 27.307008-9.899008 50.516992-29.696 69.632-19.796992 19.115008-45.396992 28.672-76.8 28.672-30.036992 0-54.612992-9.556992-73.728-28.672-19.115008-19.115008-28.672-42.324992-28.672-69.632 0-28.672 9.556992-52.224 28.672-70.656 19.115008-18.432 44.372992-27.648 75.776-27.648 31.403008 0 56.32 9.216 74.752 27.648 18.432 18.432 28.331008 41.984 29.696 70.656 0 0 0 0 0 0m-202.752 808.96c0 0 0-632.832 0-632.832 0 0 196.608 0 196.608 0 0 0 0 632.832 0 632.832 0 0-196.608 0-196.608 0 0 0 0 0 0 0m313.344-430.08c0-58.708992-1.364992-126.292992-4.096-202.752 0 0 169.984 0 169.984 0 0 0 10.24 88.064 10.24 88.064 0 0 4.096 0 4.096 0 40.96-68.267008 105.812992-102.4 194.56-102.4 68.267008 0 123.220992 22.868992 164.864 68.608 41.643008 45.739008 62.464 113.664 62.464 203.776 0 0 0 374.784 0 374.784 0 0-196.608 0-196.608 0 0 0 0-350.208 0-350.208 0-91.476992-33.451008-137.216-100.352-137.216-47.787008 0-81.236992 24.576-100.352 73.728-4.096 8.192-6.144 24.576-6.144 49.152 0 0 0 364.544 0 364.544 0 0-198.656 0-198.656 0 0 0 0-430.08 0-430.08 0 0 0 0 0 0" />
 </svg>
 </div>
         </a>
-      </li><li title="Follow me on Github.">
+      </li><li title="在 Github 上关注我。">
         <a class="button button--circle github-button" itemprop="sameAs" href="https://github.com/mincong-h" target="_blank">
           <div class="icon"><svg fill="#000000" width="24px" height="24px" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg">
   <path class="svgpath" data-index="path_0" fill="#272636" d="M0 525.2c0 223.6 143.3 413.7 343 483.5 26.9 6.8 22.8-12.4 22.8-25.4l0-88.7c-155.3 18.2-161.5-84.6-172-101.7-21.1-36-70.8-45.2-56-62.3 35.4-18.2 71.4 4.6 113.1 66.3 30.2 44.7 89.1 37.2 119 29.7 6.5-26.9 20.5-50.9 39.7-69.6C248.8 728.2 181.7 630 181.7 513.2c0-56.6 18.7-108.7 55.3-150.7-23.3-69.3 2.2-128.5 5.6-137.3 66.5-6 135.5 47.6 140.9 51.8 37.8-10.2 80.9-15.6 129.1-15.6 48.5 0 91.8 5.6 129.8 15.9 12.9-9.8 77-55.8 138.8-50.2 3.3 8.8 28.2 66.7 6.3 135 37.1 42.1 56 94.6 56 151.4 0 117-67.5 215.3-228.8 243.7 26.9 26.6 43.6 63.4 43.6 104.2l0 128.8c0.9 10.3 0 20.5 17.2 20.5C878.1 942.4 1024 750.9 1024 525.3c0-282.9-229.3-512-512-512C229.1 13.2 0 242.3 0 525.2L0 525.2z" />
@@ -440,7 +617,7 @@
   </div>
 </footer>
 </div></div>
-    </div></div></div><script>(function() {
+    </div><script>(function() {
   var SOURCES = window.TEXT_VARIABLES.sources;
   window.Lazyload.js(SOURCES.jquery, function() {
     var $body = $('body'), $window = $(window);
@@ -592,7 +769,7 @@
 })();
 </script><div class="search search--dark">
   <div class="main">
-    <div class="search__header">Search</div>
+    <div class="search__header">搜索</div>
     <div class="search-bar">
       <div class="search-box js-search-box">
         <div class="search-box__icon-search"><i class="fas fa-search"></i></div>
@@ -602,7 +779,7 @@
         </div>
       </div>
       <button class="button button--theme-dark button--pill search__cancel js-search-toggle">
-        Cancel</button>
+        取消</button>
     </div>
     <div class="search-result js-search-result"></div>
   </div>
@@ -957,34 +1134,66 @@ window.Lazyload.js([SOURCES.jquery, PAHTS.search_js], function() {
 /*(function () {
 
 })();*/
-</script><script>(function() {
+</script><script>
+  /* toc must before affix, since affix need to konw toc' height. */(function() {
   var SOURCES = window.TEXT_VARIABLES.sources;
-
+  var TOC_SELECTOR = window.TEXT_VARIABLES.site.toc.selectors;
   window.Lazyload.js(SOURCES.jquery, function() {
-    var $pageMask = $('.js-page-mask');
-    var $pageRoot = $('.js-page-root');
-    var $sidebarShow = $('.js-sidebar-show');
-    var $sidebarHide = $('.js-sidebar-hide');
+    var $window = $(window);
+    var $articleContent = $('.js-article-content');
+    var $tocRoot = $('.js-toc-root'), $col2 = $('.js-col-aside');
+    var toc;
+    var tocDisabled = false;
+    var hasSidebar = $('.js-page-root').hasClass('layout--page--sidebar');
+    var hasToc = $articleContent.find(TOC_SELECTOR).length > 0;
 
-    function freeze(e) {
-      if (e.target === $pageMask[0]) {
-        e.preventDefault();
-      }
-    }
-    function stopBodyScrolling(bool) {
-      if (bool === true) {
-        window.addEventListener('touchmove', freeze, { passive: false });
-      } else {
-        window.removeEventListener('touchmove', freeze, { passive: false });
-      }
+    function disabled() {
+      return $col2.css('display') === 'none' || !hasToc;
     }
 
-    $sidebarShow.on('click', function() {
-      stopBodyScrolling(true); $pageRoot.addClass('show-sidebar');
+    tocDisabled = disabled();
+
+    toc = $tocRoot.toc({
+      selectors: TOC_SELECTOR,
+      container: $articleContent,
+      scrollTarget: hasSidebar ? '.js-page-main' : null,
+      scroller: hasSidebar ? '.js-page-main' : null,
+      disabled: tocDisabled
     });
-    $sidebarHide.on('click', function() {
-      stopBodyScrolling(false); $pageRoot.removeClass('show-sidebar');
+
+    $window.on('resize', window.throttle(function() {
+      tocDisabled = disabled();
+      toc && toc.setOptions({
+        disabled: tocDisabled
+      });
+    }, 100));
+
+  });
+})();
+(function() {
+  var SOURCES = window.TEXT_VARIABLES.sources;
+  window.Lazyload.js(SOURCES.jquery, function() {
+    var $window = $(window), $pageFooter = $('.js-page-footer');
+    var $pageAside = $('.js-page-aside');
+    var affix;
+    var tocDisabled = false;
+    var hasSidebar = $('.js-page-root').hasClass('layout--page--sidebar');
+
+    affix = $pageAside.affix({
+      offsetBottom: $pageFooter.outerHeight(),
+      scrollTarget: hasSidebar ? '.js-page-main' : null,
+      scroller: hasSidebar ? '.js-page-main' : null,
+      scroll: hasSidebar ? $('.js-page-main').children() : null,
+      disabled: tocDisabled
     });
+
+    $window.on('resize', window.throttle(function() {
+      affix && affix.setOptions({
+        disabled: tocDisabled
+      });
+    }, 100));
+
+    window.pageAsideAffix = affix;
   });
 })();
 </script>
