@@ -10,37 +10,42 @@
 		
 	</script><meta charset="utf-8">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
-<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no"><title>Java Concurrency - Mincong Huang</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no"><title>How to prevent data loss in Elasticsearch? - Mincong Huang</title>
 
-<meta name="description" content="">
+<meta name="description" content="Six practical solutions to improve data reliability: improve number of replicas, snapshot and restore, RAID, MQ, etc.">
 
 <!-- Begin Jekyll SEO tag v2.7.1 -->
-<title>Java Concurrency | Mincong Huang</title>
+<title>How to prevent data loss in Elasticsearch? | Mincong Huang</title>
 <meta name="generator" content="Jekyll v4.2.0" />
-<meta property="og:title" content="Java Concurrency" />
+<meta property="og:title" content="How to prevent data loss in Elasticsearch?" />
 <meta name="author" content="Mincong Huang" />
 <meta property="og:locale" content="en" />
-<meta name="description" content="Hi, welcome to my blog! I’m a software engineer at Datadog. I write blog posts in my free time. My blogs are bits and pieces of my tech journey. Most of them are related to Java. Hope you enjoy them! My opinions are my own, not Datadog’s. This blog is powered by Jekyll, a simple, blog-aware, static sites solution." />
-<meta property="og:description" content="Hi, welcome to my blog! I’m a software engineer at Datadog. I write blog posts in my free time. My blogs are bits and pieces of my tech journey. Most of them are related to Java. Hope you enjoy them! My opinions are my own, not Datadog’s. This blog is powered by Jekyll, a simple, blog-aware, static sites solution." />
-<link rel="canonical" href="https://mincong.io/en/categories/java-concurrency/" />
-<meta property="og:url" content="https://mincong.io/en/categories/java-concurrency/" />
+<meta name="description" content="Six practical solutions to improve data reliability: improve number of replicas, snapshot and restore, RAID, MQ, etc." />
+<meta property="og:description" content="Six practical solutions to improve data reliability: improve number of replicas, snapshot and restore, RAID, MQ, etc." />
+<link rel="canonical" href="https://mincong.io/en/prevent-data-loss-in-elasticsearch/" />
+<meta property="og:url" content="https://mincong.io/en/prevent-data-loss-in-elasticsearch/" />
 <meta property="og:site_name" content="Mincong Huang" />
+<meta property="og:image" content="https://mincong.io/assets/bg-chase-charaba-uRHzV3ca2fk-unsplash.jpg" />
 <meta property="og:type" content="article" />
-<meta property="article:published_time" content="2021-08-09T22:52:24+02:00" />
-<meta name="twitter:card" content="summary" />
-<meta property="twitter:title" content="Java Concurrency" />
+<meta property="article:published_time" content="2021-07-31T09:50:49+02:00" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta property="twitter:image" content="https://mincong.io/assets/bg-chase-charaba-uRHzV3ca2fk-unsplash.jpg" />
+<meta property="twitter:title" content="How to prevent data loss in Elasticsearch?" />
 <meta name="twitter:site" content="@mincong_h" />
 <meta name="twitter:creator" content="@mincong_h" />
 <script type="application/ld+json">
-{"description":"Hi, welcome to my blog! I’m a software engineer at Datadog. I write blog posts in my free time. My blogs are bits and pieces of my tech journey. Most of them are related to Java. Hope you enjoy them! My opinions are my own, not Datadog’s. This blog is powered by Jekyll, a simple, blog-aware, static sites solution.","@type":"BlogPosting","headline":"Java Concurrency","dateModified":"2021-08-09T22:52:24+02:00","datePublished":"2021-08-09T22:52:24+02:00","url":"https://mincong.io/en/categories/java-concurrency/","mainEntityOfPage":{"@type":"WebPage","@id":"https://mincong.io/en/categories/java-concurrency/"},"author":{"@type":"Person","name":"Mincong Huang"},"@context":"https://schema.org"}</script>
+{"description":"Six practical solutions to improve data reliability: improve number of replicas, snapshot and restore, RAID, MQ, etc.","@type":"BlogPosting","image":"https://mincong.io/assets/bg-chase-charaba-uRHzV3ca2fk-unsplash.jpg","headline":"How to prevent data loss in Elasticsearch?","dateModified":"2021-07-31T09:50:49+02:00","datePublished":"2021-07-31T09:50:49+02:00","url":"https://mincong.io/en/prevent-data-loss-in-elasticsearch/","mainEntityOfPage":{"@type":"WebPage","@id":"https://mincong.io/en/prevent-data-loss-in-elasticsearch/"},"author":{"@type":"Person","name":"Mincong Huang"},"@context":"https://schema.org"}</script>
 <!-- End Jekyll SEO tag -->
 
 
 <!-- Extra Open Graph :: Start -->
 
+<meta property="og:image:width" content="1280"/>
+<meta property="og:image:height" content="1920"/>
+
 <!-- Extra Open Graph :: End -->
 
-<link rel="canonical" href="https://mincong.io/en/categories/java-concurrency/"><link rel="alternate" type="application/rss+xml" title="Mincong Huang" href="/feed.xml"><!-- start favicons snippet, use https://realfavicongenerator.net/ --><link rel="apple-touch-icon" sizes="180x180" href="/assets/apple-touch-icon.png"><link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon-32x32.png"><link rel="icon" type="image/png" sizes="16x16" href="/assets/favicon-16x16.png"><link rel="manifest" href="/assets/site.webmanifest"><link rel="mask-icon" href="/assets/safari-pinned-tab.svg" color="#fc4d50"><link rel="shortcut icon" href="/assets/favicon.ico">
+<link rel="canonical" href="https://mincong.io/en/prevent-data-loss-in-elasticsearch/"><link rel="alternate" type="application/rss+xml" title="Mincong Huang" href="/feed.xml"><!-- start favicons snippet, use https://realfavicongenerator.net/ --><link rel="apple-touch-icon" sizes="180x180" href="/assets/apple-touch-icon.png"><link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon-32x32.png"><link rel="icon" type="image/png" sizes="16x16" href="/assets/favicon-16x16.png"><link rel="manifest" href="/assets/site.webmanifest"><link rel="mask-icon" href="/assets/safari-pinned-tab.svg" color="#fc4d50"><link rel="shortcut icon" href="/assets/favicon.ico">
 
 <meta name="msapplication-TileColor" content="#ffc40d"><meta name="msapplication-config" content="/assets/browserconfig.xml">
 
@@ -290,18 +295,7 @@
 </head>
   <body>
     <div class="root" data-is-touch="false">
-      <div class="layout--page layout--page--sidebar clearfix js-page-root">
-  <div class="page__mask d-print-none js-page-mask js-sidebar-hide"></div>
-  <div class="page__viewport">
-    <div class="page__actions d-print-none">
-      <div class="button button--circle button--lg box-shadow-2 sidebar-button js-sidebar-show">
-        <i class="fas fa-bars icon--show"></i>
-      </div>
-    </div>
-
-    <div class="grid page__grid">
-
-      <div class="page__sidebar d-print-none"><div class="sidebar-toc"><ul class="toc toc--navigator"><li class="toc-h1">Categories</li><li class="toc-h2"><a href="/en/categories/build/">Build Tools</a></li><li class="toc-h2"><a href="/en/categories/elasticsearch/">Elasticsearch</a></li><li class="toc-h2"><a href="/en/categories/git/">Git</a></li><li class="toc-h2 active"><a href="/en/categories/java-concurrency/">Java Concurrency</a></li><li class="toc-h2"><a href="/en/categories/java-core/">Java Core</a></li><li class="toc-h2"><a href="/en/categories/java-rest/">Java RESTful APIs</a></li><li class="toc-h2"><a href="/en/categories/java-serialization/">Java Serialization</a></li><li class="toc-h2"><a href="/en/categories/java-testing/">Java Testing</a></li><li class="toc-h2"><a href="/en/categories/python/">Python</a></li><li class="toc-h2"><a href="/en/categories/reliability/">Reliability</a></li><li class="toc-h2"><a href="/en/categories/review/">Review</a></li></ul></div></div><div class="page__main js-page-main cell cell--auto">
+      <div class="layout--page js-page-root"><div class="page__main js-page-main page__viewport has-aside cell cell--auto">
 
       <div class="page__main-inner"><div class="page__header d-print-none"><header class="header"><div class="main">
       <div class="header__title">
@@ -344,101 +338,301 @@
         </ul>
       </nav></div>
   </header>
-</div><div class="page__content"><div class ="main"><div class="grid grid--reverse">
-
-              <div class="col-aside d-print-none js-col-aside"></div>
-
-              <div class="col-main cell cell--auto"><!-- start custom main top snippet -->
-
-<!-- end custom main top snippet -->
-<article itemscope itemtype="http://schema.org/WebPage"><div class="article__header"><header><h1>Java Concurrency</h1></header></div><meta itemprop="headline" content="Java Concurrency">
+</div><div class="page__content"><div class="article__header--overlay"><div class="hero hero--dark overlay" style="background-image:linear-gradient(135deg, rgba(0, 0, 0, .6), rgba(0, 0, 0, .4)),url(/assets/bg-chase-charaba-uRHzV3ca2fk-unsplash.jpg);background-color:#203028;"><div class="hero__content"><div class ="main">
 
   
   <div class="article__info clearfix">
       <ul class="left-col menu">
+        <li>
+              <a class="button button--secondary button--pill button--sm"
+                href="/en/archive/?tag=elasticsearch">elasticsearch</a>
+            </li><li>
+              <a class="button button--secondary button--pill button--sm"
+                href="/en/archive/?tag=java">java</a>
+            </li><li>
+              <a class="button button--secondary button--pill button--sm"
+                href="/en/archive/?tag=system-design">system-design</a>
+            </li><li>
+              <a class="button button--secondary button--pill button--sm"
+                href="/en/archive/?tag=reliability">reliability</a>
+            </li>
+
+        <li class="separator">|</li>
+          
+            <li>
+              <a class="button button--circle button--primary focus lang"
+                 href="/en/prevent-data-loss-in-elasticsearch/"><span>EN</span></a>
+
+              
+
+
+
+
+
+
+              
+
+              
+                <a class="button button--circle button--secondary lang"
+                   href="/cn/prevent-data-loss-in-elasticsearch/"><span>CN</span></a>
+              
+            </li>
+          
         
-
-        
-      </ul><ul class="right-col menu"><li><i class="far fa-calendar-alt"></i> <span>Aug 09, 2021</span>
-            </li></ul></div><meta itemprop="author" content="Mincong Huang"/><meta itemprop="datePublished" content="2021-08-09T22:52:24+02:00"><div class="js-article-content">
-
-
-<div class="layout--articles">
-  <section class="my-5">
-    <div class="article-list grid grid--p-3"><div class="cell cell--12 cell--md-6 cell--lg-4">
-          <div class="card card--flat"><div class="card__image"><div class="card__background_image card__background_image_md" style="background-image: url('/assets/bg-coffee-2242213_1280.jpg')"></div></div><div class="card__content">
-                <header>
-                  <a href="/2020/07/26/es-client-completablefuture/"><h2 class="card__header">Wrap Elasticsearch Response Into CompletableFuture</h2></a>
-                </header>
-              </div>
-          </div>
-        </div><div class="cell cell--12 cell--md-6 cell--lg-4">
-          <div class="card card--flat"><div class="card__image"><div class="card__background_image card__background_image_md" style="background-image: url('/assets/bg-park-troopers-RAtKWVlfdf4-unsplash.jpg')"></div></div><div class="card__content">
-                <header>
-                  <a href="/2020/06/26/completable-future/"><h2 class="card__header">Why Do We Need Completable Future?</h2></a>
-                </header>
-              </div>
-          </div>
-        </div><div class="cell cell--12 cell--md-6 cell--lg-4">
-          <div class="card card--flat"><div class="card__image"><div class="card__background_image card__background_image_md" style="background-image: url('/assets/bg-coffee-2306471_1280.jpg')"></div></div><div class="card__content">
-                <header>
-                  <a href="/2020/06/20/akka-actor/"><h2 class="card__header">Write An Actor In Akka</h2></a>
-                </header>
-              </div>
-          </div>
-        </div><div class="cell cell--12 cell--md-6 cell--lg-4">
-          <div class="card card--flat"><div class="card__image"><div class="card__background_image card__background_image_md" style="background-image: url('/assets/bg-willian-justen-de-vasconcellos-3fX0FvA-2us-unsplash.jpg')"></div></div><div class="card__content">
-                <header>
-                  <a href="/2020/05/30/exception-handling-in-completable-future/"><h2 class="card__header">3 Ways to Handle Exception In Completable Future</h2></a>
-                </header>
-              </div>
-          </div>
-        </div><div class="cell cell--12 cell--md-6 cell--lg-4">
-          <div class="card card--flat"><div class="card__image"><div class="card__background_image card__background_image_md" style="background-image: url('/assets/bg-mike-kenneally-tNALoIZhqVM-unsplash.jpg')"></div></div><div class="card__content">
-                <header>
-                  <a href="/2020/05/10/completablefuture-test/"><h2 class="card__header">How CompletableFuture is tested in OpenJDK?</h2></a>
-                </header>
-              </div>
-          </div>
-        </div><div class="cell cell--12 cell--md-6 cell--lg-4">
-          <div class="card card--flat"><div class="card__image"><div class="card__background_image card__background_image_md" style="background-image: url('/assets/bg-coffee-983955_1280.jpg')"></div></div><div class="card__content">
-                <header>
-                  <a href="/2020/03/15/jaxrs-async-processing/"><h2 class="card__header">Asynchronous Processing in JAX-RS 2.x</h2></a>
-                </header>
-              </div>
-          </div>
-        </div><div class="cell cell--12 cell--md-6 cell--lg-4">
-          <div class="card card--flat"><div class="card__image"><div class="card__background_image card__background_image_md" style="background-image: url('/assets/bg-board-2450236_1280.jpg')"></div></div><div class="card__content">
-                <header>
-                  <a href="/2020/01/08/akka-testing-actor-with-testactorref/"><h2 class="card__header">Akka: Testing Actor with TestActorRef</h2></a>
-                </header>
-              </div>
-          </div>
-        </div><div class="cell cell--12 cell--md-6 cell--lg-4">
-          <div class="card card--flat"><div class="card__image"><div class="card__background_image card__background_image_md" style="background-image: url('/assets/bg-powerboat-2784250_1280.jpg')"></div></div><div class="card__content">
-                <header>
-                  <a href="/2019/01/29/executorservice-invokeall/"><h2 class="card__header">ExecutorService.invokeAll()</h2></a>
-                </header>
-              </div>
-          </div>
-        </div><div class="cell cell--12 cell--md-6 cell--lg-4">
-          <div class="card card--flat"><div class="card__content">
-                <header>
-                  <a href="/2018/07/01/method-execution-in-multithreading/"><h2 class="card__header">Method Execution In Multithreading</h2></a>
-                </header>
-              </div>
-          </div>
-        </div><div class="cell cell--12 cell--md-6 cell--lg-4">
-          <div class="card card--flat"><div class="card__content">
-                <header>
-                  <a href="/2017/11/05/introduction-to-threads/"><h2 class="card__header">Introduction to Threads</h2></a>
-                </header>
-              </div>
-          </div>
-        </div></div>
-</section>
+      </ul><ul class="right-col menu"><li><i class="far fa-calendar-alt"></i> <span>Jul 31, 2021</span>
+            </li></ul></div><div class="article__header"><header><h1>How to prevent data loss in Elasticsearch?</h1></header></div><div class="article__header">
+                        <p class="overlay__excerpt">Six practical solutions to improve data reliability.</p>
+                      </div><div class="article__info clearfix">
+  <ul class="left-col menu">
+    <li>
+      <i class="fas fa-camera"></i>
+      
+      Photo by
+      <a href="https://unsplash.com/@chasecharaba" target="_blank">Chase Charaba</a>
+      
+      on
+      <a href="https://unsplash.com/license" target="_blank">Unplash </a>
+    </li>
+  </ul>
 </div>
-</div></article><!-- start custom main bottom snippet -->
+</div></div>
+              </div>
+            </div><div class ="main"><div class="grid grid--reverse">
+
+              <div class="col-aside d-print-none js-col-aside"><aside class="page__aside js-page-aside"><div class="toc-aside js-toc-root"></div>
+</aside></div>
+
+              <div class="col-main cell cell--auto"><!-- start custom main top snippet -->
+
+<!-- end custom main top snippet -->
+<article itemscope itemtype="http://schema.org/Article"><meta itemprop="headline" content="How to prevent data loss in Elasticsearch?"><meta itemprop="author" content="Mincong Huang"/><meta itemprop="datePublished" content="2021-07-31T09:50:49+02:00">
+    <meta itemprop="keywords" content="elasticsearch,java,system-design,reliability"><div class="js-article-content"><div class="layout--article"><!-- start custom article top snippet -->
+
+
+<!-- end custom article top snippet -->
+<div class="article__content" itemprop="articleBody"><p class="info">This article is translated with Google Translate and reviewed by Mincong.</p>
+
+<h2 id="introduction">Introduction</h2>
+
+<p>Nowadays, data reliability is a very important thing for every enterprise. Only when we have reliable data can we rely on data to create efficient and easy-to-use software. In the real-time, intelligent, and globalized application scenarios of data, ensuring the reliability of data is even more important. Today, I want to discuss with you some of my views on how to avoid data loss in Elasticsearch.</p>
+
+<p>After reading this article, you will understand:</p>
+
+<ul>
+  <li>When will the data be lost?</li>
+  <li>Increase the number of replica shards</li>
+  <li>Snapshot and restore</li>
+  <li>Use RAID disk array</li>
+  <li>Data queue (message queue) integration</li>
+  <li>The primary and secondary shards have different nodes</li>
+  <li>Avoid using a single availability zone</li>
+</ul>
+
+<p>Without further ado, let’s get started right away!</p>
+
+<h2 id="when-will-the-data-be-lost">When Will The Data Be Lost?</h2>
+
+<p>The health status of the Elasticsearch cluster is divided into three levels (colors): green, yellow, and red.</p>
+
+<p>At the shard level:</p>
+
+<ul>
+  <li>The red status means that this shard cannot be allocated to the cluster</li>
+  <li>Yellow status means that the primary shard has been allocated, but one or more replica shards have not been allocated</li>
+  <li>The green status means that all shards have been successfully allocated</li>
+</ul>
+
+<p>At the index level, its health status is determined by the worst shard status. At the cluster level, its health status is determined by the worst index status.</p>
+
+<p>So when the cluster is in the red state, it means that some shards have not been initialized normally or the existing data has been corrupted or lost. The focus of this article is to avoid the yellow or red state and make the cluster stay in the green state as much as possible.</p>
+
+<h2 id="increase-the-number-of-replica-shards">Increase The Number Of Replica Shards</h2>
+
+<p>Increasing the number of replicas is a simple way to improve data reliability. When a shard is placed on multiple machines in the cluster, if a single machine is damaged, the other machines are unlikely to be affected. We still have N-1 shards available. The higher the number of replica shards, the lower the possibility of data loss. Through <a href="https://www.elastic.co/guide/en/elasticsearch/reference/7.x/indices-update-settings.html" title="Update index settings API (7. x)">Update index settings API (7.x)</a> You can adjust the number of copy fragments. For example, if you need one primary shard and two replica shards, you can send the following HTTP request to the cluster:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>PUT /my-index-000001/_settings
+
+{
+  "index": {
+    "number_of_replicas": 2
+  }
+}
+</code></pre></div></div>
+
+<p>Although the method of increasing the number of shards is easy to use, it also has obvious shortcomings. That is … expensive! For example, we have a total of 6TB of cluster storage space. The one-primary and one-replica plan can store 6TB / 2 = 3TB of data, while the one-primary and two-replicas plan can only store 6TB / 3 = 2TB of data, which reduces the utilization rate by 33 % and increases the cost by 50%.</p>
+
+<h2 id="snapshot-and-restore">Snapshot And Restore</h2>
+
+<p>Regardless of the data storage software, it is important to back up your data regularly. The Elasticsearch replicas mentioned above provide high reliability; they allow you to tolerate sporadic node loss without interrupting service. However, the copy does not provide protection against disaster. In this case, what you need is a real backup of the cluster — a complete copy when something does go wrong. Elasticsearch’s Snapshot And Restore feature is a good way to avoid data loss. Elasticsearch backs up the current cluster state and data to a snapshot repository. This process is incremental: the first snapshot is a full snapshot, and subsequent snapshots retain the difference between the existing snapshot and the new data.</p>
+
+<p>Snapshots support different types of repository, which are implemented by installing plugins in the cluster. The officially supported plugins in Elasticsearch 7 are:</p>
+
+<ul>
+  <li><a href="https://www.elastic.co/guide/en/elasticsearch/plugins/7.x/repository-s3.html" title="Amazon S3 Warehouse Plugin">Amazon S3 Repository Plugin</a></li>
+  <li><a href="https://www.elastic.co/guide/en/elasticsearch/plugins/7.x/repository-azure.html" title="Azure Warehouse Plugin">Azure Repository Plugin</a></li>
+  <li><a href="https://www.elastic.co/guide/en/elasticsearch/plugins/7.x/repository-hdfs.html" title="Hadoop HDFS Warehouse Plugin">Hadoop HDFS Repository Plugin</a></li>
+  <li><a href="https://www.elastic.co/guide/en/elasticsearch/plugins/7.x/repository-gcs.html" title="Google Cloud Storage Warehouse Plugin">Google Cloud Storage Repository Plugin</a></li>
+</ul>
+
+<p>Unofficial plugins are:</p>
+
+<ul>
+  <li><a href="https://github.com/BigDataBoutique/elasticsearch-repository-swift" title="Openstack Swift Repository Plugin">Openstack Swift Repository Plugin</a>, developed and maintained by Wikimedia Foundation and BigData Boutique.</li>
+  <li><a href="https://github.com/aliyun/elasticsearch-repository-oss" title="Alibaba Cloud Repository Plugin">Alibaba Cloud Repository Plugin</a>, developed and maintained by Alibaba Cloud.</li>
+</ul>
+
+<p>The benefits of using snapshots are mainly to reduce the cost of backup, to protect against disaster, and to have a complete copy in the event of a problem. Another advantage is that it can be restored across clusters, so you can use the snapshot and restore feature to make customized solutions, such as a data storage system that separates hot and cold storage. The limitations of using snapshots are: 1. The entire setup process is complicated, requires a certain understanding of your cloud provider, and needs to build a storage bucket (creation, setting permissions, monitoring, etc.); 2. It can only be used on platforms that support plug-ins. That is, AWS / Google / Azure / Aliyun / Tencent, etc.; 3. Data cannot be restored without snapshots.</p>
+
+<h2 id="use-raid">Use RAID</h2>
+
+<p>RAID (Redundant Array of Independent Disks) stands for Redundant Array of Independent Disks, abbreviated as “disk array”. In fact, it uses multiple independent disks to form a large disk system to achieve better storage than a single disk. Performance and higher reliability. Common solutions are: RAID0 / RAID1 / RAID5 / RAID6 / RAID10. Different scenarios have different expected performance in terms of data loss, performance, and downtime. Its essence is to achieve data reliability through different types of double writing or verification at the disk level of a single machine. The official Elasticsearch article <a href="https://www.elastic.co/blog/how-to-design-your-elasticsearch-data-storage-architecture-for-scale">How to design your Elasticsearch data storage architecture for scale</a> written by Matt Davis discussed in detail the pros and cons of RAID0 / RAID1 / RAID5 / RAID6. Please read that article for more details.</p>
+
+<p>I personally think that this solution is not suitable for enterprise use, because it is only effective for stand-alone disks. For an enterprise-level data platform, more considerations are to reduce the dependence on the reliability of a single machine, the operating price, and the fight against disaster (such as the failure of the entire availability zone).</p>
+
+<h2 id="message-queue-integration">Message Queue Integration</h2>
+
+<p>Another idea is to integrate a message queue, such as the popular Apache Kafka. The general idea is: first write the message into Kafka’s message queue, and then let a Kafka consumer read the data and write it to Elasticsearch. The offset is committed only after the data is successfully written. In the same way, the consumer can be required to commit offset only after the data is snapshotted. The advantage of this is to avoid data loss: when Elasticsearch refuses to accept write requests and fails to back up the data through the snapshot, the data remains in Kafka. This design transforms the data loss problem into a data delay problem, and transfers part of the problem from Elasticsearch to Kafka. It also effectively solves the above-mentioned “snapshot feature cannot restore unsnapshoted data” problem, because this part of the data can now be restored from Kafka.</p>
+
+<p>In other words, this solution temporarily stores data that has not been written to ES and temporarily stores data that has not been snapshotted. It is suitable for application scenarios with a large amount of data, and is an efficient solution to problems such as ES write exceptions and unsnapshot parts. Due to the use of Kafka, its disaster tolerance is also very strong. Its shortcomings are: its complexity, it introduces a message queue and corresponding consumer logic to the system; its reliability also depends on the team’s programming ability; the difficulty of operation and maintenance also increases accordingly.</p>
+
+<h2 id="location-of-primary-and-secondary-shards">Location Of Primary And Secondary Shards</h2>
+
+<p>Another setting is <a href="https://www.elastic.co/guide/en/elasticsearch/reference/7.x/allocation-total-shards.html" title="total_shards_per_node">index.routing.allocation.total_shards_per_node</a>. It allows us to set the maximum number of shards (replicas and primaries) that an index can store in a node at the same time. The default is unbounded. By setting this value to 1, you can ensure that the shards of each index are placed on different nodes. This approach makes it acceptable to lose one node and will not cause data loss, because only one shard will be lost. The remaining shards of the index will be available and Elasticsearch will replicate it again.</p>
+
+<p>The advantage of this approach is that it is easy to implement and can ensure that the cluster will not turn red when a node is lost. However, in the case of insufficient nodes, shards may not be allocated, resulting in yellow indexes.</p>
+
+<h2 id="avoid-using-a-single-zone">Avoid Using A Single Zone</h2>
+
+<p>Avoid using a single availability availability zone. When the cluster nodes are deployed in multiple availability zones, it can effectively reduce the possibility of data loss, especially the probability that the cluster will be affected by cloud provider availability zone accidents. Elasticsearch clusters from vendors such as AWS and Alibaba Cloud all support multi-zone deployment. For specific operations, please refer to <a href="https://aws.amazon.com/fr/blogs/database/increase-availability-for-amazon- elasticsearch-service-by-deploying-in-three-availability-zones-2/" title="Increase availability for Amazon Elasticsearch Service by deploying in three Availability Zones-AWS Database Blog">AWS Blog</a> and <a href="https://partners- intl.aliyun.com/help/doc-detail/151655.htm" title="High availability-Alibaba Cloud">Alibaba Cloud Documentation</a>. Then, in the Elasticsearch cluster, you can set the cluster’s shard allocation strategy through allocation awareness attributes. For example, the following configuration in the configuration file <code class="language-plaintext highlighter-rouge">elasticsearch.yml</code> of each cluster node</p>
+
+<div class="language-yml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="s">node.attr.availabilityzone</span><span class="pi">:</span> <span class="s">az1</span>
+<span class="s">cluster.routing.allocation.awareness.attributes</span><span class="pi">:</span> <span class="s">availabilityzone</span>
+</code></pre></div></div>
+
+<p>You can set the node in the available zone az1 / az2 / az3 and so on. For specific operations, please refer to Opster’s article <a href="https://opster.com/elasticsearch-glossary/elasticsearch-zone-awareness/" title="Setting Up Zone Awareness for Shard Allocation in Elasticsearch">Setting Up Zone Awareness for Shard Allocation in Elasticsearch</a> .</p>
+
+<h2 id="comparison">Comparison</h2>
+
+<p>Let us compare the advantages and disadvantages of each of the following options.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th style="text-align: left">Solution</th>
+      <th style="text-align: left">Benefits</th>
+      <th style="text-align: left">Disadvantages/Insufficiency</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td style="text-align: left">Increase replicas</td>
+      <td style="text-align: left">Simple and fast operation</td>
+      <td style="text-align: left">Reduce cluster utilization and increase operating costs.</td>
+    </tr>
+    <tr>
+      <td style="text-align: left">Snapshots and restore</td>
+      <td style="text-align: left">Strong disaster tolerance, cost efficient</td>
+      <td style="text-align: left">The initial setup is complex, can only be used on specific cloud providers, and data without snapshots cannot be restored.</td>
+    </tr>
+    <tr>
+      <td style="text-align: left">RAID</td>
+      <td style="text-align: left">Effectively prevent disk damage</td>
+      <td style="text-align: left">Only effective for single machine. Reduce cluster utilization and increase operating costs. Unable to cope with non-disk failures and catastrophic failures in the computer room.</td>
+    </tr>
+    <tr>
+      <td style="text-align: left">MQ integration</td>
+      <td style="text-align: left">strong disaster tolerance, temporary storage of data that has not been written to ES, temporary storage of unsnapshot data, suitable for big data scenarios</td>
+      <td style="text-align: left">high system complexity, high operation and maintenance costs</td>
+    </tr>
+    <tr>
+      <td style="text-align: left">Primary and secondary shards are stored on different nodes</td>
+      <td style="text-align: left">Simple and fast operation</td>
+      <td style="text-align: left">May not be suitable for small clusters, resulting in shards that cannot be allocated</td>
+    </tr>
+    <tr>
+      <td style="text-align: left">Multi availability zone</td>
+      <td style="text-align: left">Strong disaster tolerance</td>
+      <td style="text-align: left">Need to combine cloud provider configuration</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2 id="going-further">Going Further</h2>
+
+<p>How to go futher from this article?</p>
+
+<p>The focus of this article is on ways to prevent data loss, not troubleshooting after a problem occurs. But troubleshooting is also a very important part. If you are interested in this area, you can read Ming yi tian xia’s blog post (in Chinese) <a href="https://blog.csdn.net/laoyang360/article/details/109699085" title="Elasticsearch Cluster Troubleshooting and Repair Guide">Elasticsearch 集群故障排查及修复指南 (Elasticsearch cluster troubleshooting and repair guide)</a> or Elastic official blog post written by Ali Beyad <a href="https://www.elastic.co/blog/red-elasticsearch-cluster-panic-no-longer">RED Elasticsearch Cluster? Panic no longer</a>.</p>
+
+<h2 id="conclusion">Conclusion</h2>
+
+<p>In this article, we have seen several practical solutions to improve data reliability in Elasticsearch, including: increasing the number of replica shards, snapshots and restore, using RAID, MQ integration such as Kafka, storing primary and secondary shards of an index in different nodes, and avoid using one single availability zone. Finally, the article compares their pros and cons, and also shares some resources to go further. I hope this article can give you some thoughts and make your Elasticsearch cluster more efficient and usable. If you are interested in knowing more information, please follow my GitHub account <a href="https://github.com/mincong-h" title="GitHub">mincong-h</a> or subscribe to this blog.</p>
+
+<h2 id="references">References</h2>
+
+<ul>
+  <li>Elastic, <a href="https://www.elastic.co/guide/cn/elasticsearch/guide/current/index.html" title="Elasticsearch: The Definitive Guide">“Elasticsearch: The Definitive Guide”</a>, 2021.</li>
+  <li>Elastic, <a href="https://www.elastic.co/guide/en/elasticsearch/plugins/7.x/repository.html">“Snapshot/Restore Repository Plugins”</a>, 2021.</li>
+  <li>慕课网, <a href="https://zhuanlan.zhihu.com/p/51170719">RAID磁盘阵列是什么（一看就懂）</a>, 2018.</li>
+</ul>
+</div><section class="article__sharing d-print-none"></section><div class="d-print-none"><footer class="article__footer"><meta itemprop="dateModified" content="2021-07-31T09:50:49+02:00"><!-- start custom article footer snippet -->
+
+<!-- end custom article footer snippet -->
+<div class="article__subscribe"><div class="subscribe">
+  <i class="fas fa-rss"></i>
+  <a type="application/rss+xml" href="/feed.xml">Subscribe</a>
+</div></div><div class="article__license"><div class="license">
+    <p>This work is licensed under a <a itemprop="license" rel="license" href="https://creativecommons.org/licenses/by/4.0/">Attribution 4.0 International</a> license.
+      <a rel="license" href="https://creativecommons.org/licenses/by/4.0/">
+        <img alt="Attribution 4.0 International" src="https://i.creativecommons.org/l/by/4.0/88x31.png" />
+      </a>
+    </p>
+  </div></div></footer>
+<div class="article__section-navigator clearfix"><div class="previous"><span>PREVIOUS</span><a href="/en/elasticsearch-corrupted-index/">Fix Corrupted Index in Elasticsearch</a></div></div></div>
+
+</div>
+
+<script>(function() {
+  var SOURCES = window.TEXT_VARIABLES.sources;
+  window.Lazyload.js(SOURCES.jquery, function() {
+    $(function() {
+      var $this ,$scroll;
+      var $articleContent = $('.js-article-content');
+      var hasSidebar = $('.js-page-root').hasClass('layout--page--sidebar');
+      var scroll = hasSidebar ? '.js-page-main' : 'html, body';
+      $scroll = $(scroll);
+
+      $articleContent.find('.highlight').each(function() {
+        $this = $(this);
+        $this.attr('data-lang', $this.find('code').attr('data-lang'));
+      });
+      $articleContent.find('h1[id], h2[id], h3[id], h4[id], h5[id], h6[id]').each(function() {
+        $this = $(this);
+        $this.append($('<a class="anchor d-print-none" aria-hidden="true"></a>').html('<i class="fas fa-anchor"></i>'));
+      });
+      $articleContent.on('click', '.anchor', function() {
+        $scroll.scrollToAnchor('#' + $(this).parent().attr('id'), 400);
+      });
+    });
+  });
+})();
+</script>
+</div><section class="page__comments d-print-none"><div id="disqus_thread"></div>
+  <script>
+  /**
+  *  RECOMMENDED CONFIGURATION VARIABLES: EDIT AND UNCOMMENT THE SECTION BELOW TO INSERT DYNAMIC VALUES FROM YOUR PLATFORM OR CMS.
+  *  LEARN WHY DEFINING THESE VARIABLES IS IMPORTANT: https://disqus.com/admin/universalcode/#configuration-variables*/
+  var disqus_config = function () {
+    this.page.url = 'https://mincong.io/en/prevent-data-loss-in-elasticsearch/';
+    this.page.identifier = '/en/prevent-data-loss-in-elasticsearch';
+  };
+  (function() { // DON'T EDIT BELOW THIS LINE
+    var d = document, s = d.createElement('script');
+    s.src = 'https://mincong-h.disqus.com/embed.js';
+    s.setAttribute('data-timestamp', +new Date());
+    (d.head || d.body).appendChild(s);
+  })();
+  </script>
+  <noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript></section></article><!-- start custom main bottom snippet -->
 
 <!-- end custom main bottom snippet -->
 </div>
@@ -482,7 +676,7 @@
   </div>
 </footer>
 </div></div>
-    </div></div></div><script>(function() {
+    </div><script>(function() {
   var SOURCES = window.TEXT_VARIABLES.sources;
   window.Lazyload.js(SOURCES.jquery, function() {
     var $body = $('body'), $window = $(window);
@@ -999,34 +1193,66 @@ window.Lazyload.js([SOURCES.jquery, PAHTS.search_js], function() {
 /*(function () {
 
 })();*/
-</script><script>(function() {
+</script><script>
+  /* toc must before affix, since affix need to konw toc' height. */(function() {
   var SOURCES = window.TEXT_VARIABLES.sources;
-
+  var TOC_SELECTOR = window.TEXT_VARIABLES.site.toc.selectors;
   window.Lazyload.js(SOURCES.jquery, function() {
-    var $pageMask = $('.js-page-mask');
-    var $pageRoot = $('.js-page-root');
-    var $sidebarShow = $('.js-sidebar-show');
-    var $sidebarHide = $('.js-sidebar-hide');
+    var $window = $(window);
+    var $articleContent = $('.js-article-content');
+    var $tocRoot = $('.js-toc-root'), $col2 = $('.js-col-aside');
+    var toc;
+    var tocDisabled = false;
+    var hasSidebar = $('.js-page-root').hasClass('layout--page--sidebar');
+    var hasToc = $articleContent.find(TOC_SELECTOR).length > 0;
 
-    function freeze(e) {
-      if (e.target === $pageMask[0]) {
-        e.preventDefault();
-      }
-    }
-    function stopBodyScrolling(bool) {
-      if (bool === true) {
-        window.addEventListener('touchmove', freeze, { passive: false });
-      } else {
-        window.removeEventListener('touchmove', freeze, { passive: false });
-      }
+    function disabled() {
+      return $col2.css('display') === 'none' || !hasToc;
     }
 
-    $sidebarShow.on('click', function() {
-      stopBodyScrolling(true); $pageRoot.addClass('show-sidebar');
+    tocDisabled = disabled();
+
+    toc = $tocRoot.toc({
+      selectors: TOC_SELECTOR,
+      container: $articleContent,
+      scrollTarget: hasSidebar ? '.js-page-main' : null,
+      scroller: hasSidebar ? '.js-page-main' : null,
+      disabled: tocDisabled
     });
-    $sidebarHide.on('click', function() {
-      stopBodyScrolling(false); $pageRoot.removeClass('show-sidebar');
+
+    $window.on('resize', window.throttle(function() {
+      tocDisabled = disabled();
+      toc && toc.setOptions({
+        disabled: tocDisabled
+      });
+    }, 100));
+
+  });
+})();
+(function() {
+  var SOURCES = window.TEXT_VARIABLES.sources;
+  window.Lazyload.js(SOURCES.jquery, function() {
+    var $window = $(window), $pageFooter = $('.js-page-footer');
+    var $pageAside = $('.js-page-aside');
+    var affix;
+    var tocDisabled = false;
+    var hasSidebar = $('.js-page-root').hasClass('layout--page--sidebar');
+
+    affix = $pageAside.affix({
+      offsetBottom: $pageFooter.outerHeight(),
+      scrollTarget: hasSidebar ? '.js-page-main' : null,
+      scroller: hasSidebar ? '.js-page-main' : null,
+      scroll: hasSidebar ? $('.js-page-main').children() : null,
+      disabled: tocDisabled
     });
+
+    $window.on('resize', window.throttle(function() {
+      affix && affix.setOptions({
+        disabled: tocDisabled
+      });
+    }, 100));
+
+    window.pageAsideAffix = affix;
   });
 })();
 </script>

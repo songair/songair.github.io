@@ -1,5 +1,168 @@
-<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" xml:lang="en"><generator uri="https://jekyllrb.com/" version="4.2.0">Jekyll</generator><link href="https://mincong.io/feed.xml" rel="self" type="application/atom+xml" /><link href="https://mincong.io/" rel="alternate" type="text/html" hreflang="en" /><updated>2021-08-08T22:21:56+02:00</updated><id>https://mincong.io/feed.xml</id><title type="html">Mincong Huang</title><subtitle>Hi, welcome to my blog! I'm a software engineer at Datadog. I write blog posts in my free time. My blogs are bits and pieces of my tech journey. Most of them are related to Java. Hope you enjoy them! My opinions are my own, not Datadog's. This blog is powered by Jekyll, a simple, blog-aware, static sites solution.
-</subtitle><author><name>Mincong Huang</name><email>mincong.h@gmail.com</email></author><entry xml:lang="en"><title type="html">Fix Corrupted Index in Elasticsearch</title><link href="https://mincong.io/en/elasticsearch-corrupted-index/" rel="alternate" type="text/html" title="Fix Corrupted Index in Elasticsearch" /><published>2021-07-14T16:57:49+02:00</published><updated>2021-07-14T16:57:49+02:00</updated><id>https://mincong.io/en/elasticsearch-corrupted-index</id><content type="html" xml:base="https://mincong.io/en/elasticsearch-corrupted-index/">&lt;p class=&quot;info&quot;&gt;This article is translated with Google Translate and reviewed by Mincong.&lt;/p&gt;
+<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" xml:lang="en"><generator uri="https://jekyllrb.com/" version="4.2.0">Jekyll</generator><link href="https://mincong.io/feed.xml" rel="self" type="application/atom+xml" /><link href="https://mincong.io/" rel="alternate" type="text/html" hreflang="en" /><updated>2021-08-09T22:52:24+02:00</updated><id>https://mincong.io/feed.xml</id><title type="html">Mincong Huang</title><subtitle>Hi, welcome to my blog! I'm a software engineer at Datadog. I write blog posts in my free time. My blogs are bits and pieces of my tech journey. Most of them are related to Java. Hope you enjoy them! My opinions are my own, not Datadog's. This blog is powered by Jekyll, a simple, blog-aware, static sites solution.
+</subtitle><author><name>Mincong Huang</name><email>mincong.h@gmail.com</email></author><entry xml:lang="en"><title type="html">How to prevent data loss in Elasticsearch?</title><link href="https://mincong.io/en/prevent-data-loss-in-elasticsearch/" rel="alternate" type="text/html" title="How to prevent data loss in Elasticsearch?" /><published>2021-07-31T09:50:49+02:00</published><updated>2021-07-31T09:50:49+02:00</updated><id>https://mincong.io/en/prevent-data-loss-in-elasticsearch</id><content type="html" xml:base="https://mincong.io/en/prevent-data-loss-in-elasticsearch/">&lt;p class=&quot;info&quot;&gt;This article is translated with Google Translate and reviewed by Mincong.&lt;/p&gt;
+
+&lt;h2 id=&quot;introduction&quot;&gt;Introduction&lt;/h2&gt;
+
+&lt;p&gt;Nowadays, data reliability is a very important thing for every enterprise. Only when we have reliable data can we rely on data to create efficient and easy-to-use software. In the real-time, intelligent, and globalized application scenarios of data, ensuring the reliability of data is even more important. Today, I want to discuss with you some of my views on how to avoid data loss in Elasticsearch.&lt;/p&gt;
+
+&lt;p&gt;After reading this article, you will understand:&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;When will the data be lost?&lt;/li&gt;
+  &lt;li&gt;Increase the number of replica shards&lt;/li&gt;
+  &lt;li&gt;Snapshot and restore&lt;/li&gt;
+  &lt;li&gt;Use RAID disk array&lt;/li&gt;
+  &lt;li&gt;Data queue (message queue) integration&lt;/li&gt;
+  &lt;li&gt;The primary and secondary shards have different nodes&lt;/li&gt;
+  &lt;li&gt;Avoid using a single availability zone&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;Without further ado, let’s get started right away!&lt;/p&gt;
+
+&lt;h2 id=&quot;when-will-the-data-be-lost&quot;&gt;When Will The Data Be Lost?&lt;/h2&gt;
+
+&lt;p&gt;The health status of the Elasticsearch cluster is divided into three levels (colors): green, yellow, and red.&lt;/p&gt;
+
+&lt;p&gt;At the shard level:&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;The red status means that this shard cannot be allocated to the cluster&lt;/li&gt;
+  &lt;li&gt;Yellow status means that the primary shard has been allocated, but one or more replica shards have not been allocated&lt;/li&gt;
+  &lt;li&gt;The green status means that all shards have been successfully allocated&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;At the index level, its health status is determined by the worst shard status. At the cluster level, its health status is determined by the worst index status.&lt;/p&gt;
+
+&lt;p&gt;So when the cluster is in the red state, it means that some shards have not been initialized normally or the existing data has been corrupted or lost. The focus of this article is to avoid the yellow or red state and make the cluster stay in the green state as much as possible.&lt;/p&gt;
+
+&lt;h2 id=&quot;increase-the-number-of-replica-shards&quot;&gt;Increase The Number Of Replica Shards&lt;/h2&gt;
+
+&lt;p&gt;Increasing the number of replicas is a simple way to improve data reliability. When a shard is placed on multiple machines in the cluster, if a single machine is damaged, the other machines are unlikely to be affected. We still have N-1 shards available. The higher the number of replica shards, the lower the possibility of data loss. Through &lt;a href=&quot;https://www.elastic.co/guide/en/elasticsearch/reference/7.x/indices-update-settings.html&quot; title=&quot;Update index settings API (7. x)&quot;&gt;Update index settings API (7.x)&lt;/a&gt; You can adjust the number of copy fragments. For example, if you need one primary shard and two replica shards, you can send the following HTTP request to the cluster:&lt;/p&gt;
+
+&lt;div class=&quot;language-plaintext highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;PUT /my-index-000001/_settings
+
+{
+  &quot;index&quot;: {
+    &quot;number_of_replicas&quot;: 2
+  }
+}
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;Although the method of increasing the number of shards is easy to use, it also has obvious shortcomings. That is … expensive! For example, we have a total of 6TB of cluster storage space. The one-primary and one-replica plan can store 6TB / 2 = 3TB of data, while the one-primary and two-replicas plan can only store 6TB / 3 = 2TB of data, which reduces the utilization rate by 33 % and increases the cost by 50%.&lt;/p&gt;
+
+&lt;h2 id=&quot;snapshot-and-restore&quot;&gt;Snapshot And Restore&lt;/h2&gt;
+
+&lt;p&gt;Regardless of the data storage software, it is important to back up your data regularly. The Elasticsearch replicas mentioned above provide high reliability; they allow you to tolerate sporadic node loss without interrupting service. However, the copy does not provide protection against disaster. In this case, what you need is a real backup of the cluster — a complete copy when something does go wrong. Elasticsearch’s Snapshot And Restore feature is a good way to avoid data loss. Elasticsearch backs up the current cluster state and data to a snapshot repository. This process is incremental: the first snapshot is a full snapshot, and subsequent snapshots retain the difference between the existing snapshot and the new data.&lt;/p&gt;
+
+&lt;p&gt;Snapshots support different types of repository, which are implemented by installing plugins in the cluster. The officially supported plugins in Elasticsearch 7 are:&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;&lt;a href=&quot;https://www.elastic.co/guide/en/elasticsearch/plugins/7.x/repository-s3.html&quot; title=&quot;Amazon S3 Warehouse Plugin&quot;&gt;Amazon S3 Repository Plugin&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://www.elastic.co/guide/en/elasticsearch/plugins/7.x/repository-azure.html&quot; title=&quot;Azure Warehouse Plugin&quot;&gt;Azure Repository Plugin&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://www.elastic.co/guide/en/elasticsearch/plugins/7.x/repository-hdfs.html&quot; title=&quot;Hadoop HDFS Warehouse Plugin&quot;&gt;Hadoop HDFS Repository Plugin&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://www.elastic.co/guide/en/elasticsearch/plugins/7.x/repository-gcs.html&quot; title=&quot;Google Cloud Storage Warehouse Plugin&quot;&gt;Google Cloud Storage Repository Plugin&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;Unofficial plugins are:&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;&lt;a href=&quot;https://github.com/BigDataBoutique/elasticsearch-repository-swift&quot; title=&quot;Openstack Swift Repository Plugin&quot;&gt;Openstack Swift Repository Plugin&lt;/a&gt;, developed and maintained by Wikimedia Foundation and BigData Boutique.&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://github.com/aliyun/elasticsearch-repository-oss&quot; title=&quot;Alibaba Cloud Repository Plugin&quot;&gt;Alibaba Cloud Repository Plugin&lt;/a&gt;, developed and maintained by Alibaba Cloud.&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;The benefits of using snapshots are mainly to reduce the cost of backup, to protect against disaster, and to have a complete copy in the event of a problem. Another advantage is that it can be restored across clusters, so you can use the snapshot and restore feature to make customized solutions, such as a data storage system that separates hot and cold storage. The limitations of using snapshots are: 1. The entire setup process is complicated, requires a certain understanding of your cloud provider, and needs to build a storage bucket (creation, setting permissions, monitoring, etc.); 2. It can only be used on platforms that support plug-ins. That is, AWS / Google / Azure / Aliyun / Tencent, etc.; 3. Data cannot be restored without snapshots.&lt;/p&gt;
+
+&lt;h2 id=&quot;use-raid&quot;&gt;Use RAID&lt;/h2&gt;
+
+&lt;p&gt;RAID (Redundant Array of Independent Disks) stands for Redundant Array of Independent Disks, abbreviated as “disk array”. In fact, it uses multiple independent disks to form a large disk system to achieve better storage than a single disk. Performance and higher reliability. Common solutions are: RAID0 / RAID1 / RAID5 / RAID6 / RAID10. Different scenarios have different expected performance in terms of data loss, performance, and downtime. Its essence is to achieve data reliability through different types of double writing or verification at the disk level of a single machine. The official Elasticsearch article &lt;a href=&quot;https://www.elastic.co/blog/how-to-design-your-elasticsearch-data-storage-architecture-for-scale&quot;&gt;How to design your Elasticsearch data storage architecture for scale&lt;/a&gt; written by Matt Davis discussed in detail the pros and cons of RAID0 / RAID1 / RAID5 / RAID6. Please read that article for more details.&lt;/p&gt;
+
+&lt;p&gt;I personally think that this solution is not suitable for enterprise use, because it is only effective for stand-alone disks. For an enterprise-level data platform, more considerations are to reduce the dependence on the reliability of a single machine, the operating price, and the fight against disaster (such as the failure of the entire availability zone).&lt;/p&gt;
+
+&lt;h2 id=&quot;message-queue-integration&quot;&gt;Message Queue Integration&lt;/h2&gt;
+
+&lt;p&gt;Another idea is to integrate a message queue, such as the popular Apache Kafka. The general idea is: first write the message into Kafka’s message queue, and then let a Kafka consumer read the data and write it to Elasticsearch. The offset is committed only after the data is successfully written. In the same way, the consumer can be required to commit offset only after the data is snapshotted. The advantage of this is to avoid data loss: when Elasticsearch refuses to accept write requests and fails to back up the data through the snapshot, the data remains in Kafka. This design transforms the data loss problem into a data delay problem, and transfers part of the problem from Elasticsearch to Kafka. It also effectively solves the above-mentioned “snapshot feature cannot restore unsnapshoted data” problem, because this part of the data can now be restored from Kafka.&lt;/p&gt;
+
+&lt;p&gt;In other words, this solution temporarily stores data that has not been written to ES and temporarily stores data that has not been snapshotted. It is suitable for application scenarios with a large amount of data, and is an efficient solution to problems such as ES write exceptions and unsnapshot parts. Due to the use of Kafka, its disaster tolerance is also very strong. Its shortcomings are: its complexity, it introduces a message queue and corresponding consumer logic to the system; its reliability also depends on the team’s programming ability; the difficulty of operation and maintenance also increases accordingly.&lt;/p&gt;
+
+&lt;h2 id=&quot;location-of-primary-and-secondary-shards&quot;&gt;Location Of Primary And Secondary Shards&lt;/h2&gt;
+
+&lt;p&gt;Another setting is &lt;a href=&quot;https://www.elastic.co/guide/en/elasticsearch/reference/7.x/allocation-total-shards.html&quot; title=&quot;total_shards_per_node&quot;&gt;index.routing.allocation.total_shards_per_node&lt;/a&gt;. It allows us to set the maximum number of shards (replicas and primaries) that an index can store in a node at the same time. The default is unbounded. By setting this value to 1, you can ensure that the shards of each index are placed on different nodes. This approach makes it acceptable to lose one node and will not cause data loss, because only one shard will be lost. The remaining shards of the index will be available and Elasticsearch will replicate it again.&lt;/p&gt;
+
+&lt;p&gt;The advantage of this approach is that it is easy to implement and can ensure that the cluster will not turn red when a node is lost. However, in the case of insufficient nodes, shards may not be allocated, resulting in yellow indexes.&lt;/p&gt;
+
+&lt;h2 id=&quot;avoid-using-a-single-zone&quot;&gt;Avoid Using A Single Zone&lt;/h2&gt;
+
+&lt;p&gt;Avoid using a single availability availability zone. When the cluster nodes are deployed in multiple availability zones, it can effectively reduce the possibility of data loss, especially the probability that the cluster will be affected by cloud provider availability zone accidents. Elasticsearch clusters from vendors such as AWS and Alibaba Cloud all support multi-zone deployment. For specific operations, please refer to &lt;a href=&quot;https://aws.amazon.com/fr/blogs/database/increase-availability-for-amazon- elasticsearch-service-by-deploying-in-three-availability-zones-2/&quot; title=&quot;Increase availability for Amazon Elasticsearch Service by deploying in three Availability Zones-AWS Database Blog&quot;&gt;AWS Blog&lt;/a&gt; and &lt;a href=&quot;https://partners- intl.aliyun.com/help/doc-detail/151655.htm&quot; title=&quot;High availability-Alibaba Cloud&quot;&gt;Alibaba Cloud Documentation&lt;/a&gt;. Then, in the Elasticsearch cluster, you can set the cluster’s shard allocation strategy through allocation awareness attributes. For example, the following configuration in the configuration file &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;elasticsearch.yml&lt;/code&gt; of each cluster node&lt;/p&gt;
+
+&lt;div class=&quot;language-yml highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;s&quot;&gt;node.attr.availabilityzone&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;az1&lt;/span&gt;
+&lt;span class=&quot;s&quot;&gt;cluster.routing.allocation.awareness.attributes&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;availabilityzone&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;You can set the node in the available zone az1 / az2 / az3 and so on. For specific operations, please refer to Opster’s article &lt;a href=&quot;https://opster.com/elasticsearch-glossary/elasticsearch-zone-awareness/&quot; title=&quot;Setting Up Zone Awareness for Shard Allocation in Elasticsearch&quot;&gt;Setting Up Zone Awareness for Shard Allocation in Elasticsearch&lt;/a&gt; .&lt;/p&gt;
+
+&lt;h2 id=&quot;comparison&quot;&gt;Comparison&lt;/h2&gt;
+
+&lt;p&gt;Let us compare the advantages and disadvantages of each of the following options.&lt;/p&gt;
+
+&lt;table&gt;
+  &lt;thead&gt;
+    &lt;tr&gt;
+      &lt;th style=&quot;text-align: left&quot;&gt;Solution&lt;/th&gt;
+      &lt;th style=&quot;text-align: left&quot;&gt;Benefits&lt;/th&gt;
+      &lt;th style=&quot;text-align: left&quot;&gt;Disadvantages/Insufficiency&lt;/th&gt;
+    &lt;/tr&gt;
+  &lt;/thead&gt;
+  &lt;tbody&gt;
+    &lt;tr&gt;
+      &lt;td style=&quot;text-align: left&quot;&gt;Increase replicas&lt;/td&gt;
+      &lt;td style=&quot;text-align: left&quot;&gt;Simple and fast operation&lt;/td&gt;
+      &lt;td style=&quot;text-align: left&quot;&gt;Reduce cluster utilization and increase operating costs.&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td style=&quot;text-align: left&quot;&gt;Snapshots and restore&lt;/td&gt;
+      &lt;td style=&quot;text-align: left&quot;&gt;Strong disaster tolerance, cost efficient&lt;/td&gt;
+      &lt;td style=&quot;text-align: left&quot;&gt;The initial setup is complex, can only be used on specific cloud providers, and data without snapshots cannot be restored.&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td style=&quot;text-align: left&quot;&gt;RAID&lt;/td&gt;
+      &lt;td style=&quot;text-align: left&quot;&gt;Effectively prevent disk damage&lt;/td&gt;
+      &lt;td style=&quot;text-align: left&quot;&gt;Only effective for single machine. Reduce cluster utilization and increase operating costs. Unable to cope with non-disk failures and catastrophic failures in the computer room.&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td style=&quot;text-align: left&quot;&gt;MQ integration&lt;/td&gt;
+      &lt;td style=&quot;text-align: left&quot;&gt;strong disaster tolerance, temporary storage of data that has not been written to ES, temporary storage of unsnapshot data, suitable for big data scenarios&lt;/td&gt;
+      &lt;td style=&quot;text-align: left&quot;&gt;high system complexity, high operation and maintenance costs&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td style=&quot;text-align: left&quot;&gt;Primary and secondary shards are stored on different nodes&lt;/td&gt;
+      &lt;td style=&quot;text-align: left&quot;&gt;Simple and fast operation&lt;/td&gt;
+      &lt;td style=&quot;text-align: left&quot;&gt;May not be suitable for small clusters, resulting in shards that cannot be allocated&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td style=&quot;text-align: left&quot;&gt;Multi availability zone&lt;/td&gt;
+      &lt;td style=&quot;text-align: left&quot;&gt;Strong disaster tolerance&lt;/td&gt;
+      &lt;td style=&quot;text-align: left&quot;&gt;Need to combine cloud provider configuration&lt;/td&gt;
+    &lt;/tr&gt;
+  &lt;/tbody&gt;
+&lt;/table&gt;
+
+&lt;h2 id=&quot;going-further&quot;&gt;Going Further&lt;/h2&gt;
+
+&lt;p&gt;How to go futher from this article?&lt;/p&gt;
+
+&lt;p&gt;The focus of this article is on ways to prevent data loss, not troubleshooting after a problem occurs. But troubleshooting is also a very important part. If you are interested in this area, you can read Ming yi tian xia’s blog post (in Chinese) &lt;a href=&quot;https://blog.csdn.net/laoyang360/article/details/109699085&quot; title=&quot;Elasticsearch Cluster Troubleshooting and Repair Guide&quot;&gt;Elasticsearch 集群故障排查及修复指南 (Elasticsearch cluster troubleshooting and repair guide)&lt;/a&gt; or Elastic official blog post written by Ali Beyad &lt;a href=&quot;https://www.elastic.co/blog/red-elasticsearch-cluster-panic-no-longer&quot;&gt;RED Elasticsearch Cluster? Panic no longer&lt;/a&gt;.&lt;/p&gt;
+
+&lt;h2 id=&quot;conclusion&quot;&gt;Conclusion&lt;/h2&gt;
+
+&lt;p&gt;In this article, we have seen several practical solutions to improve data reliability in Elasticsearch, including: increasing the number of replica shards, snapshots and restore, using RAID, MQ integration such as Kafka, storing primary and secondary shards of an index in different nodes, and avoid using one single availability zone. Finally, the article compares their pros and cons, and also shares some resources to go further. I hope this article can give you some thoughts and make your Elasticsearch cluster more efficient and usable. If you are interested in knowing more information, please follow my GitHub account &lt;a href=&quot;https://github.com/mincong-h&quot; title=&quot;GitHub&quot;&gt;mincong-h&lt;/a&gt; or subscribe to this blog.&lt;/p&gt;
+
+&lt;h2 id=&quot;references&quot;&gt;References&lt;/h2&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;Elastic, &lt;a href=&quot;https://www.elastic.co/guide/cn/elasticsearch/guide/current/index.html&quot; title=&quot;Elasticsearch: The Definitive Guide&quot;&gt;“Elasticsearch: The Definitive Guide”&lt;/a&gt;, 2021.&lt;/li&gt;
+  &lt;li&gt;Elastic, &lt;a href=&quot;https://www.elastic.co/guide/en/elasticsearch/plugins/7.x/repository.html&quot;&gt;“Snapshot/Restore Repository Plugins”&lt;/a&gt;, 2021.&lt;/li&gt;
+  &lt;li&gt;慕课网, &lt;a href=&quot;https://zhuanlan.zhihu.com/p/51170719&quot;&gt;RAID磁盘阵列是什么（一看就懂）&lt;/a&gt;, 2018.&lt;/li&gt;
+&lt;/ul&gt;</content><author><name>Mincong Huang</name><email>mincong.h@gmail.com</email></author><category term="elasticsearch" /><category term="elasticsearch" /><category term="java" /><category term="system-design" /><category term="reliability" /><summary type="html">Six practical solutions to improve data reliability: improve number of replicas, snapshot and restore, RAID, MQ, etc.</summary><media:thumbnail xmlns:media="http://search.yahoo.com/mrss/" url="https://mincong.io/assets/bg-chase-charaba-uRHzV3ca2fk-unsplash.jpg" /><media:content medium="image" url="https://mincong.io/assets/bg-chase-charaba-uRHzV3ca2fk-unsplash.jpg" xmlns:media="http://search.yahoo.com/mrss/" /></entry><entry xml:lang="en"><title type="html">Fix Corrupted Index in Elasticsearch</title><link href="https://mincong.io/en/elasticsearch-corrupted-index/" rel="alternate" type="text/html" title="Fix Corrupted Index in Elasticsearch" /><published>2021-07-14T16:57:49+02:00</published><updated>2021-07-14T16:57:49+02:00</updated><id>https://mincong.io/en/elasticsearch-corrupted-index</id><content type="html" xml:base="https://mincong.io/en/elasticsearch-corrupted-index/">&lt;p class=&quot;info&quot;&gt;This article is translated with Google Translate and reviewed by Mincong.&lt;/p&gt;
 
 &lt;h2 id=&quot;problem&quot;&gt;Problem&lt;/h2&gt;
 
@@ -224,7 +387,7 @@ Took 118.609 sec total.
 &lt;ul&gt;
   &lt;li&gt;Matthias Wilhelm, “Corrupted elastic index”, &lt;em&gt;Elastic.co&lt;/em&gt;, 2021.
 &lt;a href=&quot;https://discuss.elastic.co/t/corrupted-elastic-index/135932&quot;&gt;https://discuss.elastic.co/t/corrupted-elastic-index/135932&lt;/a&gt;&lt;/li&gt;
-&lt;/ul&gt;</content><author><name>Mincong Huang</name><email>mincong.h@gmail.com</email></author><category term="elasticsearch" /><category term="elasticsearch" /><category term="elasticsearch-7" /><category term="java" /><summary type="html">How to fix corrupted index in Elasticsearch cluster without snapshot?</summary><media:thumbnail xmlns:media="http://search.yahoo.com/mrss/" url="https://mincong.io/assets/bg-jonnica-hill-V5nq6u-Ce_U-unsplash.jpg" /><media:content medium="image" url="https://mincong.io/assets/bg-jonnica-hill-V5nq6u-Ce_U-unsplash.jpg" xmlns:media="http://search.yahoo.com/mrss/" /></entry><entry xml:lang="en"><title type="html">Custom Internationalization (i18n) with Jekyll</title><link href="https://mincong.io/en/jekyll-i18n/" rel="alternate" type="text/html" title="Custom Internationalization (i18n) with Jekyll" /><published>2021-07-11T22:02:53+02:00</published><updated>2021-07-11T22:02:53+02:00</updated><id>https://mincong.io/en/jekyll-i18n</id><content type="html" xml:base="https://mincong.io/en/jekyll-i18n/">&lt;p class=&quot;info&quot;&gt;This article is translated with www.DeepL.com/Translator (free version) and reviewed by Mincong.&lt;/p&gt;
+&lt;/ul&gt;</content><author><name>Mincong Huang</name><email>mincong.h@gmail.com</email></author><category term="elasticsearch" /><category term="elasticsearch" /><category term="java" /><summary type="html">How to fix corrupted index in Elasticsearch cluster without snapshot?</summary><media:thumbnail xmlns:media="http://search.yahoo.com/mrss/" url="https://mincong.io/assets/bg-jonnica-hill-V5nq6u-Ce_U-unsplash.jpg" /><media:content medium="image" url="https://mincong.io/assets/bg-jonnica-hill-V5nq6u-Ce_U-unsplash.jpg" xmlns:media="http://search.yahoo.com/mrss/" /></entry><entry xml:lang="en"><title type="html">Custom Internationalization (i18n) with Jekyll</title><link href="https://mincong.io/en/jekyll-i18n/" rel="alternate" type="text/html" title="Custom Internationalization (i18n) with Jekyll" /><published>2021-07-11T22:02:53+02:00</published><updated>2021-07-11T22:02:53+02:00</updated><id>https://mincong.io/en/jekyll-i18n</id><content type="html" xml:base="https://mincong.io/en/jekyll-i18n/">&lt;p class=&quot;info&quot;&gt;This article is translated with www.DeepL.com/Translator (free version) and reviewed by Mincong.&lt;/p&gt;
 
 &lt;h2 id=&quot;introduction&quot;&gt;Introduction&lt;/h2&gt;
 
@@ -3888,372 +4051,4 @@ on &lt;a href=&quot;https://twitter.com/mincong_h&quot;&gt;Twitter&lt;/a&gt; or
 &lt;a href=&quot;https://docs.mongodb.com/&quot;&gt;https://docs.mongodb.com/&lt;/a&gt;&lt;/li&gt;
   &lt;li&gt;Tatu Saloranta et al., “Jackson Databind”, 2021.
 &lt;a href=&quot;https://github.com/FasterXML/jackson-databind&quot;&gt;https://github.com/FasterXML/jackson-databind&lt;/a&gt;&lt;/li&gt;
-&lt;/ul&gt;</content><author><name>Mincong Huang</name><email>mincong.h@gmail.com</email></author><category term="java-serialization" /><category term="reliability" /><category term="java" /><category term="mongodb" /><category term="serialization" /><category term="jackson" /><category term="reliability" /><summary type="html">How to add or remove a field from a Mongo collection without breaking the production?</summary><media:thumbnail xmlns:media="http://search.yahoo.com/mrss/" url="https://mincong.io/assets/bg-bence-sandor-sztrecska-wIs-mjKMiw4-unsplash.jpg" /><media:content medium="image" url="https://mincong.io/assets/bg-bence-sandor-sztrecska-wIs-mjKMiw4-unsplash.jpg" xmlns:media="http://search.yahoo.com/mrss/" /></entry><entry xml:lang="en"><title type="html">Writing Parameterized Tests in JUnit 5</title><link href="https://mincong.io/2021/01/31/juni5-parameterized-tests/" rel="alternate" type="text/html" title="Writing Parameterized Tests in JUnit 5" /><published>2021-01-31T16:12:25+01:00</published><updated>2021-01-31T16:12:25+01:00</updated><id>https://mincong.io/2021/01/31/juni5-parameterized-tests</id><content type="html" xml:base="https://mincong.io/2021/01/31/juni5-parameterized-tests/">&lt;h2 id=&quot;introduction&quot;&gt;Introduction&lt;/h2&gt;
-
-&lt;p&gt;Writing tests is an important part of software development, it’s a good way to
-ensure that your code works as expected. However, it is difficult to write tests
-that cover all the scenarios. It’s also difficult to make them easy to understand
-when the implementation is complex. In this article, we are going to see how
-parameterized tests of JUnit 5 can help.&lt;/p&gt;
-
-&lt;p&gt;After reading this article, you will understand:&lt;/p&gt;
-
-&lt;ul&gt;
-  &lt;li&gt;The motivation of using parameterized tests&lt;/li&gt;
-  &lt;li&gt;How to use parameterized tests&lt;/li&gt;
-  &lt;li&gt;Different sources of arguments&lt;/li&gt;
-  &lt;li&gt;The argument conversion&lt;/li&gt;
-  &lt;li&gt;Interactions with IDE&lt;/li&gt;
-  &lt;li&gt;When to use or not to use parameterized tests?&lt;/li&gt;
-  &lt;li&gt;How to go further from here?&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;h2 id=&quot;motivation&quot;&gt;Motivation&lt;/h2&gt;
-
-&lt;p&gt;&lt;em&gt;Why should we consider using parameterized tests in our code?&lt;/em&gt;&lt;/p&gt;
-
-&lt;p&gt;&lt;strong&gt;Improve test coverage.&lt;/strong&gt; Using parameterized testing can improve the code
-coverage. Thanks to parameterized test, you can easily add more parameters, or
-add more values for the same parameter to an existing test. This is done
-without heavily changing the logic of the test code. By doing so, your
-assertions cover more lines or more branches.&lt;/p&gt;
-
-&lt;p&gt;&lt;strong&gt;Reuse test code.&lt;/strong&gt; Using parameterized testing reuses the same test case for
-multiple inputs. Therefore, it simplifies the code set up, improves the
-maintainability of these tests, and therefore save your time to develop other
-features or to write tests for other scenarios.&lt;/p&gt;
-
-&lt;p&gt;&lt;strong&gt;Clarify inputs and outputs.&lt;/strong&gt; Sometimes the test code is not as readable as you
-may think about. Without putting additional effort into those tests, it can become
-a nightmare to understand the purpose of this test, such as what are
-the real input or output parameters of these tests. By using parameterized
-testing, we extract those values as external parameters. Therefore, it’s easier
-to understand. It’s easier because 1) we can see those parameters as method input
-parameters; 2) we can find the reasoning of the inputs by comparing their common
-points and differences.&lt;/p&gt;
-
-&lt;p&gt;&lt;strong&gt;Delegate the complexity to JUnit.&lt;/strong&gt; But why not just adding a for-loop inside
-the test? Why using the parameterized testing feature in JUnit 5? Well, this is
-because by doing so, we delegate the complexity to JUnit. More precisely, JUnit
-ensures that each execution contains their set up and tear downs; the failure of
-one execution won’t impact the other, they are isolated; we can have a nice
-display name in IDE or build to explain the current execution; it can handle
-different sources and type conversions, etc.&lt;/p&gt;
-
-&lt;p&gt;&lt;strong&gt;Validate multiple implementations.&lt;/strong&gt; Parameterized testing is also useful for
-validating multiple implementations. These implementations may need to respect
-the same specification. Therefore, we can express the expectations of this
-specification as tests and require all implementations to pass these tests. This
-is a good way to prevent regressions.&lt;/p&gt;
-
-&lt;p&gt;&lt;strong&gt;Testing the orthogonality.&lt;/strong&gt; Sometimes, one method accepts multiple input
-parameters, they should be orthogonal. That is, the output of one scenario will
-only depend on one input parameter, not others. So when changing the value of
-any other parameters, the test result shouldn’t be changed. We can ensure that
-the orthogonality is respected through parameterized testing.&lt;/p&gt;
-
-&lt;p&gt;These are some reasons that I found during my daily development. I hope they are
-enough to convince you to try parameterized testing. Now we understood the
-motivation, we are going to check how to use it in the following section.&lt;/p&gt;
-
-&lt;h2 id=&quot;prerequisite&quot;&gt;Prerequisite&lt;/h2&gt;
-
-&lt;p&gt;Before using parameterized testing in JUnit 5, you have to declare 3
-dependencies: the specification (API) and the implementation (engine) of the
-JUnit 5, and also an additional module to support parameterized testing. Here is
-what do they look like in the Maven POM file (&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;pom.xml&lt;/code&gt;).&lt;/p&gt;
-
-&lt;p&gt;The specification (API) and the implementation (engine) are required for running
-JUnit 5. You probably have them in your project already.&lt;/p&gt;
-
-&lt;div class=&quot;language-xml highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;nt&quot;&gt;&amp;lt;dependency&amp;gt;&lt;/span&gt;
-  &lt;span class=&quot;nt&quot;&gt;&amp;lt;groupId&amp;gt;&lt;/span&gt;org.junit.jupiter&lt;span class=&quot;nt&quot;&gt;&amp;lt;/groupId&amp;gt;&lt;/span&gt;
-  &lt;span class=&quot;nt&quot;&gt;&amp;lt;artifactId&amp;gt;&lt;/span&gt;junit-jupiter-api&lt;span class=&quot;nt&quot;&gt;&amp;lt;/artifactId&amp;gt;&lt;/span&gt;
-  &lt;span class=&quot;nt&quot;&gt;&amp;lt;version&amp;gt;&lt;/span&gt;5.7.0&lt;span class=&quot;nt&quot;&gt;&amp;lt;/version&amp;gt;&lt;/span&gt;
-  &lt;span class=&quot;nt&quot;&gt;&amp;lt;scope&amp;gt;&lt;/span&gt;test&lt;span class=&quot;nt&quot;&gt;&amp;lt;/scope&amp;gt;&lt;/span&gt;
-&lt;span class=&quot;nt&quot;&gt;&amp;lt;/dependency&amp;gt;&lt;/span&gt;
-&lt;span class=&quot;nt&quot;&gt;&amp;lt;dependency&amp;gt;&lt;/span&gt;
-  &lt;span class=&quot;nt&quot;&gt;&amp;lt;groupId&amp;gt;&lt;/span&gt;org.junit.jupiter&lt;span class=&quot;nt&quot;&gt;&amp;lt;/groupId&amp;gt;&lt;/span&gt;
-  &lt;span class=&quot;nt&quot;&gt;&amp;lt;artifactId&amp;gt;&lt;/span&gt;junit-jupiter-engine&lt;span class=&quot;nt&quot;&gt;&amp;lt;/artifactId&amp;gt;&lt;/span&gt;
-  &lt;span class=&quot;nt&quot;&gt;&amp;lt;version&amp;gt;&lt;/span&gt;5.7.0&lt;span class=&quot;nt&quot;&gt;&amp;lt;/version&amp;gt;&lt;/span&gt;
-  &lt;span class=&quot;nt&quot;&gt;&amp;lt;scope&amp;gt;&lt;/span&gt;test&lt;span class=&quot;nt&quot;&gt;&amp;lt;/scope&amp;gt;&lt;/span&gt;
-&lt;span class=&quot;nt&quot;&gt;&amp;lt;/dependency&amp;gt;&lt;/span&gt;
-&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
-
-&lt;p&gt;Then declare the additional Maven dependency to support parameterized testing:&lt;/p&gt;
-
-&lt;div class=&quot;language-xml highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;nt&quot;&gt;&amp;lt;dependency&amp;gt;&lt;/span&gt;
-  &lt;span class=&quot;nt&quot;&gt;&amp;lt;groupId&amp;gt;&lt;/span&gt;org.junit.jupiter&lt;span class=&quot;nt&quot;&gt;&amp;lt;/groupId&amp;gt;&lt;/span&gt;
-  &lt;span class=&quot;nt&quot;&gt;&amp;lt;artifactId&amp;gt;&lt;/span&gt;junit-jupiter-params&lt;span class=&quot;nt&quot;&gt;&amp;lt;/artifactId&amp;gt;&lt;/span&gt;
-  &lt;span class=&quot;nt&quot;&gt;&amp;lt;version&amp;gt;&lt;/span&gt;5.7.0&lt;span class=&quot;nt&quot;&gt;&amp;lt;/version&amp;gt;&lt;/span&gt;
-  &lt;span class=&quot;nt&quot;&gt;&amp;lt;scope&amp;gt;&lt;/span&gt;test&lt;span class=&quot;nt&quot;&gt;&amp;lt;/scope&amp;gt;&lt;/span&gt;
-&lt;span class=&quot;nt&quot;&gt;&amp;lt;/dependency&amp;gt;&lt;/span&gt;
-&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
-
-&lt;h2 id=&quot;syntax&quot;&gt;Syntax&lt;/h2&gt;
-
-&lt;p&gt;The basic syntax of a parameterized test is as follows:&lt;/p&gt;
-
-&lt;div class=&quot;language-java highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;nd&quot;&gt;@ParameterizedTest&lt;/span&gt; &lt;span class=&quot;c1&quot;&gt;// 1&lt;/span&gt;
-&lt;span class=&quot;nd&quot;&gt;@ValueSource&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;strings&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;{&lt;/span&gt; &lt;span class=&quot;c1&quot;&gt;// 2&lt;/span&gt;
-  &lt;span class=&quot;s&quot;&gt;&quot;racecar&quot;&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;,&lt;/span&gt;
-  &lt;span class=&quot;s&quot;&gt;&quot;radar&quot;&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;,&lt;/span&gt;
-  &lt;span class=&quot;s&quot;&gt;&quot;able was I ere I saw elba&quot;&lt;/span&gt;
-&lt;span class=&quot;o&quot;&gt;})&lt;/span&gt;
-&lt;span class=&quot;kt&quot;&gt;void&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;palindromes&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nc&quot;&gt;String&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;candidate&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;{&lt;/span&gt; &lt;span class=&quot;c1&quot;&gt;// 3&lt;/span&gt;
-  &lt;span class=&quot;n&quot;&gt;assertTrue&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nc&quot;&gt;StringUtils&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;isPalindrome&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;candidate&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;));&lt;/span&gt;
-&lt;span class=&quot;o&quot;&gt;}&lt;/span&gt;
-&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
-
-&lt;p&gt;where you can see that: 1) you need to use annotation &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;@ParameterizedTest&lt;/code&gt; as
-the replacement of the regular &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;@Test&lt;/code&gt;; 2) an annotation containing a list of
-sources to be used for the parameterized test; 3) one input parameter to
-represent the source value provided by the annotation, it can also be multiple
-input parameters: it depends on your sources.&lt;/p&gt;
-
-&lt;h2 id=&quot;source-providers&quot;&gt;Source Providers&lt;/h2&gt;
-
-&lt;p&gt;&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;@ValueSource&lt;/code&gt; annotation can be used to provide a list of values, which each
-item contains one single argument. It is supported for types: &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;short&lt;/code&gt;, &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;byte&lt;/code&gt;,
-&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;int&lt;/code&gt;, &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;long&lt;/code&gt;, &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;float&lt;/code&gt;, &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;double&lt;/code&gt;, &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;char&lt;/code&gt;, &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;boolean&lt;/code&gt;, &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;java.lang.String&lt;/code&gt;,
-&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;java.lang.Class&lt;/code&gt;. However, you may notice that value source can only provide
-one argument at a time, so you have to keep your test simple to ensure that all
-these arguments will fit the test.&lt;/p&gt;
-
-&lt;div class=&quot;language-java highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;nd&quot;&gt;@ValueSource&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;ints&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;{&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;1&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;2&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;3&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;})&lt;/span&gt;
-&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
-&lt;div class=&quot;language-java highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;nd&quot;&gt;@ValueSource&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;booleans&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;{&lt;/span&gt;&lt;span class=&quot;kc&quot;&gt;true&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;kc&quot;&gt;false&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;})&lt;/span&gt;
-&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
-
-&lt;p&gt;&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;@ArgumentsSource&lt;/code&gt; annotation can be used to link to an arguments-provider,
-which provides a stream of argument arrays (&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;Arguments&lt;/code&gt;) for the parameterized
-tests. I found it useful for two cases: 1) providing multiple implementations of
-the same interface, so that we can validate all of them using the same test, as
-you can see in the code block below; 2) providing values that are computed from
-another field in the codebase. This is not suitable for
-&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;@ValueSource&lt;/code&gt; because the line will be long and unreadable. Using
-&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;@ArgumentsSource&lt;/code&gt; makes the metadata of the test method more declarative.&lt;/p&gt;
-
-&lt;div class=&quot;language-java highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;nd&quot;&gt;@ParameterizedTest&lt;/span&gt;
-&lt;span class=&quot;nd&quot;&gt;@ArgumentsSource&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nc&quot;&gt;ChatBotProvider&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;class&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt;
-&lt;span class=&quot;kt&quot;&gt;void&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;sayHello&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nc&quot;&gt;ChatBot&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;bot&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;{&lt;/span&gt;
-  &lt;span class=&quot;n&quot;&gt;assertThat&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;bot&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;sayHello&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;Foo&quot;&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;)).&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;isEqualTo&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;Hello, Foo&quot;&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;);&lt;/span&gt;
-  &lt;span class=&quot;n&quot;&gt;assertThat&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;bot&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;sayHello&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;Bar&quot;&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;)).&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;isEqualTo&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;Hello, Bar&quot;&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;);&lt;/span&gt;
-&lt;span class=&quot;o&quot;&gt;}&lt;/span&gt;
-
-&lt;span class=&quot;kd&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;kd&quot;&gt;static&lt;/span&gt; &lt;span class=&quot;kd&quot;&gt;class&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;ChatBotProvider&lt;/span&gt; &lt;span class=&quot;kd&quot;&gt;implements&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;ArgumentsProvider&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;{&lt;/span&gt;
-
-  &lt;span class=&quot;nd&quot;&gt;@Override&lt;/span&gt;
-  &lt;span class=&quot;kd&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;Stream&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;&amp;lt;?&lt;/span&gt; &lt;span class=&quot;kd&quot;&gt;extends&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;Arguments&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;&amp;gt;&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;provideArguments&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nc&quot;&gt;ExtensionContext&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;context&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;{&lt;/span&gt;
-    &lt;span class=&quot;k&quot;&gt;return&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;Stream&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;of&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;new&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;StringFormatChatBot&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(),&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;new&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;StringConcatenationChatBot&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;())&lt;/span&gt;
-        &lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;map&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nl&quot;&gt;Arguments:&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;:&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;of&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;);&lt;/span&gt;
-  &lt;span class=&quot;o&quot;&gt;}&lt;/span&gt;
-&lt;span class=&quot;o&quot;&gt;}&lt;/span&gt;
-&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
-
-&lt;p&gt;&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;@CsvSource&lt;/code&gt; annotation can be used to declare multiple argument arrays, each
-array representing one argument array. This is my favorite annotation for
-providing sources because I can provide multiple arguments for each test case,
-which is usually the case for enterprise development. You may notice that the
-string value in the CSV source is converted to primitive type &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;int&lt;/code&gt; by JUnit.
-This makes your tests concise. We will talk more about conversions in the next
-section.&lt;/p&gt;
-
-&lt;div class=&quot;language-java highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;nd&quot;&gt;@ParameterizedTest&lt;/span&gt;
-&lt;span class=&quot;nd&quot;&gt;@CsvSource&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;({&lt;/span&gt;
-  &lt;span class=&quot;s&quot;&gt;&quot;1,  2, 2&quot;&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;,&lt;/span&gt;
-  &lt;span class=&quot;s&quot;&gt;&quot;1, -1, 1&quot;&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;,&lt;/span&gt;
-  &lt;span class=&quot;s&quot;&gt;&quot;1,  1, 1&quot;&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;,&lt;/span&gt;
-&lt;span class=&quot;o&quot;&gt;})&lt;/span&gt;
-&lt;span class=&quot;kt&quot;&gt;void&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;testMax&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;int&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;a&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;int&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;b&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;int&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;max&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;{&lt;/span&gt;
-  &lt;span class=&quot;n&quot;&gt;assertThat&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nc&quot;&gt;Math&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;max&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;a&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;b&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;)).&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;isEqualTo&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;max&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;);&lt;/span&gt;
-&lt;span class=&quot;o&quot;&gt;}&lt;/span&gt;
-&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
-
-&lt;p&gt;There are other source providers, such as &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;@EnumSource&lt;/code&gt;, &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;@NullSource&lt;/code&gt;,
-&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;@EmptySource&lt;/code&gt;, &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;@MethodSource&lt;/code&gt;. They provide different types
-of sources and they are easy to use. You can find the complete
-documentation in &lt;a href=&quot;https://junit.org/junit5/docs/current/user-guide/#writing-tests-parameterized-tests-sources&quot;&gt;JUnit 5 User Guide - 2.15.3 Sources of
-Arguments&lt;/a&gt;.&lt;/p&gt;
-
-&lt;h2 id=&quot;conversion&quot;&gt;Conversion&lt;/h2&gt;
-
-&lt;p&gt;From my experience, the CSV source seems to be the most frequently used
-provider. But inside a CSV file, every row and every cell is considered as a
-string. In this section, I want to share some tricks about type conversion. It
-makes your code more concise: just let JUnit handle the work for you ;)&lt;/p&gt;
-
-&lt;p&gt;&lt;strong&gt;String-to-Primitive.&lt;/strong&gt; When providing a primitive type as an input parameter for
-the test case, JUnit knows how to convert it. For example, given an input
-parameter as &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;int&lt;/code&gt;, then JUnit will convert your string into an integer
-automatically. The same logic applies to other primitive types: long, double, float,
-boolean, etc.&lt;/p&gt;
-
-&lt;div class=&quot;language-java highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;nd&quot;&gt;@ParameterizedTest&lt;/span&gt;
-&lt;span class=&quot;nd&quot;&gt;@CsvSource&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;({&lt;/span&gt;
-  &lt;span class=&quot;s&quot;&gt;&quot;1,  2, 2&quot;&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;,&lt;/span&gt;
-  &lt;span class=&quot;s&quot;&gt;&quot;1, -1, 1&quot;&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;,&lt;/span&gt;
-  &lt;span class=&quot;s&quot;&gt;&quot;1,  1, 1&quot;&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;,&lt;/span&gt;
-&lt;span class=&quot;o&quot;&gt;})&lt;/span&gt;
-&lt;span class=&quot;kt&quot;&gt;void&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;testMax&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;int&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;a&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;int&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;b&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;int&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;max&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;{&lt;/span&gt;
-  &lt;span class=&quot;n&quot;&gt;assertThat&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nc&quot;&gt;Math&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;max&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;a&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;b&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;)).&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;isEqualTo&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;max&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;);&lt;/span&gt;
-&lt;span class=&quot;o&quot;&gt;}&lt;/span&gt;
-&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
-
-&lt;p&gt;&lt;strong&gt;String-to-Enum.&lt;/strong&gt; When providing an enumeration type as an input parameter for the
-test case, JUnit knows how to convert it as well (probably using the
-&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;valueOf(String)&lt;/code&gt; function of enumeration). Therefore, you don’t have to handle
-the conversion yourself. Here is a concrete example about how to converting a
-string into enum type &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;FilePermission&lt;/code&gt;, and then test the executability for
-different permission.&lt;/p&gt;
-
-&lt;div class=&quot;language-java highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;nd&quot;&gt;@ParameterizedTest&lt;/span&gt;
-&lt;span class=&quot;nd&quot;&gt;@CsvSource&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;({&lt;/span&gt;
-  &lt;span class=&quot;s&quot;&gt;&quot;R, false&quot;&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;,&lt;/span&gt;
-  &lt;span class=&quot;s&quot;&gt;&quot;W, false&quot;&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;,&lt;/span&gt;
-  &lt;span class=&quot;s&quot;&gt;&quot;RW, false&quot;&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;,&lt;/span&gt;
-  &lt;span class=&quot;s&quot;&gt;&quot;X, true&quot;&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;,&lt;/span&gt;
-  &lt;span class=&quot;s&quot;&gt;&quot;RX, true&quot;&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;,&lt;/span&gt;
-  &lt;span class=&quot;s&quot;&gt;&quot;WX, true&quot;&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;,&lt;/span&gt;
-  &lt;span class=&quot;s&quot;&gt;&quot;RWX, true&quot;&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;,&lt;/span&gt;
-&lt;span class=&quot;o&quot;&gt;})&lt;/span&gt;
-&lt;span class=&quot;kt&quot;&gt;void&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;isExecutable&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nc&quot;&gt;FilePermission&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;perm&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;boolean&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;isExecutable&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;{&lt;/span&gt;
-  &lt;span class=&quot;n&quot;&gt;assertThat&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;perm&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;isExecutable&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;()).&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;isEqualTo&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;isExecutable&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;);&lt;/span&gt;
-&lt;span class=&quot;o&quot;&gt;}&lt;/span&gt;
-&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
-
-&lt;h2 id=&quot;ide&quot;&gt;IDE&lt;/h2&gt;
-
-&lt;p&gt;Another important part of testing is to understand how to use IDE so that it
-can help you to be even more productive! In this section, I want to share two
-things about IDE with you: how to check which parameterized test is running and
-how to check the test coverage. Here I am using IntelliJ IDEA but I think the
-methodology is still valid for other IDEs.&lt;/p&gt;
-
-&lt;h3 id=&quot;ide-display-name-of-tests&quot;&gt;IDE: Display Name of Tests&lt;/h3&gt;
-
-&lt;p&gt;When running the parameterized in JUnit 5, you can see each test
-execution with the input parameters. For example, the test case
-&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;isWritable(FilePermission, boolean)&lt;/code&gt; is executed 7 times with different file
-permission each time:&lt;/p&gt;
-
-&lt;p&gt;&lt;img src=&quot;/assets/20210131-junit5.png&quot; alt=&quot;Execution of JUnit 5 parameterized test in IntelliJ IDEA&quot; /&gt;&lt;/p&gt;
-
-&lt;p&gt;It is also possible to customize the display names to print something more
-human-readable. Personally, I prefer to avoid spending time on it. But if you
-were interested, you can find it in the &lt;a href=&quot;https://junit.org/junit5/docs/current/user-guide/#writing-tests-parameterized-tests-display-names&quot;&gt;JUnit 5 User Guide §2.15.6. Customizing
-Display
-Names&lt;/a&gt;.&lt;/p&gt;
-
-&lt;h3 id=&quot;ide-test-coverage&quot;&gt;IDE: Test Coverage&lt;/h3&gt;
-
-&lt;p&gt;The main motivation of using parameterized testing is to increase
-the test coverage and improve the robustness of the implementation. To review
-the test coverage, you can run the tests with coverage and then check the
-coverage. Here is how to trigger a “run tests with coverage” at package level
-or class level in IntelliJ IDEA:&lt;/p&gt;
-
-&lt;p&gt;Right-click on a Java package, such as &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;io.mincong.junit5&lt;/code&gt; and select the option “Run ‘Test
-in ‘io.mincong.junit5’’ with Coverage” to trigger the tests with coverage
-enabled:&lt;/p&gt;
-
-&lt;p&gt;&lt;img src=&quot;/assets/20210131-coverage-package-level.png&quot; alt=&quot;Run tests with coverage at package level in IntelliJ IDEA&quot; /&gt;&lt;/p&gt;
-
-&lt;p&gt;Left-click on the test icon of the class name or the test name of a test file,
-such as &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;FilePermissionTest&lt;/code&gt;, then select option “Run ‘FilePermissionTest’ with
-Coverage” to trigger the tests with coverage enabled:&lt;/p&gt;
-
-&lt;p&gt;&lt;img src=&quot;/assets/20210131-coverage-class-level.png&quot; alt=&quot;Run tests with coverage at class level in IntelliJ IDEA&quot; /&gt;&lt;/p&gt;
-
-&lt;p&gt;Once the test execution is done, you can find the coverage report in different
-views, such as the project view, the class file itself, or the dedicated test
-coverage view:&lt;/p&gt;
-
-&lt;p&gt;In the project, we can see the test coverage of each package and each class
-inside the package. It gives a good overview of the current situation of a given
-package.&lt;/p&gt;
-
-&lt;p&gt;&lt;img src=&quot;/assets/20210131-coverage-report-project-view.png&quot; alt=&quot;Coverage report at project view in IntelliJ IDEA&quot; /&gt;&lt;/p&gt;
-
-&lt;p&gt;Inside a class, it’s also possible to see the code coverage right next to the line
-numbers. The color green is covered and the color red is not covered. This is useful
-when you are modifying some logic, especially for some critical path, because
-you want them to be covered by at least one test. This information helps you to
-improve your tests.&lt;/p&gt;
-
-&lt;p&gt;&lt;img src=&quot;/assets/20210131-coverage-report-class-view.png&quot; alt=&quot;Coverage report at class view in IntelliJ IDEA&quot; /&gt;&lt;/p&gt;
-
-&lt;p&gt;The last view is the coverage view, where you can see a list of packages and
-their coverage. You can also zoom into one package as the screenshot below and
-inspect the coverage of each file inside the package.&lt;/p&gt;
-
-&lt;p&gt;&lt;img src=&quot;/assets/20210131-coverage-report-coverage-view.png&quot; alt=&quot;Coverage report at coverage view in IntelliJ IDEA&quot; /&gt;&lt;/p&gt;
-
-&lt;h2 id=&quot;pros-and-cons&quot;&gt;Pros and Cons&lt;/h2&gt;
-
-&lt;p&gt;&lt;em&gt;When to use and not to use parameterized tests?&lt;/em&gt;&lt;/p&gt;
-
-&lt;p&gt;Now we understood how to use parameterized tests and get familiar with IDE, the
-remaining question is: should we use it for our tests? I think it depends on
-your needs. It’s not always the right choice. Here are some cases that I
-summarized during my daily work. I hope that they will give you some
-inspiration.&lt;/p&gt;
-
-&lt;p&gt;As mentioned in the motivation section, you should use parameterized tests to:&lt;/p&gt;
-
-&lt;ul&gt;
-  &lt;li&gt;Improve the test coverage&lt;/li&gt;
-  &lt;li&gt;Reuse test code&lt;/li&gt;
-  &lt;li&gt;Clarify inputs and outputs of your test&lt;/li&gt;
-  &lt;li&gt;Delegate the complexity to JUnit&lt;/li&gt;
-  &lt;li&gt;Validate multiple implementations&lt;/li&gt;
-  &lt;li&gt;Testing the orthogonality of different parameters&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;p&gt;But you shouldn’t use parameterized tests:&lt;/p&gt;
-
-&lt;ul&gt;
-  &lt;li&gt;if it makes the logic of the test difficult the understand. Typically, if it
-introduces if-statements or other branches in the code.&lt;/li&gt;
-  &lt;li&gt;if different arguments don’t share the same purpose. If they are different, it is
-probably worth creating multiple test cases. A good way to know this is to
-summarize the purpose in one sentence, if you cannot, it’s probably worth
-writing different tests.&lt;/li&gt;
-  &lt;li&gt;if there are too many input arguments. This can make the tests difficult to
-maintain.&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;h2 id=&quot;going-further&quot;&gt;Going Further&lt;/h2&gt;
-
-&lt;p&gt;How to go further from here?&lt;/p&gt;
-
-&lt;ul&gt;
-  &lt;li&gt;To better understand parameterized tests of JUnit 5, visit the official
-&lt;a href=&quot;https://junit.org/junit5/docs/current/user-guide/#writing-tests-parameterized-tests&quot;&gt;JUnit 5 User Guide §2.15 Parameterized
-Tests&lt;/a&gt;.&lt;/li&gt;
-  &lt;li&gt;To learn more about testing, especially testing in Java, visit &lt;a href=&quot;/tags/testing/&quot;&gt;other articles
-with tag “testing” of my blog&lt;/a&gt;.&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;p&gt;If you want to see the source code of this article, they are available on GitHub
-under module junit5 of project
-&lt;a href=&quot;https://github.com/mincong-h/java-examples/tree/blog/junit5-parameterized-tests/junit5&quot;&gt;mincong-h/java-examples&lt;/a&gt;.&lt;/p&gt;
-
-&lt;h2 id=&quot;conclusion&quot;&gt;Conclusion&lt;/h2&gt;
-
-&lt;p&gt;In this article, we saw the motivation of using parameterized testing in JUnit
-5, how to declared dependencies, the annotations of different source providers
-(value source, argument source, CSV source, …), the conversation from string
-to primitive types and enum types, running tests and inspecting coverage in
-IntelliJ IDEA, the pros and cons of using parameterized tests, and finally how
-to go further from here.
-Interested to know more? You can subscribe to &lt;a href=&quot;/feed.xml&quot;&gt;the feed of my blog&lt;/a&gt;, follow me
-on &lt;a href=&quot;https://twitter.com/mincong_h&quot;&gt;Twitter&lt;/a&gt; or
-&lt;a href=&quot;https://github.com/mincong-h/&quot;&gt;GitHub&lt;/a&gt;. Hope you enjoy this article, see you the next time!&lt;/p&gt;
-
-&lt;h2 id=&quot;references&quot;&gt;References&lt;/h2&gt;
-
-&lt;ul&gt;
-  &lt;li&gt;JUnit 5 User Guide, 2020.
-&lt;a href=&quot;https://junit.org/junit5/docs/current/user-guide/&quot;&gt;https://junit.org/junit5/docs/current/user-guide/&lt;/a&gt;&lt;/li&gt;
-&lt;/ul&gt;</content><author><name>Mincong Huang</name><email>mincong.h@gmail.com</email></author><category term="java-core" /><category term="java" /><category term="junit" /><category term="junit5" /><category term="testing" /><summary type="html">Improving code quality using parameterized tests of JUnit 5! This article explains the motivation, the basic syntax, different annotations, and IDE-related actions about parameterized tests. Also, when you should or shouldn't use it and how to go further from here.</summary><media:thumbnail xmlns:media="http://search.yahoo.com/mrss/" url="https://mincong.io/assets/bg-jean-louis-paulin-lHwmE58fW4Y-unsplash.jpg" /><media:content medium="image" url="https://mincong.io/assets/bg-jean-louis-paulin-lHwmE58fW4Y-unsplash.jpg" xmlns:media="http://search.yahoo.com/mrss/" /></entry></feed>
+&lt;/ul&gt;</content><author><name>Mincong Huang</name><email>mincong.h@gmail.com</email></author><category term="java-serialization" /><category term="reliability" /><category term="java" /><category term="mongodb" /><category term="serialization" /><category term="jackson" /><category term="reliability" /><summary type="html">How to add or remove a field from a Mongo collection without breaking the production?</summary><media:thumbnail xmlns:media="http://search.yahoo.com/mrss/" url="https://mincong.io/assets/bg-bence-sandor-sztrecska-wIs-mjKMiw4-unsplash.jpg" /><media:content medium="image" url="https://mincong.io/assets/bg-bence-sandor-sztrecska-wIs-mjKMiw4-unsplash.jpg" xmlns:media="http://search.yahoo.com/mrss/" /></entry></feed>
