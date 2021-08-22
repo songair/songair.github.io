@@ -10,42 +10,42 @@
 		
 	</script><meta charset="utf-8">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
-<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no"><title>如何防止 Elasticsearch 中的数据丢失？ - Mincong Huang</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no"><title>一文了解 Elasticsearch 设置 - Mincong Huang</title>
 
-<meta name="description" content="六个提高数据可靠性的实战方案：提高副本分片、快照与恢复、RAID、MQ等">
+<meta name="description" content="这篇文章讲述 Elasticsearch 的常见设置：集群设置、索引设置、节点设置，静态与动态设置的区别，以及的一些常用的 curl 命令。">
 
 <!-- Begin Jekyll SEO tag v2.7.1 -->
-<title>如何防止 Elasticsearch 中的数据丢失？ | Mincong Huang</title>
+<title>一文了解 Elasticsearch 设置 | Mincong Huang</title>
 <meta name="generator" content="Jekyll v4.2.0" />
-<meta property="og:title" content="如何防止 Elasticsearch 中的数据丢失？" />
+<meta property="og:title" content="一文了解 Elasticsearch 设置" />
 <meta name="author" content="Mincong Huang" />
 <meta property="og:locale" content="zh" />
-<meta name="description" content="六个提高数据可靠性的实战方案：提高副本分片、快照与恢复、RAID、MQ等" />
-<meta property="og:description" content="六个提高数据可靠性的实战方案：提高副本分片、快照与恢复、RAID、MQ等" />
-<link rel="canonical" href="https://mincong.io/cn/prevent-data-loss-in-elasticsearch/" />
-<meta property="og:url" content="https://mincong.io/cn/prevent-data-loss-in-elasticsearch/" />
+<meta name="description" content="这篇文章讲述 Elasticsearch 的常见设置：集群设置、索引设置、节点设置，静态与动态设置的区别，以及的一些常用的 curl 命令。" />
+<meta property="og:description" content="这篇文章讲述 Elasticsearch 的常见设置：集群设置、索引设置、节点设置，静态与动态设置的区别，以及的一些常用的 curl 命令。" />
+<link rel="canonical" href="https://mincong.io/cn/elasticsearch-settings/" />
+<meta property="og:url" content="https://mincong.io/cn/elasticsearch-settings/" />
 <meta property="og:site_name" content="Mincong Huang" />
-<meta property="og:image" content="https://mincong.io/assets/bg-chase-charaba-uRHzV3ca2fk-unsplash.jpg" />
+<meta property="og:image" content="https://mincong.io/assets/bg-anthony-roberts-82wJ10pX1Fw-unsplash.jpg" />
 <meta property="og:type" content="article" />
-<meta property="article:published_time" content="2021-07-31T09:50:49+02:00" />
+<meta property="article:published_time" content="2021-08-21T18:07:13+02:00" />
 <meta name="twitter:card" content="summary_large_image" />
-<meta property="twitter:image" content="https://mincong.io/assets/bg-chase-charaba-uRHzV3ca2fk-unsplash.jpg" />
-<meta property="twitter:title" content="如何防止 Elasticsearch 中的数据丢失？" />
+<meta property="twitter:image" content="https://mincong.io/assets/bg-anthony-roberts-82wJ10pX1Fw-unsplash.jpg" />
+<meta property="twitter:title" content="一文了解 Elasticsearch 设置" />
 <meta name="twitter:site" content="@mincong_h" />
 <meta name="twitter:creator" content="@mincong_h" />
 <script type="application/ld+json">
-{"description":"六个提高数据可靠性的实战方案：提高副本分片、快照与恢复、RAID、MQ等","@type":"BlogPosting","image":"https://mincong.io/assets/bg-chase-charaba-uRHzV3ca2fk-unsplash.jpg","headline":"如何防止 Elasticsearch 中的数据丢失？","dateModified":"2021-07-31T09:50:49+02:00","datePublished":"2021-07-31T09:50:49+02:00","url":"https://mincong.io/cn/prevent-data-loss-in-elasticsearch/","mainEntityOfPage":{"@type":"WebPage","@id":"https://mincong.io/cn/prevent-data-loss-in-elasticsearch/"},"author":{"@type":"Person","name":"Mincong Huang"},"@context":"https://schema.org"}</script>
+{"description":"这篇文章讲述 Elasticsearch 的常见设置：集群设置、索引设置、节点设置，静态与动态设置的区别，以及的一些常用的 curl 命令。","@type":"BlogPosting","image":"https://mincong.io/assets/bg-anthony-roberts-82wJ10pX1Fw-unsplash.jpg","headline":"一文了解 Elasticsearch 设置","dateModified":"2021-08-21T18:07:13+02:00","datePublished":"2021-08-21T18:07:13+02:00","url":"https://mincong.io/cn/elasticsearch-settings/","mainEntityOfPage":{"@type":"WebPage","@id":"https://mincong.io/cn/elasticsearch-settings/"},"author":{"@type":"Person","name":"Mincong Huang"},"@context":"https://schema.org"}</script>
 <!-- End Jekyll SEO tag -->
 
 
 <!-- Extra Open Graph :: Start -->
 
-<meta property="og:image:width" content="1280"/>
-<meta property="og:image:height" content="1920"/>
+<meta property="og:image:width" content="853"/>
+<meta property="og:image:height" content="1280"/>
 
 <!-- Extra Open Graph :: End -->
 
-<link rel="canonical" href="https://mincong.io/cn/prevent-data-loss-in-elasticsearch/"><link rel="alternate" type="application/rss+xml" title="Mincong Huang" href="/feed.xml"><!-- start favicons snippet, use https://realfavicongenerator.net/ --><link rel="apple-touch-icon" sizes="180x180" href="/assets/apple-touch-icon.png"><link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon-32x32.png"><link rel="icon" type="image/png" sizes="16x16" href="/assets/favicon-16x16.png"><link rel="manifest" href="/assets/site.webmanifest"><link rel="mask-icon" href="/assets/safari-pinned-tab.svg" color="#fc4d50"><link rel="shortcut icon" href="/assets/favicon.ico">
+<link rel="canonical" href="https://mincong.io/cn/elasticsearch-settings/"><link rel="alternate" type="application/rss+xml" title="Mincong Huang" href="/feed.xml"><!-- start favicons snippet, use https://realfavicongenerator.net/ --><link rel="apple-touch-icon" sizes="180x180" href="/assets/apple-touch-icon.png"><link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon-32x32.png"><link rel="icon" type="image/png" sizes="16x16" href="/assets/favicon-16x16.png"><link rel="manifest" href="/assets/site.webmanifest"><link rel="mask-icon" href="/assets/safari-pinned-tab.svg" color="#fc4d50"><link rel="shortcut icon" href="/assets/favicon.ico">
 
 <meta name="msapplication-TileColor" content="#ffc40d"><meta name="msapplication-config" content="/assets/browserconfig.xml">
 
@@ -338,7 +338,7 @@
         </ul>
       </nav></div>
   </header>
-</div><div class="page__content"><div class="article__header--overlay"><div class="hero hero--dark overlay" style="background-image:linear-gradient(135deg, rgba(0, 0, 0, .6), rgba(0, 0, 0, .4)),url(/assets/bg-chase-charaba-uRHzV3ca2fk-unsplash.jpg);background-color:#203028;"><div class="hero__content"><div class ="main">
+</div><div class="page__content"><div class="article__header--overlay"><div class="hero hero--dark overlay" style="background-image:linear-gradient(135deg, rgba(0, 0, 0, .6), rgba(0, 0, 0, .4)),url(/assets/bg-anthony-roberts-82wJ10pX1Fw-unsplash.jpg);background-color:#203028;"><div class="hero__content"><div class ="main">
 
   
   <div class="article__info clearfix">
@@ -346,15 +346,6 @@
         <li>
               <a class="button button--secondary button--pill button--sm"
                 href="/cn/archive/?tag=elasticsearch">elasticsearch</a>
-            </li><li>
-              <a class="button button--secondary button--pill button--sm"
-                href="/cn/archive/?tag=java">java</a>
-            </li><li>
-              <a class="button button--secondary button--pill button--sm"
-                href="/cn/archive/?tag=system-design">system-design</a>
-            </li><li>
-              <a class="button button--secondary button--pill button--sm"
-                href="/cn/archive/?tag=reliability">reliability</a>
             </li>
 
         <li class="separator">|</li>
@@ -370,25 +361,22 @@
               
 
               
-                <a class="button button--circle button--secondary lang"
-                   href="/en/prevent-data-loss-in-elasticsearch/"><span>EN</span></a>
-              
 
               <a class="button button--circle button--primary focus lang"
-                 href="/cn/prevent-data-loss-in-elasticsearch/"><span>CN</span></a>
+                 href="/cn/elasticsearch-settings/"><span>CN</span></a>
             </li>
           
         
-      </ul><ul class="right-col menu"><li><i class="far fa-calendar-alt"></i> <span>2021年 07月31日</span>
-            </li></ul></div><div class="article__header"><header><h1>如何防止 Elasticsearch 中的数据丢失？</h1></header></div><div class="article__header">
-                        <p class="overlay__excerpt">六个提高数据可靠性的实战方案。</p>
+      </ul><ul class="right-col menu"><li><i class="far fa-calendar-alt"></i> <span>2021年 08月21日</span>
+            </li></ul></div><div class="article__header"><header><h1>一文了解 Elasticsearch 设置</h1></header></div><div class="article__header">
+                        <p class="overlay__excerpt">集群设置、索引设置、节点设置</p>
                       </div><div class="article__info clearfix">
   <ul class="left-col menu">
     <li>
       <i class="fas fa-camera"></i>
       
       照片由
-      <a href="https://unsplash.com/@chasecharaba" target="_blank">Chase Charaba</a>
+      <a href="https://unsplash.com/@arcreates" target="_blank">Anthony Roberts</a>
       
       提供 /
       <a href="https://unsplash.com/license" target="_blank">Unplash </a>
@@ -405,8 +393,8 @@
               <div class="col-main cell cell--auto"><!-- start custom main top snippet -->
 
 <!-- end custom main top snippet -->
-<article itemscope itemtype="http://schema.org/Article"><meta itemprop="headline" content="如何防止 Elasticsearch 中的数据丢失？"><meta itemprop="author" content="Mincong Huang"/><meta itemprop="datePublished" content="2021-07-31T09:50:49+02:00">
-    <meta itemprop="keywords" content="elasticsearch,java,system-design,reliability"><div class="js-article-content"><div class="layout--article"><!-- start custom article top snippet -->
+<article itemscope itemtype="http://schema.org/Article"><meta itemprop="headline" content="一文了解 Elasticsearch 设置"><meta itemprop="author" content="Mincong Huang"/><meta itemprop="datePublished" content="2021-08-21T18:07:13+02:00">
+    <meta itemprop="keywords" content="elasticsearch"><div class="js-article-content"><div class="layout--article"><!-- start custom article top snippet -->
 
 
 <!-- end custom article top snippet -->
@@ -417,182 +405,306 @@
 
 <h2 id="前言">前言</h2>
 
-<p>在当下，数据可靠性（data reliability）对于每个企业来说都是至关重要的事情。只有当具备可靠的数据，我们才可以依赖数据创造出高效好用的软件。在数据实时化、智能化、全球化的应用场景下，保证数据的可靠性则更为重要。今天，我想跟大家讨论一下，我对于如何在 Elasticsearch 中避免数据丢失这个问题的一些看法。</p>
-
-<p>阅读本文后，你会明白：</p>
+<p>如果你正在使用 Elasticsearch 集群，你一定离不开对它的配置。无论你的应用场景是什么、无论你在公司任职哪个职位，只要你使用到了 Elasticsearch，那么总是需要对它的配置有一定的了解，通过调整它们来更好地实现你的需求。可是另一方面，Elasticsearch 的配置有如此之多，让人有些无从下手。所以我想写这篇文章，跟大家分析一下如何快速明白 Elasticsearch 的常见设置。阅读本文后，你会明白：</p>
 
 <ul>
-  <li>数据什么时候会丢失？</li>
-  <li>提高副本分片数</li>
-  <li>快照与恢复</li>
-  <li>使用 RAID 磁盘阵列</li>
-  <li>消息队列（message queue）整合</li>
-  <li>主副分片存在不同节点</li>
-  <li>避免使用单一可用区</li>
+  <li>设置的应用范围（集群、索引、节点、快照仓库等）</li>
+  <li>集群设置</li>
+  <li>索引设置</li>
+  <li>节点设置</li>
+  <li>curl 用法举例</li>
 </ul>
 
-<p>事不宜迟，让我们马上开始吧！</p>
+<p>本文根据 Elasticsearch 7 所写，具体内容可能与你使用的版本略有不同。好了，事不宜迟，让我们马上开始吧！</p>
 
-<h2 id="数据什么时候会丢失">数据什么时候会丢失？</h2>
+<h2 id="设置的应用范围">设置的应用范围</h2>
 
-<p>Elasticsearch 集群的健康状态分为三个等级（颜色）：绿色、黄色、红色。</p>
-
-<p>在分片层面下：</p>
-
-<ul>
-  <li>红色的状态意味着此分片无法被分配到集群内</li>
-  <li>黄色的状态意味着主分片已经被分配，但是一个或多个副本分片并没有被分配</li>
-  <li>绿色的状态意味着所有的分片都已经被成功地分配</li>
-</ul>
-
-<p>在索引的层面下，它的健康状态由最差的分片状态决定。而在集群的层面下，它的健康状态由最差的索引状态决定。</p>
-
-<p>所以当集群在红色状态下，这意味着某些分片数据没有能够被正常初始化或者已有数据存在损坏或者丢失的情况。这篇文章的重点就是避免黄色或者红色的状态出现，让集群尽量处于绿色状态。</p>
-
-<h2 id="提高副本分片数">提高副本分片数</h2>
-
-<p>提高副本分片数是一个简单的提高数据可靠性的办法。当一个分片被放在集群的多台机器时，如果单台机器出现硬盘损坏，其他机器受到影响的可能性不大。我们依然有 N - 1 个可用的分片。副本分片数越高，那么丢失数据的可能性也就越低。通过 <a href="https://www.elastic.co/guide/en/elasticsearch/reference/7.x/indices-update-settings.html" title="Update index settings API (7.x)">Update index settings API (7.x)</a> 可以调整副本分片数。比如，如果需要一个主分片和两个副本分片的话，可以使用发送以下的 HTTP 请求到集群：</p>
-
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>PUT /my-index-000001/_settings
-
-{
-  "index" : {
-    "number_of_replicas" : 2
-  }
-}
-</code></pre></div></div>
-
-<p>提高分片数这个方法虽然好用，但是它也有明显的不足。那就是。。。贵！比如说我们总共有 6TB 的集群储存空间，一主一副的方案可以储存 6TB / 2 = 3TB 的数据，而一主二副的方案则只能储存 6TB / 3 = 2TB 的数据，利用率降低 33% 成本提高 50%。</p>
-
-<h2 id="快照与恢复">快照与恢复</h2>
-
-<p>使用无论哪个存储数据的软件，定期备份你的数据都是很重要的。上文提到的 Elasticsearch 副本提供了高可靠性；它们让你可以容忍零星的节点丢失而不会中断服务。但是，副本并不提供对灾难性故障的保护。对这种情况，你需要的是对集群真正的备份 — 在某些东西确实出问题的时候有一个完整的拷贝。Elasticsearch 的快照与恢复功能（Snapshot And Restore）是避免数据丢失的很好的方法。Elasticsearch 将当前集群的状态和数据备份到一个仓库里。这个过程是增量的：第一个快照是全量快照，后续快照则会保留已有快照和新数据之间的差异。</p>
-
-<p>快照支持不同类型的仓库，它们通过在集群中安装插件的方式实现。在 Elasticsearch 7 中官方支持的插件有：</p>
-
-<ul>
-  <li><a href="https://www.elastic.co/guide/en/elasticsearch/plugins/7.x/repository-s3.html" title="Amazon S3 仓库插件">Amazon S3 仓库插件</a></li>
-  <li><a href="https://www.elastic.co/guide/en/elasticsearch/plugins/7.x/repository-azure.html" title="Azure 仓库插件">Azure 仓库插件</a></li>
-  <li><a href="https://www.elastic.co/guide/en/elasticsearch/plugins/7.x/repository-hdfs.html" title="Hadoop HDFS 仓库插件">Hadoop HDFS 仓库插件</a></li>
-  <li><a href="https://www.elastic.co/guide/en/elasticsearch/plugins/7.x/repository-gcs.html" title="Google Cloud Storage 仓库插件">Google Cloud Storage 仓库插件</a></li>
-</ul>
-
-<p>非官方的插件有：</p>
-
-<ul>
-  <li><a href="https://github.com/BigDataBoutique/elasticsearch-repository-swift" title="Openstack Swift 仓库插件">Openstack Swift 仓库插件</a>，由 Wikimedia Foundation 和 BigData Boutique 开发和维护。</li>
-  <li><a href="https://github.com/aliyun/elasticsearch-repository-oss" title="阿里云仓库插件">阿里云仓库插件</a>，由阿里云开发维护。</li>
-</ul>
-
-<p>使用快照的好处主要是降低备份的成本、对灾难性故障有保护，在出问题时有完整的拷贝。另一个好处是它可以跨集群恢复，所以可以使用快照和恢复功能做出自定义的解决方案，比如冷热分离的数据储存系统。使用快照的局限性在于：1、整个设置过程比较复杂，需要对云供应商有一定的了解，需要搭建储存桶（创建、设置权限、监控等）；2、只能够在支持插件的平台使用，也就是 AWS / Google / Azure / Aliyun / Tencent 等；3、对于没有快照的数据无法恢复。</p>
-
-<h2 id="使用-raid-磁盘阵列">使用 RAID 磁盘阵列</h2>
-
-<!--
-  Use https://www.elastic.co/blog/how-to-design-your-elasticsearch-data-storage-architecture-for-scale for EN
- -->
-
-<p>RAID（Redundant Array of Independent Disks）即独立磁盘冗余阵列，简称为「磁盘阵列」，其实就是用多个独立的磁盘组成在一起形成一个大的磁盘系统，从而实现比单块磁盘更好的存储性能和更高的可靠性。常见的方案有：RAID0 / RAID1 / RAID5 / RAID6 / RAID10。不同的方案在数据丢失、性能和停机时间方面的预期表现不一样。它的实质是在单机的磁盘层面，通过不同类型的双写或者验证，实现了数据可靠性。由 Matt Davis 写的 Elasticsearch 官方文章<a href="https://www.elastic.co/cn/blog/how-to-design-your-elasticsearch-data-storage-architecture-for-scale" title="如何设计可扩展的 Elasticsearch 数据存储的架构">如何设计可扩展的 Elasticsearch 数据存储的架构</a>详细讨论了 RAID0 / RAID1 / RAID5 / RAID6 的利弊。欢迎大家阅读那篇文章了解更多的详情。</p>
-
-<p>个人认为这个解决方案不太适合企业使用，因为它只对单机磁盘有效。对于企业级的数据平台来说，更多的考量因素是降低对于单机可靠性的依赖、运行价格、对抗灾难性故障（比如整个可用区故障）等。</p>
-
-<h2 id="消息队列-mq-整合">消息队列 MQ 整合</h2>
-
-<p>另一个思路是整合消息队列（message queue），比如当下很流行的 Apache Kafka。大致的思路是：先把消息写进 Kafka 的消息队列中，然后让一个 Kafka 的 consumer 去读取这些数据并写入 Elasticsearch 中。只有在数据被成功写入以后才 commit offset。同样道理，可以要求 consumer 只有在数据被快照以后才 commit offset。将这样的好处是避免数据丢失：当 Elasticsearch 拒绝接受写入请求、未通过快照备份数据时，数据依然保留在 Kafka 中。这样的设计将数据丢失问题转化为数据延迟问题，将一部分问题从 Elasticsearch 转移到 Kafka。它也有效地解决了上文中“快照功能无法恢复未快照数据”的问题，因为这部分数据现在可以从 Kafka 中恢复了。</p>
-
-<p>换句话说，这个解决方案暂存了未写入 ES 的数据、暂存了未快照数据。它适合数据量很大的应用场景，为出现 ES 写入异常、未快照部分等问题的高效解决方案。由于使用了 Kafka，它的容灾性也很强。它的不足点在于：它的复杂度，它给系统引入了消息队列以及与相应的消费者逻辑；它的可靠性也依赖于团队的编程能力；运维难度也相应增加。</p>
-
-<h2 id="主副分片存放在不同节点">主副分片存放在不同节点</h2>
-
-<p>另一个设定是 <a href="https://www.elastic.co/guide/en/elasticsearch/reference/7.x/allocation-total-shards.html" title="total_shards_per_node">index.routing.allocation.total_shards_per_node</a> 。它允许我们设定一个索引在一个节点中可以同时存放的分片数。默认是无限个。通过设置这个值到 1，可以保证每个索引的分片都放在不同的节点。这个做法使得丢失任何一个节点都不是很可怕，不会引起数据丢失，因为只丢失了一个分片而已。索引的剩余分片会被重新拷贝，形成新的分片。</p>
-
-<p>这个做法的好处是容易实现，能够保证在丢失一个节点时，集群不会变成红色。但在节点不足的情况下，分片可能无法被分配，导致索引黄色。</p>
-
-<h2 id="避免使用单一可用区">避免使用单一可用区</h2>
-
-<p>避免使用单一可用区（Availability Zone）。当集群的节点被部署在多个可用区的时候，能有效降低数据丢失的可能性，尤其是集群受到云供应商可用区事故影响的几率。在AWS、阿里云等供应商的Elasticsearch集群都支持多可用区部署，具体操作参考 <a href="https://aws.amazon.com/fr/blogs/database/increase-availability-for-amazon-elasticsearch-service-by-deploying-in-three-availability-zones-2/" title="Increase availability for Amazon Elasticsearch Service by deploying in three Availability Zones - AWS Database Blog">AWS 博客</a>和<a href="https://partners-intl.aliyun.com/help/doc-detail/151655.htm" title="High availability - Alibaba Cloud">阿里云文档</a>。然后，在 Elasticsearch 的集群中，可以通过 allocation awareness attributes 设置集群的分片分配策略。比如在每个集群节点的配置文件 <code class="language-plaintext highlighter-rouge">elasticsearch.yml</code> 中以下配置</p>
-
-<div class="language-yml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="s">node.attr.availabilityzone</span><span class="pi">:</span> <span class="s">az1</span>
-<span class="s">cluster.routing.allocation.awareness.attributes</span><span class="pi">:</span> <span class="s">availabilityzone</span>
-</code></pre></div></div>
-
-<p>可以设置节点在可用区 az1 / az2 / az3 等。具体操作可以参考 Opster 公司的文章 <a href="https://opster.com/elasticsearch-glossary/elasticsearch-zone-awareness/" title="Setting Up Zone Awareness for Shard Allocation in Elasticsearch">Setting Up Zone Awareness for Shard Allocation in Elasticsearch</a>。</p>
-
-<h2 id="比较">比较</h2>
-
-<p>下面让我们比较以下每个方案的好处以及一些不足之处。</p>
+<p>Elasticsearch 中不同的设置可以应用到不同的范围。</p>
 
 <table>
   <thead>
     <tr>
-      <th style="text-align: left">方案</th>
-      <th style="text-align: left">好处</th>
-      <th style="text-align: left">坏处/不足</th>
+      <th style="text-align: left">范围</th>
+      <th style="text-align: left">API</th>
+      <th style="text-align: left">描述</th>
     </tr>
   </thead>
   <tbody>
     <tr>
-      <td style="text-align: left">增加副本</td>
-      <td style="text-align: left">操作简单快捷</td>
-      <td style="text-align: left">降低集群利用率，提高运营成本高。</td>
+      <td style="text-align: left">集群</td>
+      <td style="text-align: left"><code class="language-plaintext highlighter-rouge">/_cluster/settings</code></td>
+      <td style="text-align: left">这些设置会被应用到整个集群的所有节点，比如集群分片分配和路由（<a href="https://www.elastic.co/guide/en/elasticsearch/reference/7.x/modules-cluster.html" title="cluster-level shard allocation and routing">cluster-level shard allocation and routing settings</a>）就属于集群级别的设置。</td>
     </tr>
     <tr>
-      <td style="text-align: left">快照和恢复</td>
-      <td style="text-align: left">容灾性强、价格实惠</td>
-      <td style="text-align: left">前期设置复杂、只能在特定云平台使用、对于没有快照的数据无法恢复。</td>
+      <td style="text-align: left">索引/数据流/别名</td>
+      <td style="text-align: left"><code class="language-plaintext highlighter-rouge">/{target}/_settings</code></td>
+      <td style="text-align: left">这些设置会被应用到被选中的目标。目标可以是一个或者多个索引（index）、数据流（data stream）、别名（alias）。多个目标中间需要用逗号隔开。</td>
     </tr>
     <tr>
-      <td style="text-align: left">RAID 磁盘阵列</td>
-      <td style="text-align: left">有效防止磁盘损坏</td>
-      <td style="text-align: left">只对单机有效。降低集群利用率，提高运营成本高。无法应对非磁盘故障、机房灾难性故障。</td>
+      <td style="text-align: left">节点</td>
+      <td style="text-align: left">-</td>
+      <td style="text-align: left">配置节点（node）主要指的是配置节点的角色：master / data / ingest / ml / … 这个可以通过修改配置文件 <code class="language-plaintext highlighter-rouge">elasticsearch.yml</code> 实现。</td>
     </tr>
     <tr>
-      <td style="text-align: left">MQ 整合</td>
-      <td style="text-align: left">容灾性强、暂存未写入 ES 的数据、暂存未快照数据、适合大数据场景</td>
-      <td style="text-align: left">系统复杂度高、运维成本高</td>
-    </tr>
-    <tr>
-      <td style="text-align: left">主副分片存放不同节点</td>
-      <td style="text-align: left">操作简单快捷</td>
-      <td style="text-align: left">可能不适用于小集群，导致分片无法分配</td>
-    </tr>
-    <tr>
-      <td style="text-align: left">多可用区</td>
-      <td style="text-align: left">容灾性强</td>
-      <td style="text-align: left">需要结合云供应商配置</td>
+      <td style="text-align: left">快照仓库（需要安装插件）</td>
+      <td style="text-align: left"><code class="language-plaintext highlighter-rouge">/_snapshot/{repository}</code></td>
+      <td style="text-align: left">插件也有自己的设置。比如快照仓库插件（snapshot repository plugin）就对于每个快照仓库提供设置，比如仓库位置、快照创建速度、快照恢复速度等。</td>
     </tr>
   </tbody>
 </table>
+
+<h2 id="集群设置">集群设置</h2>
+
+<p><a href="https://www.elastic.co/guide/en/elasticsearch/reference/7.x/cluster-update-settings.html">https://www.elastic.co/guide/en/elasticsearch/reference/7.x/cluster-update-settings.html</a></p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>GET /_cluster/settings
+PUT /_cluster/settings
+</code></pre></div></div>
+
+<p>集群的设置可以是：</p>
+
+<ol>
+  <li>持久的（persistent），也就是在整个集群重启以后依然有效</li>
+  <li>暂时的（transient），也就是在整个集群重启以后无效</li>
+</ol>
+
+<p>persistent 设置的例子（JSON 以 “persistent” 开头）：</p>
+
+<div class="language-json highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">{</span><span class="w">
+  </span><span class="nl">"persistent"</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w">
+    </span><span class="nl">"indices"</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w">
+      </span><span class="nl">"recovery"</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w">
+        </span><span class="nl">"max_bytes_per_sec"</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="s2">"20mb"</span><span class="w">
+      </span><span class="p">}</span><span class="w">
+    </span><span class="p">}</span><span class="w">
+  </span><span class="p">}</span><span class="w">
+</span><span class="p">}</span><span class="w">
+</span></code></pre></div></div>
+
+<p>transient 设置的例子（JSON 以 “transient” 开头）：</p>
+
+<div class="language-json highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">{</span><span class="w">
+  </span><span class="nl">"transient"</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w">
+    </span><span class="nl">"indices"</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w">
+      </span><span class="nl">"recovery"</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w">
+        </span><span class="nl">"max_bytes_per_sec"</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="s2">"20mb"</span><span class="w">
+      </span><span class="p">}</span><span class="w">
+    </span><span class="p">}</span><span class="w">
+  </span><span class="p">}</span><span class="w">
+</span><span class="p">}</span><span class="w">
+</span></code></pre></div></div>
+
+<p>集群设置的载入优先级：</p>
+
+<ol>
+  <li>transient 集群设置</li>
+  <li>persistent 集群设置</li>
+  <li>配置文件 <code class="language-plaintext highlighter-rouge">elasticsearch.yml</code> 中的设置</li>
+  <li>默认设置</li>
+</ol>
+
+<p>根据官方文档 <a href="https://www.elastic.co/guide/en/elasticsearch/reference/7.x/cluster-update-settings.html" title="Cluster update settings API">Cluster update settings API</a> 的说法，集群级别的设置建议通过 <code class="language-plaintext highlighter-rouge">settings</code> API 来设定。仅用文件 <code class="language-plaintext highlighter-rouge">elasticsearch.yml</code> 来处理本地配置。这样，你可以保证集群所有节点的配置都是一样的。不然的话，你可能会意外地在不同的节点设置了不同的配置，而且这样的差异非常难被察觉。</p>
+
+<p>集群设置分为静态和动态两种类型：</p>
+
+<table>
+  <thead>
+    <tr>
+      <th style="text-align: left">类型</th>
+      <th style="text-align: left">描述</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td style="text-align: left">静态（static）</td>
+      <td style="text-align: left">这些设置只有在未被启动或者已经关机的节点上被应用，通过 <code class="language-plaintext highlighter-rouge">elasticsearch.yml</code> 配置。每一个节点都要被单独设置。</td>
+    </tr>
+    <tr>
+      <td style="text-align: left">动态（dynamic）</td>
+      <td style="text-align: left">这些设置可以在一个正在运行的集群中，通过 Cluster update settings API 被修改。</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>静态和动态类型的设置举例：</p>
+
+<p><img src="/assets/20210821-type-of-settings.png" alt="静态和动态类型举例" /></p>
+
+<p>Elasticsearch 有很多可以自定义的集群设置：安全设置、分片分配和路由设置、索引生命周期（ILM）设置、日志设置、网络设置等。这里不展开，具体可以查看官方文档 <a href="https://www.elastic.co/guide/en/elasticsearch/reference/7.x/settings.html" title="Configuring Elasticsearch">Configuring Elasticsearch</a> 以及它相关的子页面。</p>
+
+<h2 id="索引设置">索引设置</h2>
+
+<p><a href="https://www.elastic.co/guide/en/elasticsearch/reference/7.x/indices-update-settings.html">https://www.elastic.co/guide/en/elasticsearch/reference/7.x/indices-update-settings.html</a></p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>GET /{target}/_settings
+PUT /{target}/_settings
+</code></pre></div></div>
+
+<p>这些设置会被应用到被选中的目标。目标可以是一个或者多个索引（index）、数据流（data stream）、别名（alias）。多个目标中间需要用逗号 <code class="language-plaintext highlighter-rouge">,</code> 隔开。</p>
+
+<p>索引设置分为静态和动态两种类型：</p>
+
+<table>
+  <thead>
+    <tr>
+      <th style="text-align: left">类型</th>
+      <th style="text-align: left">描述</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td style="text-align: left">静态（static）</td>
+      <td style="text-align: left">这些设置只有在索引创建时或者在索引关闭以后才可以被修改。</td>
+    </tr>
+    <tr>
+      <td style="text-align: left">动态（dynamic）</td>
+      <td style="text-align: left">这些设置可以在一个正在被使用（live）索引中通过 update-index-settings API 被修改。</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>Elasticsearch 有很多可以自定义的索引设置：分片数量、压缩方式、启动检查、refresh 等。这里不展开，具体可以查看官方文档 <a href="https://www.elastic.co/guide/en/elasticsearch/reference/7.x/index-modules.html" title="Index modules">Index modules</a>。</p>
+
+<h2 id="节点设置">节点设置</h2>
+
+<p><a href="https://www.elastic.co/guide/en/elasticsearch/reference/7.x/modules-node.html">https://www.elastic.co/guide/en/elasticsearch/reference/7.x/modules-node.html</a></p>
+
+<p>配置节点（node）主要指的是配置节点的角色：master / data / ingest / ml / … 这个可以通过修改配置文件 <code class="language-plaintext highlighter-rouge">elasticsearch.yml</code> 实现。最重要的几个角色应该是：master-eligible 节点（参与 master 竞选，对于维持集群存在至关重要）、data 节点（存储数据）、coordinating-only 节点（专门协调任务，类似负载平衡）。详情上方的见官方文档。</p>
+
+<p>在配置文件 <code class="language-plaintext highlighter-rouge">elasticsearch.yml</code> 中，将一个节点设为数据节点：</p>
+
+<div class="language-yml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="s">node.data</span><span class="pi">:</span> <span class="no">true</span>
+</code></pre></div></div>
+
+<h2 id="curl-用法举例">curl 用法举例</h2>
+
+<p>在上面的文章中，我们看了不同类型的设置。可是在实际工作中，明白它们的类型并不够。你很可能需要查询、更新、删除一些设置来满足你的实际需要。下面，我们来看看如何用 curl 来操作动态的集群和索引设定。</p>
+
+<p>集群级别设置举例：</p>
+
+<div class="language-sh highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># list cluster-wide settings (explicitly defined)</span>
+curl <span class="s2">"localhost:9200/_cluster/settings"</span>
+
+<span class="c"># list cluster-wide settings (explicitly defined) in flat format</span>
+curl <span class="s2">"localhost:9200/_cluster/settings?flat_settings"</span>
+
+<span class="c"># list cluster-wide settings (including defaults)</span>
+curl <span class="s2">"localhost:9200/_cluster/settings?include_defaults"</span>
+
+<span class="c"># list cluster-wide settings (including defaults) in flat format</span>
+curl <span class="s2">"localhost:9200/_cluster/settings?include_defaults&amp;flat_settings"</span>
+
+<span class="c"># update a cluster-wide setting</span>
+curl <span class="nt">-X</span> PUT <span class="s2">"localhost:9200/_cluster/settings"</span> <span class="nt">-H</span> <span class="s1">'Content-Type: application/json'</span> <span class="nt">-d</span><span class="s1">'
+{
+  "persistent.indices.recovery.max_bytes_per_sec": "50mb"
+}
+'</span>
+
+<span class="c"># reset a cluster-wide setting to the default value</span>
+curl <span class="nt">-X</span> PUT <span class="s2">"localhost:9200/_cluster/settings"</span> <span class="nt">-H</span> <span class="s1">'Content-Type: application/json'</span> <span class="nt">-d</span><span class="s1">'
+{
+  "persistent.indices.recovery.max_bytes_per_sec": null
+}
+'</span>
+</code></pre></div></div>
+
+<p>索引级别设置举例：</p>
+
+<div class="language-sh highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># list index-wide settings (explicitly defined)</span>
+curl <span class="s2">"localhost:9200/index1/_settings"</span>
+
+<span class="c"># list index-wide settings (explicitly defined) for index1 and index2</span>
+curl <span class="s2">"localhost:9200/index1,index2/_settings"</span>
+
+<span class="c"># list index-wide settings (explicitly defined) for indices starting with "index"</span>
+curl <span class="s2">"localhost:9200/index*/_settings"</span>
+
+<span class="c"># list index-wide settings (explicitly defined) for all indices</span>
+curl <span class="s2">"localhost:9200/_all/_settings"</span>
+
+<span class="c"># list index-wide settings (explicitly defined) in flat format</span>
+curl <span class="s2">"localhost:9200/index1/_settings?flat_settings"</span>
+
+<span class="c"># list index-wide settings (including defaults)</span>
+curl <span class="s2">"localhost:9200/index1/_settings?include_defaults"</span>
+
+<span class="c"># list index-wide settings (including defaults) in flat format</span>
+curl <span class="s2">"localhost:9200/index1/_settings?include_defaults&amp;flat_settings"</span>
+
+<span class="c"># update an index-wide setting for index1</span>
+curl <span class="nt">-X</span> PUT <span class="s2">"localhost:9200/index1/_settings"</span> <span class="nt">-H</span> <span class="s1">'Content-Type: application/json'</span> <span class="nt">-d</span><span class="s1">'
+{
+  "index": {
+    "number_of_replicas": 2
+  }
+}
+'</span>
+
+<span class="c"># reset an index-wide setting to the default value</span>
+curl <span class="nt">-X</span> PUT <span class="s2">"localhost:9200/index1/_settings"</span> <span class="nt">-H</span> <span class="s1">'Content-Type: application/json'</span> <span class="nt">-d</span><span class="s1">'
+{
+  "index": {
+    "refresh_interval": null
+  }
+}
+'</span>
+</code></pre></div></div>
+
+<p>对于静态的索引设置，需要先关闭索引，修改设置，再启动：</p>
+
+<div class="language-sh highlighter-rouge"><div class="highlight"><pre class="highlight"><code>curl <span class="nt">-X</span> POST <span class="s2">"localhost:9200/index1/_close?wait_for_active_shards=0"</span>
+
+curl <span class="nt">-X</span> PUT <span class="s2">"localhost:9200/index1/_settings"</span> <span class="nt">-H</span> <span class="s1">'Content-Type: application/json'</span> <span class="nt">-d</span><span class="s1">'
+{
+  "analysis": {
+    "analyzer": {
+      "content": {
+        "type": "custom",
+        "tokenizer": "whitespace"
+      }
+    }
+  }
+}
+'</span>
+
+curl <span class="nt">-X</span> POST <span class="s2">"localhost:9200/index1/_open"</span>
+</code></pre></div></div>
 
 <h2 id="扩展">扩展</h2>
 
 <p>如何从这篇文章中拓展出去？</p>
 
-<p>这篇文章的重点是防止数据丢失的方式，而不是出现问题后的故障排查。但是故障排查也是很重要的部分，对这方面有兴趣的朋友可以看看铭毅天下的博文<a href="https://blog.csdn.net/laoyang360/article/details/109699085" title="Elasticsearch 集群故障排查及修复指南">Elasticsearch 集群故障排查及修复指南</a>或者由 Ali Beyad 写的 Elastic 官方博文 <a href="https://www.elastic.co/blog/red-elasticsearch-cluster-panic-no-longer">RED Elasticsearch Cluster? Panic no longer</a>。</p>
+<ul>
+  <li>如果你想知道更多的关于集群设置的信息，请查看官方文档 <a href="https://www.elastic.co/guide/en/elasticsearch/reference/7.x/settings.html" title="Configuring Elasticsearch">Configuring Elasticsearch</a> 以及它相关的子页面。</li>
+  <li>如果你想知道更多的关于节点设置的信息，请查看官方文档 <a href="https://www.elastic.co/guide/en/elasticsearch/reference/7.x/modules-node.html" title="Configuring Elasticsearch &gt; Node">Configuring Elasticsearch &gt; Node</a>。</li>
+  <li>如果你想知道更多的关于索引设置的信息，请查看官方文档 <a href="https://www.elastic.co/guide/en/elasticsearch/reference/7.x/index-modules.html" title="Index modules">Index modules</a>。</li>
+  <li>当使用 <code class="language-plaintext highlighter-rouge">curl</code> 来查询或者修改 Elasticsearch 的设置的时候，建议配合命令 <code class="language-plaintext highlighter-rouge">jq</code> 使用。它可以帮助你快速修改 JSON 内容，得到你需要的结果。</li>
+</ul>
 
 <h2 id="结论">结论</h2>
 
-<p>在本文中，我们看到了在 Elasticsearch 中几个提高数据可靠性的实战方案，包括：提高副本分片数、快照与恢复、使用 RAID 磁盘阵列、结合 Kafka 等 MQ 技术使用、主副分片存不同节点、以及避免使用单一可用区。最后，文章比较了它们的好与坏，还分享了一些让大家拓展出去的资源。希望这篇文章能够给你带来一些思考，让你的 Elasticsearch 集群更加高效可用。如果你有兴趣了解更多的资讯，欢迎关注我的 GitHub 账号 <a href="https://github.com/mincong-h" title="GitHub">mincong-h</a> 或者微信订阅号【码农小黄】。谢谢大家！</p>
+<p>在本文中，我们看到了 Elasticsearch 中的集群设置、节点设置、索引设置。我们讨论了设置的加载顺序。我们看到设置分为静态动态两种：静态设置需要在静止状态下修改，动态设置则可以在运行状态下直接通过 API 修改。我们也看到了如何在官方文档中识别静态和动态的设置。我们还通过 curl 列举了一些常用的命令。最后，我还分享了一些让大家拓展出去的资源。希望这篇文章能够给你带来一些思考，让你对 Elasticsearch 有进一步的了解。如果你有兴趣了解更多的资讯，欢迎关注我的 GitHub 账号 <a href="https://github.com/mincong-h" title="GitHub">mincong-h</a> 或者微信订阅号【码农小黄】。谢谢大家！</p>
 
 <h2 id="参考文献">参考文献</h2>
 
 <ul>
-  <li>Elastic，<a href="https://www.elastic.co/guide/cn/elasticsearch/guide/current/index.html" title="Elasticsearch: 权威指南">“Elasticsearch: 权威指南”</a>，2021 年。</li>
-  <li>Elastic，<a href="https://www.elastic.co/guide/en/elasticsearch/plugins/7.x/repository.html">“Snapshot/Restore Repository Plugins”</a>，2021 年。</li>
-  <li>慕课网，<a href="https://zhuanlan.zhihu.com/p/51170719">RAID磁盘阵列是什么（一看就懂）</a>，2018 年。</li>
+  <li>Opster Team, “Elasticsearch Settings”, <em>Opster</em>, 2021. <a href="https://opster.com/elasticsearch-glossary/elasticsearch-settings/">https://opster.com/elasticsearch-glossary/elasticsearch-settings/</a></li>
+  <li>Elasticsearch, “Index modules”, <em>Elastic</em>, 2021. <a href="https://www.elastic.co/guide/en/elasticsearch/reference/7.x/index-modules.html">https://www.elastic.co/guide/en/elasticsearch/reference/7.x/index-modules.html</a></li>
+  <li>Elasticsearch, “Node”, <em>Elastic</em>, 2021. <a href="https://www.elastic.co/guide/en/elasticsearch/reference/7.x/modules-node.html">https://www.elastic.co/guide/en/elasticsearch/reference/7.x/modules-node.html</a></li>
+  <li>Elasticsearch, “Configuring Elasticsearch”, <em>Elastic</em>, 2021. <a href="https://www.elastic.co/guide/en/elasticsearch/reference/7.x/settings.html">https://www.elastic.co/guide/en/elasticsearch/reference/7.x/settings.html</a></li>
+  <li>Vincent Duan, “Elasticsearch Transient 与 Persistent 的区别”, <em>CSDN</em>, 2020. <a href="https://blog.csdn.net/vincent_duan/article/details/103927725">https://blog.csdn.net/vincent_duan/article/details/103927725</a></li>
 </ul>
 
 <!--
  WeChat:
-   写作不易，希望大家点个赞、点个在看支持一下，谢谢！
+   写作不易，希望大家点个赞、点个在看支持一下，谢谢(花)
    ![](https://mincong.io/assets/wechat-QR-code.jpg)
 
  CSDN:
    ![扫码关注](https://img-blog.csdnimg.cn/img_convert/f07c6cc9272c721180bad20c599e4ff7.png#pic_center =600x333)
 -->
-</div><section class="article__sharing d-print-none"></section><div class="d-print-none"><footer class="article__footer"><span>更新于
-      <time itemprop="dateModified" datetime="2021-08-10T07:31:50+02:00">2021年 08月10日</time>
-    </span><!-- start custom article footer snippet -->
+</div><section class="article__sharing d-print-none"></section><div class="d-print-none"><footer class="article__footer"><meta itemprop="dateModified" content="2021-08-21T18:07:13+02:00"><!-- start custom article footer snippet -->
 
 <!-- end custom article footer snippet -->
 <div class="article__subscribe"><div class="subscribe">
@@ -611,7 +723,7 @@
       </a>
     </p>
   </div></div></footer>
-<div class="article__section-navigator clearfix"><div class="previous"><span>上篇</span><a href="/cn/elasticsearch-indexing-strategy-in-asset-management-platform-amp/">Netflix 资产管理平台 (AMP) 中的 Elasticsearch 索引策略</a></div><div class="next"><span>下篇</span><a href="/cn/elasticsearch-settings/">一文了解 Elasticsearch 设置</a></div></div></div>
+<div class="article__section-navigator clearfix"><div class="previous"><span>上篇</span><a href="/cn/prevent-data-loss-in-elasticsearch/">如何防止 Elasticsearch 中的数据丢失？</a></div></div></div>
 
 </div>
 
@@ -646,8 +758,8 @@
   *  RECOMMENDED CONFIGURATION VARIABLES: EDIT AND UNCOMMENT THE SECTION BELOW TO INSERT DYNAMIC VALUES FROM YOUR PLATFORM OR CMS.
   *  LEARN WHY DEFINING THESE VARIABLES IS IMPORTANT: https://disqus.com/admin/universalcode/#configuration-variables*/
   var disqus_config = function () {
-    this.page.url = 'https://mincong.io/cn/prevent-data-loss-in-elasticsearch/';
-    this.page.identifier = '/cn/prevent-data-loss-in-elasticsearch';
+    this.page.url = 'https://mincong.io/cn/elasticsearch-settings/';
+    this.page.identifier = '/cn/elasticsearch-settings';
   };
   (function() { // DON'T EDIT BELOW THIS LINE
     var d = document, s = d.createElement('script');
