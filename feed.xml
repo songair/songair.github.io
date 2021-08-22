@@ -1,5 +1,298 @@
-<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" xml:lang="en"><generator uri="https://jekyllrb.com/" version="4.2.0">Jekyll</generator><link href="https://mincong.io/feed.xml" rel="self" type="application/atom+xml" /><link href="https://mincong.io/" rel="alternate" type="text/html" hreflang="en" /><updated>2021-08-22T17:10:52+02:00</updated><id>https://mincong.io/feed.xml</id><title type="html">Mincong Huang</title><subtitle>Hi, welcome to my blog! I'm a software engineer at Datadog. I write blog posts in my free time. My blogs are bits and pieces of my tech journey. Most of them are related to Java. Hope you enjoy them! My opinions are my own, not Datadog's. This blog is powered by Jekyll, a simple, blog-aware, static sites solution.
-</subtitle><author><name>Mincong Huang</name><email>mincong.h@gmail.com</email></author><entry xml:lang="en"><title type="html">How to prevent data loss in Elasticsearch?</title><link href="https://mincong.io/en/prevent-data-loss-in-elasticsearch/" rel="alternate" type="text/html" title="How to prevent data loss in Elasticsearch?" /><published>2021-07-31T09:50:49+02:00</published><updated>2021-07-31T09:50:49+02:00</updated><id>https://mincong.io/en/prevent-data-loss-in-elasticsearch</id><content type="html" xml:base="https://mincong.io/en/prevent-data-loss-in-elasticsearch/">&lt;p class=&quot;info&quot;&gt;This article is translated with Google Translate and reviewed by Mincong.&lt;/p&gt;
+<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" xml:lang="en"><generator uri="https://jekyllrb.com/" version="4.2.0">Jekyll</generator><link href="https://mincong.io/feed.xml" rel="self" type="application/atom+xml" /><link href="https://mincong.io/" rel="alternate" type="text/html" hreflang="en" /><updated>2021-08-22T18:35:13+02:00</updated><id>https://mincong.io/feed.xml</id><title type="html">Mincong Huang</title><subtitle>Hi, welcome to my blog! I'm a software engineer at Datadog. I write blog posts in my free time. My blogs are bits and pieces of my tech journey. Most of them are related to Java. Hope you enjoy them! My opinions are my own, not Datadog's. This blog is powered by Jekyll, a simple, blog-aware, static sites solution.
+</subtitle><author><name>Mincong Huang</name><email>mincong.h@gmail.com</email></author><entry xml:lang="en"><title type="html">Elasticsearch Settings</title><link href="https://mincong.io/en/elasticsearch-settings/" rel="alternate" type="text/html" title="Elasticsearch Settings" /><published>2021-08-21T18:07:13+02:00</published><updated>2021-08-21T18:07:13+02:00</updated><id>https://mincong.io/en/elasticsearch-settings</id><content type="html" xml:base="https://mincong.io/en/elasticsearch-settings/">&lt;p class=&quot;info&quot;&gt;This article is translated with Google Translate and reviewed by Mincong.&lt;/p&gt;
+
+&lt;h2 id=&quot;introduction&quot;&gt;Introduction&lt;/h2&gt;
+
+&lt;p&gt;If you are using an Elasticsearch cluster, you will probably need to configure it. No matter what your use-case is, no matter which position you hold in the company, as long as you use Elasticsearch, you always need to have a certain understanding of its configuration, and adjust them to better meet your needs. But on the other hand, there are so many settings of Elasticsearch that it is a little bit difficult to start. So I want to write this article to discuss with you how to understand the different types of settings of Elasticsearch. After reading this article, you will understand:&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;The scope of settings (cluster, index, node, snapshot repository, etc.)&lt;/li&gt;
+  &lt;li&gt;Cluster settings&lt;/li&gt;
+  &lt;li&gt;Index settings&lt;/li&gt;
+  &lt;li&gt;Node settings&lt;/li&gt;
+  &lt;li&gt;curl usage examples&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;This article is based on Elasticsearch 7, the specific content may be slightly different from the version you are using. Now, let’s get started!&lt;/p&gt;
+
+&lt;h2 id=&quot;scope-of-settings&quot;&gt;Scope Of Settings&lt;/h2&gt;
+
+&lt;p&gt;Different settings in Elasticsearch can be applied to different scopes.&lt;/p&gt;
+
+&lt;table&gt;
+  &lt;thead&gt;
+    &lt;tr&gt;
+      &lt;th style=&quot;text-align: left&quot;&gt;Scope&lt;/th&gt;
+      &lt;th style=&quot;text-align: left&quot;&gt;API&lt;/th&gt;
+      &lt;th&gt;Description&lt;/th&gt;
+    &lt;/tr&gt;
+  &lt;/thead&gt;
+  &lt;tbody&gt;
+    &lt;tr&gt;
+      &lt;td style=&quot;text-align: left&quot;&gt;Cluster&lt;/td&gt;
+      &lt;td style=&quot;text-align: left&quot;&gt;&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;/_cluster/settings&lt;/code&gt;&lt;/td&gt;
+      &lt;td&gt;These settings will be applied to all nodes in the entire cluster, for example, (&lt;a href=&quot;https://www.elastic.co /guide/en/elasticsearch/reference/7.x/modules-cluster.html&quot; title=&quot;cluster-level shard allocation and routing&quot;&gt;cluster-level shard allocation and routing settings&lt;/a&gt;) are cluster-level settings.&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td style=&quot;text-align: left&quot;&gt;Index / Data stream / Alias ​​&lt;/td&gt;
+      &lt;td style=&quot;text-align: left&quot;&gt;&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;/{target}/_settings&lt;/code&gt;&lt;/td&gt;
+      &lt;td&gt;These settings will be applied to the selected target. The target can be one or more indexes, data streams. Multiple targets need to be separated by commas.&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td style=&quot;text-align: left&quot;&gt;Node&lt;/td&gt;
+      &lt;td style=&quot;text-align: left&quot;&gt;-&lt;/td&gt;
+      &lt;td&gt;The node settings mainly refer to the configuration of the role of the node: master / data / ingest / ml / … This can be achieved by modifying the configuration file &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;elasticsearch.yml&lt;/code&gt;.&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td style=&quot;text-align: left&quot;&gt;Snapshot repository (plugin required)&lt;/td&gt;
+      &lt;td style=&quot;text-align: left&quot;&gt;&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;/_snapshot/{repository}&lt;/code&gt;&lt;/td&gt;
+      &lt;td&gt;Plugins also have their own settings. For example, the snapshot repository plugin provides settings for each snapshot repository, such as the location of the repository, the speed of snapshot creation, and the speed of snapshot restore.&lt;/td&gt;
+    &lt;/tr&gt;
+  &lt;/tbody&gt;
+&lt;/table&gt;
+
+&lt;h2 id=&quot;cluster-settings&quot;&gt;Cluster Settings&lt;/h2&gt;
+
+&lt;p&gt;&lt;a href=&quot;https://www.elastic.co/guide/en/elasticsearch/reference/7.x/cluster-update-settings.html&quot;&gt;https://www.elastic.co/guide/en/elasticsearch/reference/7.x/cluster-update-settings.html&lt;/a&gt;&lt;/p&gt;
+
+&lt;div class=&quot;language-plaintext highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;GET /_cluster/settings
+PUT /_cluster/settings
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;The cluster settings can be:&lt;/p&gt;
+
+&lt;ol&gt;
+  &lt;li&gt;Persistent, which is still valid after the entire cluster restarts&lt;/li&gt;
+  &lt;li&gt;Transient, that is, invalid after the entire cluster restarts&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;Examples of persistent settings (JSON starts with “persistent”):&lt;/p&gt;
+
+&lt;div class=&quot;language-json highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;
+  &lt;/span&gt;&lt;span class=&quot;nl&quot;&gt;&quot;persistent&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;
+    &lt;/span&gt;&lt;span class=&quot;nl&quot;&gt;&quot;indices&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;
+      &lt;/span&gt;&lt;span class=&quot;nl&quot;&gt;&quot;recovery&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;
+        &lt;/span&gt;&lt;span class=&quot;nl&quot;&gt;&quot;max_bytes_per_sec&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;20mb&quot;&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;
+      &lt;/span&gt;&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;
+    &lt;/span&gt;&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;
+  &lt;/span&gt;&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;
+&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;
+&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;Example of transient setting (JSON starts with “transient”):&lt;/p&gt;
+
+&lt;div class=&quot;language-json highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;
+  &lt;/span&gt;&lt;span class=&quot;nl&quot;&gt;&quot;transient&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;
+    &lt;/span&gt;&lt;span class=&quot;nl&quot;&gt;&quot;indices&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;
+      &lt;/span&gt;&lt;span class=&quot;nl&quot;&gt;&quot;recovery&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;
+        &lt;/span&gt;&lt;span class=&quot;nl&quot;&gt;&quot;max_bytes_per_sec&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;20mb&quot;&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;
+      &lt;/span&gt;&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;
+    &lt;/span&gt;&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;
+  &lt;/span&gt;&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;
+&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;
+&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;Precedence of cluster settings:&lt;/p&gt;
+
+&lt;ol&gt;
+  &lt;li&gt;transient cluster settings&lt;/li&gt;
+  &lt;li&gt;Persistent cluster settings&lt;/li&gt;
+  &lt;li&gt;Settings in the configuration file &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;elasticsearch.yml&lt;/code&gt;&lt;/li&gt;
+  &lt;li&gt;Default settings&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;According to the official documentation &lt;a href=&quot;https://www.elastic.co/guide/en/elasticsearch/reference/7.x/cluster-update-settings.html&quot; title=&quot;Cluster update settings API&quot;&gt;Cluster update settings API&lt;/a&gt;, the cluster-wide settings are recommended to be set through the &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;settings&lt;/code&gt; API. Only use the file &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;elasticsearch.yml&lt;/code&gt; to handle local configuration. In this way, you can ensure that the configuration of all nodes in the cluster is the same. Otherwise, you may accidentally set different configurations on different nodes, and such differences are very difficult to detect.&lt;/p&gt;
+
+&lt;p&gt;There are two types of cluster settings: static and dynamic:&lt;/p&gt;
+
+&lt;table&gt;
+  &lt;thead&gt;
+    &lt;tr&gt;
+      &lt;th style=&quot;text-align: left&quot;&gt;Type&lt;/th&gt;
+      &lt;th style=&quot;text-align: left&quot;&gt;Description&lt;/th&gt;
+    &lt;/tr&gt;
+  &lt;/thead&gt;
+  &lt;tbody&gt;
+    &lt;tr&gt;
+      &lt;td style=&quot;text-align: left&quot;&gt;Static&lt;/td&gt;
+      &lt;td style=&quot;text-align: left&quot;&gt;These settings are only applied on nodes that have not been started or have been shut down, and are configured by &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;elasticsearch.yml&lt;/code&gt;. Each node must be set individually.&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td style=&quot;text-align: left&quot;&gt;Dynamic&lt;/td&gt;
+      &lt;td style=&quot;text-align: left&quot;&gt;These settings can be modified in a running cluster through the cluster update settings API.&lt;/td&gt;
+    &lt;/tr&gt;
+  &lt;/tbody&gt;
+&lt;/table&gt;
+
+&lt;p&gt;Examples of static and dynamic settings:&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/assets/20210821-type-of-settings.png&quot; alt=&quot;Static and dynamic type example&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;Elasticsearch has many cluster-wide settings: security settings, shard allocation and routing settings, index lifecycle management (ILM) settings, logging settings, network settings, etc. We are not going into details here, but you can check the official documentation &lt;a href=&quot;https://www.elastic.co/guide/en/elasticsearch/reference/7.x/settings.html&quot; title=&quot;Configuring Elasticsearch&quot;&gt;Configuring Elasticsearch&lt;/a&gt; and its related subpages for more information.&lt;/p&gt;
+
+&lt;h2 id=&quot;index-settings&quot;&gt;Index Settings&lt;/h2&gt;
+
+&lt;p&gt;&lt;a href=&quot;https://www.elastic.co/guide/en/elasticsearch/reference/7.x/indices-update-settings.html&quot;&gt;https://www.elastic.co/guide/en/elasticsearch/reference/7.x/indices-update-settings.html&lt;/a&gt;&lt;/p&gt;
+
+&lt;div class=&quot;language-plaintext highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;GET /{target}/_settings
+PUT /{target}/_settings
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;These settings will be applied to the selected target. The target can be one or more indexes, data streams, alias. Multiple targets need to be separated by commas &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;,&lt;/code&gt;.&lt;/p&gt;
+
+&lt;p&gt;Index settings are divided into two types – static and dynamic:&lt;/p&gt;
+
+&lt;table&gt;
+  &lt;thead&gt;
+    &lt;tr&gt;
+      &lt;th style=&quot;text-align: left&quot;&gt;Type&lt;/th&gt;
+      &lt;th style=&quot;text-align: left&quot;&gt;Description&lt;/th&gt;
+    &lt;/tr&gt;
+  &lt;/thead&gt;
+  &lt;tbody&gt;
+    &lt;tr&gt;
+      &lt;td style=&quot;text-align: left&quot;&gt;Static&lt;/td&gt;
+      &lt;td style=&quot;text-align: left&quot;&gt;These settings can only be modified when the index is created or after the index is closed.&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td style=&quot;text-align: left&quot;&gt;Dynamic&lt;/td&gt;
+      &lt;td style=&quot;text-align: left&quot;&gt;These settings can be modified via the update-index-settings API in a live index.&lt;/td&gt;
+    &lt;/tr&gt;
+  &lt;/tbody&gt;
+&lt;/table&gt;
+
+&lt;p&gt;Elasticsearch has many index-wide settings: number of shards, compression method, startup check, refresh, etc. We are not going into details here, but you can check the official document &lt;a href=&quot;https://www.elastic.co/guide/en/elasticsearch/reference/7.x/index-modules.html&quot; title=&quot;Index modules&quot;&gt;Index modules&lt;/a&gt; for more details.&lt;/p&gt;
+
+&lt;h2 id=&quot;node-settings&quot;&gt;Node Settings&lt;/h2&gt;
+
+&lt;p&gt;&lt;a href=&quot;https://www.elastic.co/guide/en/elasticsearch/reference/7.x/modules-node.html&quot;&gt;https://www.elastic.co/guide/en/elasticsearch/reference/7.x/modules-node.html&lt;/a&gt;&lt;/p&gt;
+
+&lt;p&gt;The node settings mainly refer to the configuration of node’s role: master / data / ingest / ml / … This can be achieved by modifying the configuration file &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;elasticsearch.yml&lt;/code&gt;. The most important roles should be: master-eligible node (participating in the master election, which is vital to maintaining the existence of the cluster), data node (storing data), coordinating-only node (tasks coordination, similar to load balancing). See the official document above for details.&lt;/p&gt;
+
+&lt;p&gt;For example, in the configuration file &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;elasticsearch.yml&lt;/code&gt;, you can set a node as a data node:&lt;/p&gt;
+
+&lt;div class=&quot;language-yml highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;s&quot;&gt;node.data&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;no&quot;&gt;true&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;h2 id=&quot;curl-cheatsheet&quot;&gt;curl cheatsheet&lt;/h2&gt;
+
+&lt;p&gt;In the above article, we looked at different types of settings. But in actual work, it is not enough to just understand their types. You may need to query, update, or delete some settings to meet your actual needs. Next, let’s take a look at how to use curl to operate dynamic cluster and index settings.&lt;/p&gt;
+
+&lt;p&gt;Examples of cluster-level settings:&lt;/p&gt;
+
+&lt;div class=&quot;language-sh highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;c&quot;&gt;# list cluster-wide settings (explicitly defined)&lt;/span&gt;
+curl &lt;span class=&quot;s2&quot;&gt;&quot;localhost:9200/_cluster/settings&quot;&lt;/span&gt;
+
+&lt;span class=&quot;c&quot;&gt;# list cluster-wide settings (explicitly defined) in flat format&lt;/span&gt;
+curl &lt;span class=&quot;s2&quot;&gt;&quot;localhost:9200/_cluster/settings?flat_settings&quot;&lt;/span&gt;
+
+&lt;span class=&quot;c&quot;&gt;# list cluster-wide settings (including defaults)&lt;/span&gt;
+curl &lt;span class=&quot;s2&quot;&gt;&quot;localhost:9200/_cluster/settings?include_defaults&quot;&lt;/span&gt;
+
+&lt;span class=&quot;c&quot;&gt;# list cluster-wide settings (including defaults) in flat format&lt;/span&gt;
+curl &lt;span class=&quot;s2&quot;&gt;&quot;localhost:9200/_cluster/settings?include_defaults&amp;amp;flat_settings&quot;&lt;/span&gt;
+
+&lt;span class=&quot;c&quot;&gt;# update a cluster-wide setting&lt;/span&gt;
+curl &lt;span class=&quot;nt&quot;&gt;-X&lt;/span&gt; PUT &lt;span class=&quot;s2&quot;&gt;&quot;localhost:9200/_cluster/settings&quot;&lt;/span&gt; &lt;span class=&quot;nt&quot;&gt;-H&lt;/span&gt; &lt;span class=&quot;s1&quot;&gt;'Content-Type: application/json'&lt;/span&gt; &lt;span class=&quot;nt&quot;&gt;-d&lt;/span&gt;&lt;span class=&quot;s1&quot;&gt;'
+{
+  &quot;persistent.indices.recovery.max_bytes_per_sec&quot;: &quot;50mb&quot;
+}
+'&lt;/span&gt;
+
+&lt;span class=&quot;c&quot;&gt;# reset a cluster-wide setting to the default value&lt;/span&gt;
+curl &lt;span class=&quot;nt&quot;&gt;-X&lt;/span&gt; PUT &lt;span class=&quot;s2&quot;&gt;&quot;localhost:9200/_cluster/settings&quot;&lt;/span&gt; &lt;span class=&quot;nt&quot;&gt;-H&lt;/span&gt; &lt;span class=&quot;s1&quot;&gt;'Content-Type: application/json'&lt;/span&gt; &lt;span class=&quot;nt&quot;&gt;-d&lt;/span&gt;&lt;span class=&quot;s1&quot;&gt;'
+{
+  &quot;persistent.indices.recovery.max_bytes_per_sec&quot;: null
+}
+'&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;Example of index level setting:&lt;/p&gt;
+
+&lt;div class=&quot;language-sh highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;c&quot;&gt;# list index-wide settings (explicitly defined)&lt;/span&gt;
+curl &lt;span class=&quot;s2&quot;&gt;&quot;localhost:9200/index1/_settings&quot;&lt;/span&gt;
+
+&lt;span class=&quot;c&quot;&gt;# list index-wide settings (explicitly defined) for index1 and index2&lt;/span&gt;
+curl &lt;span class=&quot;s2&quot;&gt;&quot;localhost:9200/index1,index2/_settings&quot;&lt;/span&gt;
+
+&lt;span class=&quot;c&quot;&gt;# list index-wide settings (explicitly defined) for indices starting with &quot;index&quot;&lt;/span&gt;
+curl &lt;span class=&quot;s2&quot;&gt;&quot;localhost:9200/index*/_settings&quot;&lt;/span&gt;
+
+&lt;span class=&quot;c&quot;&gt;# list index-wide settings (explicitly defined) for all indices&lt;/span&gt;
+curl &lt;span class=&quot;s2&quot;&gt;&quot;localhost:9200/_all/_settings&quot;&lt;/span&gt;
+
+&lt;span class=&quot;c&quot;&gt;# list index-wide settings (explicitly defined) in flat format&lt;/span&gt;
+curl &lt;span class=&quot;s2&quot;&gt;&quot;localhost:9200/index1/_settings?flat_settings&quot;&lt;/span&gt;
+
+&lt;span class=&quot;c&quot;&gt;# list index-wide settings (including defaults)&lt;/span&gt;
+curl &lt;span class=&quot;s2&quot;&gt;&quot;localhost:9200/index1/_settings?include_defaults&quot;&lt;/span&gt;
+
+&lt;span class=&quot;c&quot;&gt;# list index-wide settings (including defaults) in flat format&lt;/span&gt;
+curl &lt;span class=&quot;s2&quot;&gt;&quot;localhost:9200/index1/_settings?include_defaults&amp;amp;flat_settings&quot;&lt;/span&gt;
+
+&lt;span class=&quot;c&quot;&gt;# update an index-wide setting for index1&lt;/span&gt;
+curl &lt;span class=&quot;nt&quot;&gt;-X&lt;/span&gt; PUT &lt;span class=&quot;s2&quot;&gt;&quot;localhost:9200/index1/_settings&quot;&lt;/span&gt; &lt;span class=&quot;nt&quot;&gt;-H&lt;/span&gt; &lt;span class=&quot;s1&quot;&gt;'Content-Type: application/json'&lt;/span&gt; &lt;span class=&quot;nt&quot;&gt;-d&lt;/span&gt;&lt;span class=&quot;s1&quot;&gt;'
+{
+  &quot;index&quot;: {
+    &quot;number_of_replicas&quot;: 2
+  }
+}
+'&lt;/span&gt;
+
+&lt;span class=&quot;c&quot;&gt;# reset an index-wide setting to the default value&lt;/span&gt;
+curl &lt;span class=&quot;nt&quot;&gt;-X&lt;/span&gt; PUT &lt;span class=&quot;s2&quot;&gt;&quot;localhost:9200/index1/_settings&quot;&lt;/span&gt; &lt;span class=&quot;nt&quot;&gt;-H&lt;/span&gt; &lt;span class=&quot;s1&quot;&gt;'Content-Type: application/json'&lt;/span&gt; &lt;span class=&quot;nt&quot;&gt;-d&lt;/span&gt;&lt;span class=&quot;s1&quot;&gt;'
+{
+  &quot;index&quot;: {
+    &quot;refresh_interval&quot;: null
+  }
+}
+'&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;For static index settings, you need to close the index first, modify the settings, and then start:&lt;/p&gt;
+
+&lt;div class=&quot;language-sh highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;curl &lt;span class=&quot;nt&quot;&gt;-X&lt;/span&gt; POST &lt;span class=&quot;s2&quot;&gt;&quot;localhost:9200/index1/_close?wait_for_active_shards=0&quot;&lt;/span&gt;
+
+curl &lt;span class=&quot;nt&quot;&gt;-X&lt;/span&gt; PUT &lt;span class=&quot;s2&quot;&gt;&quot;localhost:9200/index1/_settings&quot;&lt;/span&gt; &lt;span class=&quot;nt&quot;&gt;-H&lt;/span&gt; &lt;span class=&quot;s1&quot;&gt;'Content-Type: application/json'&lt;/span&gt; &lt;span class=&quot;nt&quot;&gt;-d&lt;/span&gt;&lt;span class=&quot;s1&quot;&gt;'
+{
+  &quot;analysis&quot;: {
+    &quot;analyzer&quot;: {
+      &quot;content&quot;: {
+        &quot;type&quot;: &quot;custom&quot;,
+        &quot;tokenizer&quot;: &quot;whitespace&quot;
+      }
+    }
+  }
+}
+'&lt;/span&gt;
+
+curl &lt;span class=&quot;nt&quot;&gt;-X&lt;/span&gt; POST &lt;span class=&quot;s2&quot;&gt;&quot;localhost:9200/index1/_open&quot;&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;h2 id=&quot;going-further&quot;&gt;Going further&lt;/h2&gt;
+
+&lt;p&gt;How to go further from this article?&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;If you want to know more about cluster settings, please check the official document &lt;a href=&quot;https://www.elastic.co/guide/en/elasticsearch/reference/7.x/settings.html&quot; title=&quot;Configuring Elasticsearch&quot;&gt;Configuring Elasticsearch&lt;/a&gt; and its related subpages.&lt;/li&gt;
+  &lt;li&gt;If you want to know more about node settings, please check the official document &lt;a href=&quot;https://www.elastic.co/guide/en/elasticsearch/reference/7.x/modules-node .html&quot; title=&quot;Configuring Elasticsearch&amp;gt; Node&quot;&gt;Configuring Elasticsearch&amp;gt; Node&lt;/a&gt;.&lt;/li&gt;
+  &lt;li&gt;If you want to know more about index settings, please check the official document &lt;a href=&quot;https://www.elastic.co/guide/en/elasticsearch/reference/7.x/index-modules.html&quot; title=&quot;Index modules&quot;&gt;Index modules&lt;/a&gt;.&lt;/li&gt;
+  &lt;li&gt;When using &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;curl&lt;/code&gt; to query or modify the settings of Elasticsearch, it is recommended to use it with the command &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;jq&lt;/code&gt;. It can help you quickly modify the JSON content and get the results you need.&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h2 id=&quot;conclusion&quot;&gt;Conclusion&lt;/h2&gt;
+
+&lt;p&gt;In this article, we saw cluster settings, node settings, and index settings in Elasticsearch. We discussed the precedence of the settings. We see that the settings are divided into two types: static and dynamic. Static settings need to be modified in a static state, and dynamic settings can be modified directly through the API in the running state. We saw how to identify static and dynamic settings in the official documentation. We also listed some commonly used commands through &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;curl&lt;/code&gt;. Finally, I also shared some resources so that you can go further from here. I hope this article can bring you some thoughts and give you a better understanding of Elasticsearch. You can subscribe to the &lt;a href=&quot;/feed.xml&quot;&gt;feed of my blog&lt;/a&gt;, follow me on &lt;a href=&quot;https://twitter.com/mincong_h&quot;&gt;Twitter&lt;/a&gt; or &lt;a href=&quot;https://github.com/mincong-h/&quot;&gt;GitHub&lt;/a&gt;. Hope you enjoy this article, see you the next time!&lt;/p&gt;
+
+&lt;h2 id=&quot;references&quot;&gt;References&lt;/h2&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;Opster Team, “Elasticsearch Settings”, &lt;em&gt;Opster&lt;/em&gt;, 2021. &lt;a href=&quot;https://opster.com/elasticsearch-glossary/elasticsearch-settings/&quot;&gt;https://opster.com/elasticsearch-glossary/elasticsearch-settings/&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;Elasticsearch, “Index modules”, &lt;em&gt;Elastic&lt;/em&gt;, 2021. &lt;a href=&quot;https://www.elastic.co/guide/en/elasticsearch/reference/7.x/index-modules.html&quot;&gt;https://www.elastic.co/guide/en/elasticsearch/reference/7.x/index-modules.html&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;Elasticsearch, “Node”, &lt;em&gt;Elastic&lt;/em&gt;, 2021. &lt;a href=&quot;https://www.elastic.co/guide/en/elasticsearch/reference/7.x/modules-node.html&quot;&gt;https://www.elastic.co/guide/en/elasticsearch/reference/7.x/modules-node.html&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;Elasticsearch, “Configuring Elasticsearch”, &lt;em&gt;Elastic&lt;/em&gt;, 2021. &lt;a href=&quot;https://www.elastic.co/guide/en/elasticsearch/reference/7.x/settings.html&quot;&gt;https://www.elastic.co/guide/en/elasticsearch/reference/7.x/settings.html&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;Vincent Duan, “The difference between Elasticsearch Transient and Persistent”, &lt;em&gt;CSDN&lt;/em&gt;, 2020. &lt;a href=&quot;https://blog.csdn.net/vincent_duan/article/details/103927725&quot;&gt;https://blog.csdn.net/vincent_duan/article/details/103927725&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;</content><author><name>Mincong Huang</name><email>mincong.h@gmail.com</email></author><category term="elasticsearch" /><category term="elasticsearch" /><summary type="html">This article describes the different types of settings of Elasticsearch: cluster settings, index settings, node settings, the difference between static and dynamic settings, and some commonly used curl commands.</summary><media:thumbnail xmlns:media="http://search.yahoo.com/mrss/" url="https://mincong.io/assets/bg-anthony-roberts-82wJ10pX1Fw-unsplash.jpg" /><media:content medium="image" url="https://mincong.io/assets/bg-anthony-roberts-82wJ10pX1Fw-unsplash.jpg" xmlns:media="http://search.yahoo.com/mrss/" /></entry><entry xml:lang="en"><title type="html">How to prevent data loss in Elasticsearch?</title><link href="https://mincong.io/en/prevent-data-loss-in-elasticsearch/" rel="alternate" type="text/html" title="How to prevent data loss in Elasticsearch?" /><published>2021-07-31T09:50:49+02:00</published><updated>2021-07-31T09:50:49+02:00</updated><id>https://mincong.io/en/prevent-data-loss-in-elasticsearch</id><content type="html" xml:base="https://mincong.io/en/prevent-data-loss-in-elasticsearch/">&lt;p class=&quot;info&quot;&gt;This article is translated with Google Translate and reviewed by Mincong.&lt;/p&gt;
 
 &lt;h2 id=&quot;introduction&quot;&gt;Introduction&lt;/h2&gt;
 
@@ -3527,528 +3820,4 @@ on &lt;a href=&quot;https://twitter.com/mincong_h&quot;&gt;Twitter&lt;/a&gt; or
 &lt;a href=&quot;https://www.baeldung.com/junit5-dynamic-tests&quot;&gt;https://www.baeldung.com/junit5-dynamic-tests&lt;/a&gt;&lt;/li&gt;
   &lt;li&gt;Satish Varma, “Junit 5 dynamic tests @TestFactory with examples”,
 &lt;em&gt;JavaByDeveloper&lt;/em&gt;, 2020. &lt;a href=&quot;https://javabydeveloper.com/junit-5-dynamic-tests-testfactory-with-examples/&quot;&gt;https://javabydeveloper.com/junit-5-dynamic-tests-testfactory-with-examples/&lt;/a&gt;&lt;/li&gt;
-&lt;/ul&gt;</content><author><name>Mincong Huang</name><email>mincong.h@gmail.com</email></author><category term="java-testing" /><category term="java" /><category term="junit" /><category term="junit5" /><category term="testing" /><summary type="html">How to write dynamic tests using @TestFactory in JUnit 5? This article explains the syntax, different return types, the test lifecycle, and potential use-cases.</summary><media:thumbnail xmlns:media="http://search.yahoo.com/mrss/" url="https://mincong.io/assets/bg-mike-kenneally-tNALoIZhqVM-unsplash.jpg" /><media:content medium="image" url="https://mincong.io/assets/bg-mike-kenneally-tNALoIZhqVM-unsplash.jpg" xmlns:media="http://search.yahoo.com/mrss/" /></entry><entry xml:lang="en"><title type="html">Making Backward-Compatible Schema Changes in MongoDB</title><link href="https://mincong.io/2021/02/27/mongodb-schema-compatibility/" rel="alternate" type="text/html" title="Making Backward-Compatible Schema Changes in MongoDB" /><published>2021-02-27T17:07:27+01:00</published><updated>2021-02-27T17:07:27+01:00</updated><id>https://mincong.io/2021/02/27/mongodb-schema-compatibility</id><content type="html" xml:base="https://mincong.io/2021/02/27/mongodb-schema-compatibility/">&lt;h2 id=&quot;introduction&quot;&gt;Introduction&lt;/h2&gt;
-
-&lt;p&gt;Changing the schema of a Mongo collection is a common request for developers. We
-need this when the business evolves: we need to add new fields or remove
-existing fields from a target Mongo collection to better support different
-use-cases. Nevertheless, this is a risky operation, it may trigger an incident or
-outage when this is not handled correctly. In this article, we are going to what
-can go wrong, how to change the schema safely, and how to investigate
-if things go wrong. This article assumes that you are familiar with the basic
-concepts of MongoDB and uses &lt;a href=&quot;https://github.com/FasterXML/jackson-databind&quot;&gt;Jackson&lt;/a&gt; as the serialization framework for your
-Java application.&lt;/p&gt;
-
-&lt;p&gt;After reading this article, you will understand:&lt;/p&gt;
-
-&lt;ul&gt;
-  &lt;li&gt;Potential risks when adding a new field&lt;/li&gt;
-  &lt;li&gt;Filling missing data with a default value&lt;/li&gt;
-  &lt;li&gt;Writing unit tests&lt;/li&gt;
-  &lt;li&gt;Migrating existing documents&lt;/li&gt;
-  &lt;li&gt;Preparing the worst case: how to revert changes&lt;/li&gt;
-  &lt;li&gt;Incident: how to mitigate using Mongo queries?&lt;/li&gt;
-  &lt;li&gt;How to go further from here?&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;p&gt;This article is written with MongoDB 4.2, Jackson 2.12, and Java 11. But the
-concepts are not tight to these versions and should be valid for older versions.
-Now, let’s get started!&lt;/p&gt;
-
-&lt;h2 id=&quot;potential-risks&quot;&gt;Potential Risks&lt;/h2&gt;
-
-&lt;p&gt;&lt;em&gt;What can go wrong when adding a new field?&lt;/em&gt;&lt;/p&gt;
-
-&lt;p&gt;If a new field is added in the Java class without changing the existing
-documents in MongoDB, the deserialization can be completely broken. This is
-because the new field required by the Java class does not exist for those
-documents. Deserializing them can trigger an &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;UnrecognizedPropertyException&lt;/code&gt; by
-Jackson Object Mapper.&lt;/p&gt;
-
-&lt;p&gt;Here is an example called &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;OrderV1&lt;/code&gt;. The 1st version of the order contains
-3 fields: the object ID in MongoDB, the customer ID, and the amount of this
-order. Recently, the product owner wants the possibility to cancel an order, so
-we need a new field “isCanceled” to support this use-case as &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;OrderV2&lt;/code&gt;. Also,
-the product owner wants us to add an operator to keep track of the person who
-handles the order. The changes look pretty simple:&lt;/p&gt;
-
-&lt;div class=&quot;language-diff highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;gd&quot;&gt;-public class OrderV1 {
-&lt;/span&gt;&lt;span class=&quot;gi&quot;&gt;+public class OrderV2 {
-&lt;/span&gt;
-   @JsonProperty(&quot;_id&quot;)
-   private final String id;
-
-   @JsonProperty(&quot;customerId&quot;)
-   private final String customerId;
-
-   @JsonProperty(&quot;amount&quot;)
-   private final double amount;
-
-+  @JsonProperty(&quot;isCanceled&quot;)
-&lt;span class=&quot;gi&quot;&gt;+  private final boolean isCanceled;
-&lt;/span&gt;
-+  @JsonProperty(&quot;operator&quot;)
-&lt;span class=&quot;gi&quot;&gt;+  private final String operator;
-&lt;/span&gt;
-   ...
- }
-&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
-
-&lt;p&gt;But you will see that there are some major risks here.&lt;/p&gt;
-
-&lt;h3 id=&quot;nullpointerexception&quot;&gt;NullPointerException&lt;/h3&gt;
-
-&lt;p&gt;Without changing existing documents in MongoDB, the deserialization of the new fields may
-be set to &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;null&lt;/code&gt;. This is the case for the new field &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;operator&lt;/code&gt;. This is because
-the field &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;operator&lt;/code&gt; does not exist for those Mongo documents. In Java, having a
-field with a &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;null&lt;/code&gt;
-value can trigger &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;NullPointerException&lt;/code&gt; and break your application. You need to
-either handle the &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;null&lt;/code&gt; case in your Java code; or perform data migration in
-Mongo, i.e. adding the missing fields for your existing documents. We will talk
-about these tricks in detail in the following sections.&lt;/p&gt;
-
-&lt;h3 id=&quot;impossible-to-rollback&quot;&gt;Impossible To Rollback&lt;/h3&gt;
-
-&lt;p&gt;Another risk is about reverting the changes. Without additional configuration in
-the Jackson object mapper or your value class, you may not be able to roll back
-your changes once they are deployed to production. Once the Java changes are reverted,
-the deserialization of the new documents from MongoDB to Java will fail with the
-following exception:&lt;/p&gt;
-
-&lt;blockquote&gt;
-  &lt;p&gt;“java.io.UncheckedIOException:
-com.fasterxml.jackson.databind.exc.UnrecognizedPropertyException: Unrecognized field
-“isCanceled” (class io.mincong.mongodb.model_changes.OrderV1), not marked as ignorable (3
-known properties: “amount”, “customerId”, “_id”]) at [Source: (String)”{“_id”: “2”,
-“customerId”: “Customer2”, “amount”: 200.0, “isCanceled”: true, “operator”:
-“emea@example.com”, “productIds”: [“A”, “B”, “C”]}”; line: 1, column: 77] (through reference
-chain: io.mincong.mongodb.model_changes.OrderV1[“isCanceled”])”&lt;/p&gt;
-&lt;/blockquote&gt;
-
-&lt;p&gt;This is because new documents have the field “isCanceled” but the old value
-class &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;OrderV1&lt;/code&gt; does not know how to deserialize it! This is so dangerous, we
-rolled back, but the production is on fire, exceptions are everywhere. But how to avoid this from
-happening? We will discuss it in detail in the “Preparing For Rollback” section.&lt;/p&gt;
-
-&lt;p&gt;Now we have a better understanding of how adding new fields may impact our
-production, it’s time to see how to improve the situation using different
-techniques.&lt;/p&gt;
-
-&lt;h2 id=&quot;filling-missing-data&quot;&gt;Filling Missing Data&lt;/h2&gt;
-
-&lt;p&gt;To prevent &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;NullPointerException&lt;/code&gt;, we can fill the missing data in Java by
-providing a default value. There are 4 ways to do that:&lt;/p&gt;
-
-&lt;ul&gt;
-  &lt;li&gt;Use Java language feature&lt;/li&gt;
-  &lt;li&gt;Fill null in the constructor&lt;/li&gt;
-  &lt;li&gt;Fill null in the getter&lt;/li&gt;
-  &lt;li&gt;Use Jackson module&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;h3 id=&quot;using-java-language-feature&quot;&gt;Using Java Language Feature&lt;/h3&gt;
-
-&lt;p&gt;When declaring a class attribute as primitive, Jackson chooses a default value
-for you. For &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;boolean&lt;/code&gt;, it defaults to &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;false&lt;/code&gt;; for &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;integer&lt;/code&gt;, it defaults to 0;
-for &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;double&lt;/code&gt;, it defaults to 0.0; …
-Therefore, you can rely on this technique to avoid having a &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;null&lt;/code&gt; field in your
-Java application. For example, to express whether an order is canceled, we
-can use the field &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;isCanceled&lt;/code&gt; which is a primitive type &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;boolean&lt;/code&gt;. When the field
-does not exist in Mongo document, it defaults to &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;false&lt;/code&gt;, which means the order
-is valid, not canceled.&lt;/p&gt;
-
-&lt;div class=&quot;language-java highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;kd&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;kd&quot;&gt;class&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;OrderV2&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;{&lt;/span&gt;
-
-  &lt;span class=&quot;cm&quot;&gt;/**
-   * This is a new boolean field.
-   *
-   * &amp;lt;p&amp;gt;For existing documents which do not contain this field, the
-   * deserialization defaults to `false`.
-   */&lt;/span&gt;
-  &lt;span class=&quot;nd&quot;&gt;@JsonProperty&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;isCanceled&quot;&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt;
-  &lt;span class=&quot;kd&quot;&gt;private&lt;/span&gt; &lt;span class=&quot;kd&quot;&gt;final&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;boolean&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;isCanceled&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;;&lt;/span&gt;
-
-  &lt;span class=&quot;o&quot;&gt;...&lt;/span&gt;
-&lt;span class=&quot;o&quot;&gt;}&lt;/span&gt;
-&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
-
-&lt;p&gt;However, be careful when choosing the adjective used for the new information. You
-should ensure that &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;false&lt;/code&gt; has the correct meaning for documents missing that
-field. For example, if you are adding a field to represent the visibility of
-an object, you have two choices: &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;isHidden&lt;/code&gt; or &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;isVisible&lt;/code&gt;, which one should
-you use? You should probably choose the adjective
-&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;isHidden&lt;/code&gt; rather than &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;isVisible&lt;/code&gt; because, for existing Mongo
-documents, they don’t have the field for visibility. In this case:&lt;/p&gt;
-
-&lt;ul&gt;
-  &lt;li&gt;&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;isHidden&lt;/code&gt; defaults to false (visible) when the field does not exist&lt;/li&gt;
-  &lt;li&gt;&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;isVisible&lt;/code&gt; defaults to false (hidden) when the field does not exist. This is
-NOT what we need: we want to default to visible, not hidden.&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;p&gt;So &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;isHidden&lt;/code&gt; is a better choice here.&lt;/p&gt;
-
-&lt;h3 id=&quot;filling-null-in-constructor&quot;&gt;Filling Null In Constructor&lt;/h3&gt;
-
-&lt;p&gt;Another way is to handle to &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;null&lt;/code&gt; in the constructor of the value class.
-Therefore, when the deserialization happens, Jackson uses the constructor as the
-JSON creator to create the Java instance, and the null case will be handled
-properly.&lt;/p&gt;
-
-&lt;div class=&quot;language-java highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;kd&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;kd&quot;&gt;class&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;OrderV2&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;{&lt;/span&gt;
-
-  &lt;span class=&quot;nd&quot;&gt;@JsonProperty&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;operator&quot;&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt;
-  &lt;span class=&quot;kd&quot;&gt;private&lt;/span&gt; &lt;span class=&quot;kd&quot;&gt;final&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;String&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;operator&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;;&lt;/span&gt;
-
-  &lt;span class=&quot;o&quot;&gt;...&lt;/span&gt;
-
-  &lt;span class=&quot;nd&quot;&gt;@JsonCreator&lt;/span&gt;
-  &lt;span class=&quot;kd&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;OrderV2&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;
-      &lt;span class=&quot;nd&quot;&gt;@JsonProperty&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;_id&quot;&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;String&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;id&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;,&lt;/span&gt;
-      &lt;span class=&quot;nd&quot;&gt;@JsonProperty&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;customerId&quot;&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;String&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;customerId&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;,&lt;/span&gt;
-      &lt;span class=&quot;nd&quot;&gt;@JsonProperty&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;amount&quot;&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;double&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;amount&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;,&lt;/span&gt;
-      &lt;span class=&quot;nd&quot;&gt;@JsonProperty&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;isCanceled&quot;&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;boolean&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;isCancelled&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;,&lt;/span&gt;
-      &lt;span class=&quot;nd&quot;&gt;@JsonProperty&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;operator&quot;&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;String&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;operator&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;,&lt;/span&gt;
-      &lt;span class=&quot;nd&quot;&gt;@JsonProperty&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;productIds&quot;&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;List&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;nc&quot;&gt;String&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;&amp;gt;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;productIds&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;{&lt;/span&gt;
-    &lt;span class=&quot;o&quot;&gt;...&lt;/span&gt;
-
-    &lt;span class=&quot;k&quot;&gt;if&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;operator&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;==&lt;/span&gt; &lt;span class=&quot;kc&quot;&gt;null&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;{&lt;/span&gt;
-      &lt;span class=&quot;k&quot;&gt;this&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;operator&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&quot;support@example.com&quot;&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;;&lt;/span&gt;
-    &lt;span class=&quot;o&quot;&gt;}&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;else&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;{&lt;/span&gt;
-      &lt;span class=&quot;k&quot;&gt;this&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;operator&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;operator&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;;&lt;/span&gt;
-    &lt;span class=&quot;o&quot;&gt;}&lt;/span&gt;
-  &lt;span class=&quot;o&quot;&gt;}&lt;/span&gt;
-
-  &lt;span class=&quot;o&quot;&gt;...&lt;/span&gt;
-&lt;span class=&quot;o&quot;&gt;}&lt;/span&gt;
-&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
-
-&lt;p&gt;Let’s take a real example. Given a document in Mongo collection without the new
-field &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;operator&lt;/code&gt;:&lt;/p&gt;
-
-&lt;div class=&quot;language-json highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;
-  &lt;/span&gt;&lt;span class=&quot;nl&quot;&gt;&quot;_id&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;1&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;
-  &lt;/span&gt;&lt;span class=&quot;nl&quot;&gt;&quot;customerId&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;Customer1&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;
-  &lt;/span&gt;&lt;span class=&quot;nl&quot;&gt;&quot;amount&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;mf&quot;&gt;100.0&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;
-&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;
-&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
-
-&lt;p&gt;Then during the deserialization, this is considered as &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;null&lt;/code&gt; by Jackson, but
-then fall back to “support@example.com” in the constructor:&lt;/p&gt;
-
-&lt;p&gt;&lt;img src=&quot;/assets/20210227-handle-null-in-constructor.png&quot; alt=&quot;Handle null in constructor&quot; /&gt;&lt;/p&gt;
-
-&lt;p&gt;Therefore, the &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;null&lt;/code&gt; case is handled successfully.&lt;/p&gt;
-
-&lt;h3 id=&quot;filling-null-in-getter&quot;&gt;Filling Null In Getter&lt;/h3&gt;
-
-&lt;p&gt;In a similar approach, you can also handle null in the getter method.&lt;/p&gt;
-
-&lt;div class=&quot;language-java highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;kd&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;kd&quot;&gt;class&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;OrderV2&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;{&lt;/span&gt;
-
-  &lt;span class=&quot;nd&quot;&gt;@JsonProperty&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;operator&quot;&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt;
-  &lt;span class=&quot;kd&quot;&gt;private&lt;/span&gt; &lt;span class=&quot;kd&quot;&gt;final&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;String&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;operator&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;;&lt;/span&gt;
-
-  &lt;span class=&quot;o&quot;&gt;...&lt;/span&gt;
-
-  &lt;span class=&quot;kd&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;String&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;getOperator&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;()&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;{&lt;/span&gt;
-    &lt;span class=&quot;k&quot;&gt;return&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;operator&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;==&lt;/span&gt; &lt;span class=&quot;kc&quot;&gt;null&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;?&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&quot;support@example.com&quot;&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;operator&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;;&lt;/span&gt;
-  &lt;span class=&quot;o&quot;&gt;}&lt;/span&gt;
-
-&lt;span class=&quot;o&quot;&gt;}&lt;/span&gt;
-&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
-
-&lt;h3 id=&quot;jackson-jdk8module&quot;&gt;Jackson Jdk8Module&lt;/h3&gt;
-
-&lt;p&gt;Another solution is to use &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;Optional&lt;/code&gt;, combined with Jackson module &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;Jdk8Module&lt;/code&gt; to
-serialize and deserialize it correctly. You can visit GitHub project
-&lt;a href=&quot;https://github.com/FasterXML/jackson-modules-java8&quot;&gt;https://github.com/FasterXML/jackson-modules-java8&lt;/a&gt; or read the article &lt;a href=&quot;https://www.baeldung.com/jackson-optional&quot;&gt;“Using
-Optional with Jackson”&lt;/a&gt; in Baeldung
-to learn more about it.&lt;/p&gt;
-
-&lt;h2 id=&quot;writing-unit-tests&quot;&gt;Writing Unit Tests&lt;/h2&gt;
-
-&lt;p&gt;To better simulate the changes, you can write some unit tests to test different
-behavior. I am not recommending you to write tests to cover all the cases, that
-will be very time-consuming. I am just trying to share different testing
-techniques to demonstrate that it is possible to assert in some way.&lt;/p&gt;
-
-&lt;h3 id=&quot;testing-reciprocity&quot;&gt;Testing Reciprocity&lt;/h3&gt;
-
-&lt;p&gt;One possible test is to ensure that you can serialize a document into MongoDB,
-deserialize it back in Java, and the restored Java instance is equal to the
-original one.&lt;/p&gt;
-
-&lt;div class=&quot;language-plaintext highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;Java             MongoDB
----              ---
-orignal   -----&amp;gt; Mongo document
-restored &amp;lt;-----
-&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
-
-&lt;p&gt;Something like:&lt;/p&gt;
-
-&lt;div class=&quot;language-java highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;c1&quot;&gt;// Given&lt;/span&gt;
-&lt;span class=&quot;kt&quot;&gt;var&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;result&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;orderCollection&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;insertOne&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;order1&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;);&lt;/span&gt;
-
-&lt;span class=&quot;c1&quot;&gt;// When&lt;/span&gt;
-&lt;span class=&quot;kt&quot;&gt;var&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;results&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;orderCollection&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;find&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nc&quot;&gt;Filters&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;eq&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;customerId&quot;&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&quot;BigCorp&quot;&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;));&lt;/span&gt;
-
-&lt;span class=&quot;c1&quot;&gt;// Then&lt;/span&gt;
-&lt;span class=&quot;n&quot;&gt;assertThat&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;results&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;).&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;containsExactly&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;order1&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;);&lt;/span&gt;
-&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
-
-&lt;h3 id=&quot;testing-backward-compatibility&quot;&gt;Testing Backward-Compatibility&lt;/h3&gt;
-
-&lt;p&gt;Another possible test is to test that deserializing an old Mongo document into
-Java using the new schema (new Java class) will work as expected.&lt;/p&gt;
-
-&lt;div class=&quot;language-plaintext highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;Java             MongoDB
----              ---
-BSON      -----&amp;gt; Mongo document
-restored &amp;lt;-----
-&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
-
-&lt;p&gt;Because your Java class is changed (added new fields), you cannot use it to create the same
-structure as it was before. To simulate the existing Mongo documents, you can
-create a Mongo document using &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;org.bson.Document&lt;/code&gt;:&lt;/p&gt;
-
-&lt;div class=&quot;language-java highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;nc&quot;&gt;Document&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;parse&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;{ \&quot;_id\&quot;: \&quot;1\&quot;, \&quot;customerId\&quot;: \&quot;Customer1\&quot;, \&quot;amount\&quot;: 100.0 }&quot;&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;);&lt;/span&gt;
-&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
-
-&lt;p&gt;In the example, we created a BSON document without the new field &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;isCanceled&lt;/code&gt;
-in the test. It simulates the existing Mongo documents created before the schema
-change. It allows us to assert the
-deserialization and ensure that the restored document contains the values that
-we expect.&lt;/p&gt;
-
-&lt;h3 id=&quot;testing-rollback&quot;&gt;Testing Rollback&lt;/h3&gt;
-
-&lt;p&gt;This sounds a bit overkill to me. Testing in staging is probably enough. But
-if you want to do this, it’s possible as well.&lt;/p&gt;
-
-&lt;div class=&quot;language-plaintext highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;Java                  MongoDB
----                   ---
-original (V2)  -----&amp;gt; Mongo document
-restored (V1) &amp;lt;-----
-&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
-
-&lt;p&gt;You can copy the existing Java class into a new class, such as
-&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;LegacyOrder.java&lt;/code&gt; or &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;OrderV1.java&lt;/code&gt;. Then, write an instance V2 into
-MongoDB and read it back as V1 (legacy) format to assert if the result is what
-you expect.&lt;/p&gt;
-
-&lt;h2 id=&quot;migrating-existing-documents&quot;&gt;Migrating Existing Documents&lt;/h2&gt;
-
-&lt;p&gt;Besides providing a default value during the deserialization, another possibility
-to avoid the &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;NullPointerException&lt;/code&gt; is to migrate the existing documents in
-MongoDB. Before doing so, consider:&lt;/p&gt;
-
-&lt;ul&gt;
-  &lt;li&gt;Whether you need to perform a backup before running your query. Ideally, the
-backup is scheduled regularly. Or consider export the concerned
-documents using
-&lt;a href=&quot;https://docs.mongodb.com/database-tools/mongoexport/&quot;&gt;mongoexport&lt;/a&gt;.&lt;/li&gt;
-  &lt;li&gt;Testing your query in localhost and staging environment before running it in
-production.&lt;/li&gt;
-  &lt;li&gt;Ask for approval from at least one of your teammates before changing the
-documents.&lt;/li&gt;
-  &lt;li&gt;Create a conversation in the chat tool, e.g. Slack or Microsoft Teams, to keep
-track of the operations.&lt;/li&gt;
-  &lt;li&gt;Update one document before updating multiple ones.&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;p&gt;Now, back to the Mongo query for migration. This can be as simple as:&lt;/p&gt;
-
-&lt;div class=&quot;language-js highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;nx&quot;&gt;db&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;orders&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;update&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;
-  &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt; &lt;span class=&quot;na&quot;&gt;isCanceled&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt; &lt;span class=&quot;na&quot;&gt;$exists&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;kc&quot;&gt;false&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;},&lt;/span&gt;  &lt;span class=&quot;c1&quot;&gt;// 1&lt;/span&gt;
-  &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt; &lt;span class=&quot;na&quot;&gt;$set&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt; &lt;span class=&quot;na&quot;&gt;isCanceled&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;kc&quot;&gt;false&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;},&lt;/span&gt;  &lt;span class=&quot;c1&quot;&gt;// 2&lt;/span&gt;
-  &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt; &lt;span class=&quot;na&quot;&gt;multi&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;kc&quot;&gt;true&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;  &lt;span class=&quot;c1&quot;&gt;// 3&lt;/span&gt;
-&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
-&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
-
-&lt;p&gt;In the query above:&lt;/p&gt;
-
-&lt;ol&gt;
-  &lt;li&gt;We find the documents in collection &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;orders&lt;/code&gt; that do not contain the field
-&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;isCanceled&lt;/code&gt;.&lt;/li&gt;
-  &lt;li&gt;Then for those documents, we set the missing field &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;isCanceled&lt;/code&gt; as “false”.&lt;/li&gt;
-  &lt;li&gt;By default, an update statement only updates one single document. We set it to
-update multiple ones — all those matching the selection (without field
-&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;isCanceled&lt;/code&gt;). Note that it’s better to perform the update query twice: the
-first time with option &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;{ multi: false }&lt;/code&gt; to test if the update statement
-works. Then perform it a second-time with option &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;{ multi: true }&lt;/code&gt; to update
-all the documents that matched the selection. In this way, we reduce the risk of
-breaking the entire collection.&lt;/li&gt;
-&lt;/ol&gt;
-
-&lt;p&gt;Then the update result shows how many documents were concerned: the number of
-documents matched the query, number of documents updated or inserted, and number
-of documents modified.&lt;/p&gt;
-
-&lt;div class=&quot;language-js highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;nx&quot;&gt;WriteResult&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;({&lt;/span&gt; &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;nMatched&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;1&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;nUpserted&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;nModified&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;1&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;})&lt;/span&gt;
-&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
-
-&lt;h2 id=&quot;preparing-for-rollback&quot;&gt;Preparing For Rollback&lt;/h2&gt;
-
-&lt;p&gt;&lt;em&gt;How to handle an unknown field in Jackson?&lt;/em&gt;&lt;/p&gt;
-
-&lt;p&gt;In the previous section “Potential Risks”, we mentioned that rolling back to
-the previous version in Java application may not be possible.
-The deserialization of the new documents in MongoDB may fail with the
-following exception:&lt;/p&gt;
-
-&lt;blockquote&gt;
-  &lt;p&gt;“java.io.UncheckedIOException:
-com.fasterxml.jackson.databind.exc.UnrecognizedPropertyException: Unrecognized field
-“isCanceled” (class io.mincong.mongodb.model_changes.OrderV1), not marked as ignorable (3
-known properties: “amount”, “customerId”, “_id”]) at [Source: (String)”{“_id”: “2”,
-“customerId”: “Customer2”, “amount”: 200.0, “isCanceled”: true, “operator”:
-“emea@example.com”, “productIds”: [“A”, “B”, “C”]}”; line: 1, column: 77] (through reference
-chain: io.mincong.mongodb.model_changes.OrderV1[“isCanceled”])”&lt;/p&gt;
-&lt;/blockquote&gt;
-
-&lt;p&gt;This is because new documents have the field “isCanceled” but the old value
-class &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;OrderV1&lt;/code&gt; does not know how to deserialize it! In this section, we are
-going to see how to handle unknown fields correctly in Jackson.&lt;/p&gt;
-
-&lt;h3 id=&quot;handle-unknown-field-globally&quot;&gt;Handle Unknown Field Globally&lt;/h3&gt;
-
-&lt;p&gt;Make the Jackson object mapper more lenient face to unknown properties during
-the JSON deserialization by disabling the feature &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;FAIL_ON_UNKNOWN_PROPERTIES&lt;/code&gt;.
-We can do that using one of the following lines:&lt;/p&gt;
-
-&lt;div class=&quot;language-java highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;n&quot;&gt;objectMapper&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;disable&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nc&quot;&gt;DeserializationFeature&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;FAIL_ON_UNKNOWN_PROPERTIES&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;);&lt;/span&gt;
-&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
-
-&lt;div class=&quot;language-java highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;n&quot;&gt;objectMapper&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;configure&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nc&quot;&gt;DeserializationFeature&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;FAIL_ON_UNKNOWN_PROPERTIES&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;kc&quot;&gt;false&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;);&lt;/span&gt;
-&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
-
-&lt;p&gt;This will apply to all the JSON objects deserialized by this object mapper.&lt;/p&gt;
-
-&lt;h3 id=&quot;handle-unknown-field-locally&quot;&gt;Handle Unknown Field Locally&lt;/h3&gt;
-
-&lt;p&gt;Make the Jackson object mapper more lenient for a given value class during the
-JSON deserialization by adding annotation &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;@JsonIgnoreProperties&lt;/code&gt; in your value
-class:&lt;/p&gt;
-
-&lt;div class=&quot;language-java highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;nd&quot;&gt;@JsonIgnoreProperties&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;ignoreUnknown&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;kc&quot;&gt;true&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt;
-&lt;span class=&quot;kd&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;kd&quot;&gt;class&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;OrderV1&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;{&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;...&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;}&lt;/span&gt;
-&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
-
-&lt;p&gt;This will apply to all the JSON objects deserialized into this value class
-&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;OrderV1&lt;/code&gt;. Compared to setting the feature globally, setting it locally at the class
-level gives you finer control about the behavior over different classes, but
-it’s also easier to forget adding this annotation because you will have to do
-that for &lt;em&gt;all&lt;/em&gt; the classes and bring inconsistency over the deserialization
-behavior.&lt;/p&gt;
-
-&lt;p&gt;Once you configured one of the features mentioned above (globally or locally),
-then it should be safe to rollback! Hopefully, you won’t need to rollback, but
-it’s always a good idea to know that your code is prepared for that.&lt;/p&gt;
-
-&lt;h2 id=&quot;useful-mongo-queries&quot;&gt;Useful Mongo Queries&lt;/h2&gt;
-
-&lt;p&gt;In the previous sections, we were focused on how to avoid breaking the schema in
-the first place. But what if the production is already broken? Maybe someone
-else didn’t realize his changes can trigger an incident. Therefore, it’s always
-a good thing to learn some basic Mongo queries to prepare the worst case. That
-is, fixing the production when it is broken. Here are some Mongo queries that I
-prepared for you.&lt;/p&gt;
-
-&lt;div class=&quot;language-js highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;o&quot;&gt;&amp;gt;&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;db&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;orders&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;count&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;()&lt;/span&gt;
-&lt;span class=&quot;mi&quot;&gt;2&lt;/span&gt;
-&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
-
-&lt;p&gt;Count the number of documents in the collection &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;orders&lt;/code&gt;. Useful to understand
-how many documents are concerned and the potential impact if things go wrong.&lt;/p&gt;
-
-&lt;div class=&quot;language-js highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;o&quot;&gt;&amp;gt;&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;db&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;orders&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;find&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;({&lt;/span&gt; &lt;span class=&quot;na&quot;&gt;isCanceled&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt; &lt;span class=&quot;na&quot;&gt;$exists&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;kc&quot;&gt;false&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;}).&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;limit&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;10&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;).&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;pretty&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;()&lt;/span&gt;
-&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt; &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;_id&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;1&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;customerId&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;Customer1&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;amount&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;100&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
-&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
-
-&lt;p&gt;Find out 10 documents without the field &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;isCanceled&lt;/code&gt; and print them in pretty
-format. Useful to inspect the JSON before or after the actual update.&lt;/p&gt;
-
-&lt;div class=&quot;language-js highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;o&quot;&gt;&amp;gt;&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;db&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;orders&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;update&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;
-  &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt; &lt;span class=&quot;na&quot;&gt;isCanceled&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt; &lt;span class=&quot;na&quot;&gt;$exists&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;kc&quot;&gt;true&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;},&lt;/span&gt;
-  &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt; &lt;span class=&quot;na&quot;&gt;$unset&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt; &lt;span class=&quot;na&quot;&gt;isCanceled&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;dl&quot;&gt;&quot;&quot;&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
-  &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt; &lt;span class=&quot;na&quot;&gt;multi&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;kc&quot;&gt;true&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
-&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
-&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
-
-&lt;p&gt;Remove field &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;isCanceled&lt;/code&gt; from all the documents having this field. Useful for
-reverting the changes. Especially when your Java code had been rolled back to
-the previous version but the Jackson fails to deserialize the recently-added Mongo
-documented, which contains the new field &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;isCanceled&lt;/code&gt;.&lt;/p&gt;
-
-&lt;h2 id=&quot;other-scenarios&quot;&gt;Other Scenarios&lt;/h2&gt;
-
-&lt;p&gt;In the sections above, we mainly discussed what happened when adding a new field
-in MongoDB. But what about other scenarios?&lt;/p&gt;
-
-&lt;ul&gt;
-  &lt;li&gt;Another common scenario is to remove a field. Removing a field may have an issue
-because the Java class may not be prepared for accepting unknown properties.
-This is exactly what we discussed during the section “Preparing For Rollback”.&lt;/li&gt;
-  &lt;li&gt;Another possible scenario is to change the type of an existing field. I would
-avoid doing this. There must be a better solution, such as creating a new
-field using another name.&lt;/li&gt;
-  &lt;li&gt;Renaming or removing an element in a Java enum. Renaming is possible but please
-ensure that the JSON property naming is not going to be changed implicitly.
-For example, by renaming an enum item from &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;FOO&lt;/code&gt; to &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;BAR&lt;/code&gt;, the serialization will
-be changed from “FOO” to “BAR”, which will completely break your application.
-Removing an element is dangerous as well. Ensure that
-this element does not exist in any of your databases (staging, production)
-before doing so.&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;p&gt;There are eventually other scenarios that I didn’t mention. Please leave a
-comment so that everyone reading this article can learn about that.&lt;/p&gt;
-
-&lt;h2 id=&quot;going-further&quot;&gt;Going Further&lt;/h2&gt;
-
-&lt;p&gt;How to go further from here?&lt;/p&gt;
-
-&lt;ul&gt;
-  &lt;li&gt;This article assumes that you use &lt;a href=&quot;https://github.com/FasterXML/jackson-databind&quot;&gt;Jackson
-Databind&lt;/a&gt; to serialize and
-deserialize your Mongo documents in Java. If you are not using it and want to
-give it a try, take a look at this Stack Overflow question &lt;a href=&quot;https://stackoverflow.com/a/47949886/4381330&quot;&gt;Is there any way
-for creating Mongo codecs
-automatically?&lt;/a&gt;, my implementation
-is highly inspired by Kevin Day’s answer.&lt;/li&gt;
-  &lt;li&gt;To learn more about different update operators in MongoDB, such as &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;$set&lt;/code&gt;,
-&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;$unset&lt;/code&gt;, visit MongoDB Manual &lt;a href=&quot;https://docs.mongodb.com/manual/reference/operator/update/&quot;&gt;“Update
-Operators”&lt;/a&gt;.&lt;/li&gt;
-  &lt;li&gt;To learn more about database tool &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;mongodump&lt;/code&gt;, visit MongoDB documentation
-&lt;a href=&quot;https://docs.mongodb.com/database-tools/mongodump/#mongodb-binary-bin.mongodump&quot;&gt;mongodump&lt;/a&gt;.&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;p&gt;You can also find the source code of this article on GitHub under project
-&lt;a href=&quot;https://github.com/mincong-h/java-examples/tree/blog/mongo-schema-compatibility/mongo&quot;&gt;mincong-h/java-examples&lt;/a&gt;,
-in particular the &lt;a href=&quot;https://github.com/mincong-h/java-examples/tree/blog/mongo-schema-compatibility/mongo/src/main/java/io/mincong/mongodb/model_changes&quot;&gt;source
-code&lt;/a&gt;
-and the &lt;a href=&quot;https://github.com/mincong-h/java-examples/tree/blog/mongo-schema-compatibility/mongo/src/test/java/io/mincong/mongodb/model_changes&quot;&gt;test code&lt;/a&gt;.&lt;/p&gt;
-
-&lt;h2 id=&quot;conclusion&quot;&gt;Conclusion&lt;/h2&gt;
-
-&lt;p&gt;In this article, we saw the potential risks for MongoDB when adding a new field
-in the Java application (&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;NullPointerException&lt;/code&gt; and issue for rollback), the
-different techniques for filling the &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;null&lt;/code&gt; value, how to write unit tests, how
-to migrate the existing documents, how to prepare for rollback by handling
-unknown field correctly via object mapper or via Java class annotation, and some
-useful MongoDB queries to help you investigate the incident when something goes
-wrong. Finally, we discussed briefly other scenarios and saw some resources
-about how to go further from here.
-Interested to know more? You can subscribe to &lt;a href=&quot;/feed.xml&quot;&gt;the feed of my blog&lt;/a&gt;, follow me
-on &lt;a href=&quot;https://twitter.com/mincong_h&quot;&gt;Twitter&lt;/a&gt; or
-&lt;a href=&quot;https://github.com/mincong-h/&quot;&gt;GitHub&lt;/a&gt;. Hope you enjoy this article, see you the next time!&lt;/p&gt;
-
-&lt;h2 id=&quot;references&quot;&gt;References&lt;/h2&gt;
-
-&lt;ul&gt;
-  &lt;li&gt;MongoDB, “MongoDB Documentation”, 2021.
-&lt;a href=&quot;https://docs.mongodb.com/&quot;&gt;https://docs.mongodb.com/&lt;/a&gt;&lt;/li&gt;
-  &lt;li&gt;Tatu Saloranta et al., “Jackson Databind”, 2021.
-&lt;a href=&quot;https://github.com/FasterXML/jackson-databind&quot;&gt;https://github.com/FasterXML/jackson-databind&lt;/a&gt;&lt;/li&gt;
-&lt;/ul&gt;</content><author><name>Mincong Huang</name><email>mincong.h@gmail.com</email></author><category term="java-serialization" /><category term="reliability" /><category term="java" /><category term="mongodb" /><category term="serialization" /><category term="jackson" /><category term="reliability" /><summary type="html">How to add or remove a field from a Mongo collection without breaking the production?</summary><media:thumbnail xmlns:media="http://search.yahoo.com/mrss/" url="https://mincong.io/assets/bg-bence-sandor-sztrecska-wIs-mjKMiw4-unsplash.jpg" /><media:content medium="image" url="https://mincong.io/assets/bg-bence-sandor-sztrecska-wIs-mjKMiw4-unsplash.jpg" xmlns:media="http://search.yahoo.com/mrss/" /></entry></feed>
+&lt;/ul&gt;</content><author><name>Mincong Huang</name><email>mincong.h@gmail.com</email></author><category term="java-testing" /><category term="java" /><category term="junit" /><category term="junit5" /><category term="testing" /><summary type="html">How to write dynamic tests using @TestFactory in JUnit 5? This article explains the syntax, different return types, the test lifecycle, and potential use-cases.</summary><media:thumbnail xmlns:media="http://search.yahoo.com/mrss/" url="https://mincong.io/assets/bg-mike-kenneally-tNALoIZhqVM-unsplash.jpg" /><media:content medium="image" url="https://mincong.io/assets/bg-mike-kenneally-tNALoIZhqVM-unsplash.jpg" xmlns:media="http://search.yahoo.com/mrss/" /></entry></feed>
