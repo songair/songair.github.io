@@ -229,7 +229,69 @@ health status index    uuid                   pri rep docs.count docs.deleted st
 yellow open   my_index Uz7B9HV2SJ6peiLiUMJhyg   1   1          1            0      3.9kb          3.9kb
 ```
 
-The above file `index-0` represents generation 0 of the snapshot repository. It is a `RepositoryData` serialized in JSON format, which contains all the snapshot IDs and their corresponding indexes. The UUID of the index `my_index` in the repository is `Uxom82JcSfORXgbtZ4jLSg`, and its corresponding UUID in the cluster is `Uz7B9HV2SJ6peiLiUMJhyg`. This index is referenced by a snapshot, which is the snapshot `my_snapshot_1` (`2hiUzvH3RPCp9iOeiTa6TQ`). 
+The above file `index-0` represents generation 0 of the snapshot repository. It is a `RepositoryData` serialized in JSON format, which contains all the snapshot IDs and their corresponding indexes. The UUID of the index `my_index` in the repository is `Uxom82JcSfORXgbtZ4jLSg`, and its corresponding UUID in the cluster is `Uz7B9HV2SJ6peiLiUMJhyg`. This index is referenced by a snapshot, which is the snapshot `my_snapshot_1` (`2hiUzvH3RPCp9iOeiTa6TQ`).
+
+## File index.latest
+
+The `index.latest` file is a pointer that represents the last-generation index file in numerical form, which is the number N mentioned above. Here N is a hexadecimal number, for example, the index of the 100th generation (decimal) is represented as 64 in hexadecimal, because 64 = 16*6 + 4. In the repository `my_repo` prepared above, since only one snapshot was taken, it is the 0th generation:
+
+```
+➜ hexdump index.latest
+0000000 00 00 00 00 00 00 00 00
+0000008
+```
+
+Now, let's generate more documents and create more snapshots, so that we can better view the changes in `index.latest`:
+
+```sh
+for i in {2..20}
+do
+  echo "Creating document ${i}"
+  curl -s -X PUT "localhost:9200/my_index/_doc/${i}" \
+    -H'Content-Type: application/json' \
+    -d "{\"msg\": \"Hello Elasticsearch ${i}\"}"
+
+  echo "Creating snapshot ${i}"
+  curl -s -X PUT "localhost:9200/_snapshot/my_repo/my_snapshot_${i}" \
+    -H'Content-Type: application/json' \
+    -d'{
+    "indices": "my_index",
+    "include_global_state": false,
+    "metadata": {
+      "taken_by": "Mincong",
+      "taken_because": "https://mincong.io is the best blog for learning Elasticsearch"
+    }
+  }'
+done
+```
+
+At this time, `index.latest` has become the 19th generation (starting from the 0 generation, so it is actually the 20th generation). 19 = 16*1 + 3
+
+```
+➜ hexdump index.latest
+0000000 00 00 00 00 00 00 00 00 13
+0000008
+```
+
+```
+➜ echo'ibase=16; 13' | bc
+19
+```
+
+But how does Elasticsearch load the `RepositoryData` through `index-N` and `index.latest` files?
+
+Loading `RepositoryData` and the mapping of index name to its repository `IndexId`, which is done by calling `BlobStoreRepository.getRepositoryData()`. The specific implementation is as follows ([extracted from Javadoc](https://github.com/elastic/elasticsearch/blob/7.12/server/src/main/java/org/elasticsearch/repositories/blobstore/package-info.java)):
+
+1. Step 1: Storing repository data
+   1. The blobstore repository stores the `RepositoryData` in blobs named with incrementing suffix `N` at `/index-N` directly under the repository's root.
+   2. For each `BlobStoreRepository` an entry of type `RepositoryMetadata` exists in the cluster state. It tracks the current valid generation `N` as well as the latest generation that a write was attempted for.
+   3. The blobstore also stores the most recent `N` as a 64bit long in the blob `/index.latest` directly under the repository's root.
+2. Step 2: Determine the value of N
+   1. First, find the most recent `RepositoryData` by getting a list of all index-N blobs through listing all blobs with prefix "index-" under the repository root and then selecting the one with the highest value for N.
+   2. If this operation fails because the repository's `BlobContainer` does not support list operations (in the case of read-only repositories), read the highest value of N from the `index.latest` blob.
+3. Step 3: Deserialization
+   1. Use the just determined value of `N` and get the `/index-N` blob and deserialize the `RepositoryData` from it.
+   2. If no value of `N` could be found since neither an `index.latest` nor any `index-N` blobs exist in the repository, it is assumed to be empty and `RepositoryData#EMPTY` is returned.
 
 ## Conclusion
 
