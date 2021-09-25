@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="zh">
+<!DOCTYPE html><html lang="en">
   <head><!-- Global site tag (gtag.js) - Google Analytics -->
 	<script async src="https://www.googletagmanager.com/gtag/js?id=UA-87129300-1"></script>
 	<script>
@@ -10,31 +10,31 @@
 		
 	</script><meta charset="utf-8">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
-<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no"><title>Elasticsearch 快照仓库的内部结构 - Mincong Huang</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no"><title>Internal Structure Of Snapshot Repository - Mincong Huang</title>
 
-<meta name="description" content="这篇文章带大家走进 Elasticsearch 快照仓库，看看它的内部结构，了解不同文件的内容和用途。">
+<meta name="description" content="This article takes you to the Elasticsearch snapshot repository to explore its internal structure and understand the contents and uses of different files.">
 
 <!-- Begin Jekyll SEO tag v2.7.1 -->
-<title>Elasticsearch 快照仓库的内部结构 | Mincong Huang</title>
+<title>Internal Structure Of Snapshot Repository | Mincong Huang</title>
 <meta name="generator" content="Jekyll v4.2.0" />
-<meta property="og:title" content="Elasticsearch 快照仓库的内部结构" />
+<meta property="og:title" content="Internal Structure Of Snapshot Repository" />
 <meta name="author" content="Mincong Huang" />
-<meta property="og:locale" content="zh" />
-<meta name="description" content="这篇文章带大家走进 Elasticsearch 快照仓库，看看它的内部结构，了解不同文件的内容和用途。" />
-<meta property="og:description" content="这篇文章带大家走进 Elasticsearch 快照仓库，看看它的内部结构，了解不同文件的内容和用途。" />
-<link rel="canonical" href="https://mincong.io/cn/elasticsearch-snapshot-repository-structure/" />
-<meta property="og:url" content="https://mincong.io/cn/elasticsearch-snapshot-repository-structure/" />
+<meta property="og:locale" content="en" />
+<meta name="description" content="This article takes you to the Elasticsearch snapshot repository to explore its internal structure and understand the contents and uses of different files." />
+<meta property="og:description" content="This article takes you to the Elasticsearch snapshot repository to explore its internal structure and understand the contents and uses of different files." />
+<link rel="canonical" href="https://mincong.io/en/elasticsearch-snapshot-repository-structure/" />
+<meta property="og:url" content="https://mincong.io/en/elasticsearch-snapshot-repository-structure/" />
 <meta property="og:site_name" content="Mincong Huang" />
 <meta property="og:image" content="https://mincong.io/assets/bg-dmitrij-paskevic-YjVa-F9P9kk-unsplash.jpg" />
 <meta property="og:type" content="article" />
 <meta property="article:published_time" content="2021-09-04T10:11:10+02:00" />
 <meta name="twitter:card" content="summary_large_image" />
 <meta property="twitter:image" content="https://mincong.io/assets/bg-dmitrij-paskevic-YjVa-F9P9kk-unsplash.jpg" />
-<meta property="twitter:title" content="Elasticsearch 快照仓库的内部结构" />
+<meta property="twitter:title" content="Internal Structure Of Snapshot Repository" />
 <meta name="twitter:site" content="@mincong_h" />
 <meta name="twitter:creator" content="@mincong_h" />
 <script type="application/ld+json">
-{"description":"这篇文章带大家走进 Elasticsearch 快照仓库，看看它的内部结构，了解不同文件的内容和用途。","@type":"BlogPosting","image":"https://mincong.io/assets/bg-dmitrij-paskevic-YjVa-F9P9kk-unsplash.jpg","headline":"Elasticsearch 快照仓库的内部结构","dateModified":"2021-09-04T10:11:10+02:00","datePublished":"2021-09-04T10:11:10+02:00","url":"https://mincong.io/cn/elasticsearch-snapshot-repository-structure/","mainEntityOfPage":{"@type":"WebPage","@id":"https://mincong.io/cn/elasticsearch-snapshot-repository-structure/"},"author":{"@type":"Person","name":"Mincong Huang"},"@context":"https://schema.org"}</script>
+{"description":"This article takes you to the Elasticsearch snapshot repository to explore its internal structure and understand the contents and uses of different files.","@type":"BlogPosting","image":"https://mincong.io/assets/bg-dmitrij-paskevic-YjVa-F9P9kk-unsplash.jpg","headline":"Internal Structure Of Snapshot Repository","dateModified":"2021-09-04T10:11:10+02:00","datePublished":"2021-09-04T10:11:10+02:00","url":"https://mincong.io/en/elasticsearch-snapshot-repository-structure/","mainEntityOfPage":{"@type":"WebPage","@id":"https://mincong.io/en/elasticsearch-snapshot-repository-structure/"},"author":{"@type":"Person","name":"Mincong Huang"},"@context":"https://schema.org"}</script>
 <!-- End Jekyll SEO tag -->
 
 
@@ -45,7 +45,7 @@
 
 <!-- Extra Open Graph :: End -->
 
-<link rel="canonical" href="https://mincong.io/cn/elasticsearch-snapshot-repository-structure/"><link rel="alternate" type="application/rss+xml" title="Mincong Huang" href="/feed.xml"><!-- start favicons snippet, use https://realfavicongenerator.net/ --><link rel="apple-touch-icon" sizes="180x180" href="/assets/apple-touch-icon.png"><link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon-32x32.png"><link rel="icon" type="image/png" sizes="16x16" href="/assets/favicon-16x16.png"><link rel="manifest" href="/assets/site.webmanifest"><link rel="mask-icon" href="/assets/safari-pinned-tab.svg" color="#fc4d50"><link rel="shortcut icon" href="/assets/favicon.ico">
+<link rel="canonical" href="https://mincong.io/en/elasticsearch-snapshot-repository-structure/"><link rel="alternate" type="application/rss+xml" title="Mincong Huang" href="/feed.xml"><!-- start favicons snippet, use https://realfavicongenerator.net/ --><link rel="apple-touch-icon" sizes="180x180" href="/assets/apple-touch-icon.png"><link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon-32x32.png"><link rel="icon" type="image/png" sizes="16x16" href="/assets/favicon-16x16.png"><link rel="manifest" href="/assets/site.webmanifest"><link rel="mask-icon" href="/assets/safari-pinned-tab.svg" color="#fc4d50"><link rel="shortcut icon" href="/assets/favicon.ico">
 
 <meta name="msapplication-TileColor" content="#ffc40d"><meta name="msapplication-config" content="/assets/browserconfig.xml">
 
@@ -324,13 +324,13 @@
           
           
 
-          <a href="/cn/">码农小黄</a>
+          <a href="/">Mincong Huang</a>
         </div><button class="button button--secondary button--circle search-button js-search-toggle">
             <i class="fas fa-search"></i>
           </button></div><nav class="navigation">
-        <ul><li class="navigation__item"><a href="/cn/categories/">分类</a></li><li class="navigation__item"><a href="/cn/series/">系列</a></li><li class="navigation__item"><a href="/cn/archive/">归档</a></li><li class="navigation__item"><a href="/cn/about/">关于</a></li><li><button class="button button--secondary button--circle search-button js-search-toggle"><i class="fas fa-search"></i></button></li><li>
-            <a href="/">
-             <img src="/assets/flag-US.png"
+        <ul><li class="navigation__item"><a href="/en/categories/">Categories</a></li><li class="navigation__item"><a href="/en/series/">Series</a></li><li class="navigation__item"><a href="/en/archive/">Archive</a></li><li class="navigation__item"><a href="/en/about/">About</a></li><li><button class="button button--secondary button--circle search-button js-search-toggle"><i class="fas fa-search"></i></button></li><li>
+            <a href="/cn/">
+             <img src="/assets/flag-CN.png"
                   alt=""
                   class="naviation__lang_img">
             </a>
@@ -345,15 +345,18 @@
       <ul class="left-col menu">
         <li>
               <a class="button button--secondary button--pill button--sm"
-                href="/cn/archive/?tag=elasticsearch">elasticsearch</a>
+                href="/en/archive/?tag=elasticsearch">elasticsearch</a>
             </li><li>
               <a class="button button--secondary button--pill button--sm"
-                href="/cn/archive/?tag=java">java</a>
+                href="/en/archive/?tag=java">java</a>
             </li>
 
         <li class="separator">|</li>
           
             <li>
+              <a class="button button--circle button--primary focus lang"
+                 href="/en/elasticsearch-snapshot-repository-structure/"><span>EN</span></a>
+
               
 
 
@@ -365,26 +368,23 @@
 
               
                 <a class="button button--circle button--secondary lang"
-                   href="/en/elasticsearch-snapshot-repository-structure/"><span>EN</span></a>
+                   href="/cn/elasticsearch-snapshot-repository-structure/"><span>CN</span></a>
               
-
-              <a class="button button--circle button--primary focus lang"
-                 href="/cn/elasticsearch-snapshot-repository-structure/"><span>CN</span></a>
             </li>
           
         
-      </ul><ul class="right-col menu"><li><i class="far fa-calendar-alt"></i> <span>2021年 09月04日</span>
-            </li></ul></div><div class="article__header"><header><h1>Elasticsearch 快照仓库的内部结构</h1></header></div><div class="article__header">
-                        <p class="overlay__excerpt">这些文件，你都了解吗？</p>
+      </ul><ul class="right-col menu"><li><i class="far fa-calendar-alt"></i> <span>Sep 04, 2021</span>
+            </li></ul></div><div class="article__header"><header><h1>Internal Structure Of Snapshot Repository</h1></header></div><div class="article__header">
+                        <p class="overlay__excerpt">Do you know these files?</p>
                       </div><div class="article__info clearfix">
   <ul class="left-col menu">
     <li>
       <i class="fas fa-camera"></i>
       
-      照片由
+      Photo by
       <a href="https://unsplash.com/@zeak" target="_blank">Dmitrij Paskevic</a>
       
-      提供 /
+      on
       <a href="https://unsplash.com/license" target="_blank">Unplash </a>
     </li>
   </ul>
@@ -399,39 +399,36 @@
               <div class="col-main cell cell--auto"><!-- start custom main top snippet -->
 
 <!-- end custom main top snippet -->
-<article itemscope itemtype="http://schema.org/Article"><meta itemprop="headline" content="Elasticsearch 快照仓库的内部结构"><meta itemprop="author" content="Mincong Huang"/><meta itemprop="datePublished" content="2021-09-04T10:11:10+02:00">
+<article itemscope itemtype="http://schema.org/Article"><meta itemprop="headline" content="Internal Structure Of Snapshot Repository"><meta itemprop="author" content="Mincong Huang"/><meta itemprop="datePublished" content="2021-09-04T10:11:10+02:00">
     <meta itemprop="keywords" content="elasticsearch,java"><div class="js-article-content"><div class="layout--article"><!-- start custom article top snippet -->
 
 
 <!-- end custom article top snippet -->
-<div class="article__content" itemprop="articleBody"><!--
-  Replace asset link with following on Chinese Platforms:
-  https://github.com/mincong-h/mincong-h.github.io/raw/master/
- -->
+<div class="article__content" itemprop="articleBody"><p class="info">This article is translated with Google Translate and reviewed by Mincong.</p>
 
-<h2 id="前言">前言</h2>
+<h2 id="introduction">Introduction</h2>
 
-<p>如果你在生产线上使用 Elasticsearch 集群，那么我相信你一定听说过 Elasticsearch 的快照和恢复功能（snapshot and restore），因为它是保证集群数据不丢失的重要手段。网上有很多资料关于如何使用 Elasticsearch 快照，可是关于快照底层原理的文章却很少。今天，我想和大家来探讨一下 Elasticsearch 快照仓库（snapshot repository）的内部结构。明白这个结构，它能使我们对 Elasticsearch 快照功能有更好的了解，也能在生产线出问题的时候，提供更多排除故障的思路。</p>
+<p>If you use an Elasticsearch cluster in production, I believe you must have heard of Elasticsearch’s <a href="https://www.elastic.co/guide/en/elasticsearch/reference/7.x/snapshot-restore-apis.html">snapshot and restore feature</a>, because it is an important means to ensure that cluster data is not lost. There are a lot of materials on the Internet about how to use Elasticsearch snapshots, but there are very few articles about its implementation. Today, I want to discuss with you the internal structure of the Elasticsearch snapshot repository. Knowing it can give us a better understanding of how Elasticsearch’s snapshots work, and can also provide more ideas for troubleshooting when there is a problem in production.</p>
 
-<p>阅读本文后，你会明白：</p>
+<p>After reading this article, you will understand:</p>
 
 <ul>
-  <li>什么是快照仓库？</li>
-  <li>快照仓库的文件类型</li>
-  <li>进一步了解 index-N 文件</li>
-  <li>进一步了解 index.latest 文件</li>
-  <li>进一步了解快照信息文件</li>
+  <li>What is a snapshot repository?</li>
+  <li>Different files inside a snapshot repository</li>
+  <li>Learning more about <code class="language-plaintext highlighter-rouge">index-N</code> files</li>
+  <li>Learning more about the <code class="language-plaintext highlighter-rouge">index.latest</code> file</li>
+  <li>Learning more about snapshot information files</li>
 </ul>
 
-<p>事不宜迟，让我们马上开始吧！</p>
+<p>Without further ado, let’s get started right away!</p>
 
-<h2 id="什么是快照仓库">什么是快照仓库？</h2>
+<h2 id="what-is-a-snapshot-repository">What is a snapshot repository?</h2>
 
-<p>快照仓库是 Elasticsearch 存储快照（snapshot）的地方，一个快照仓库可以存储多个快照。快照是 Elasticsearch 储存备份的方式，你可以对所有索引或者单个索引进行快照。在一个快照仓库中，快照是增量的：新的快照只会快照那些在之前快照中未被快照的部分，避免浪费时间和储存空间。快照仓库有多种类型：可以是文件系统仓库，也可以是云供应商的云存储仓库，比如 AWS S3、Google Cloud Storage、Azure Blob Storage、Aliyun OSS 等。</p>
+<p>A snapshot repository is a location where Elasticsearch stores snapshots. One snapshot repository can store multiple snapshots. Snapshots are how Elasticsearch backups your data. You can create a snapshot for one single index or multiple indices. Inside a snapshot repository, snapshots are incremental: new snapshots will only snapshot those parts that were not snapshotted in the previous snapshot to avoid wasting time and storage space. There are many types of snapshot repositories: they can be local repository or remote repositories for  cloud providers, such as AWS S3, Google Cloud Storage, Azure Blob Storage, Aliyun OSS, etc.</p>
 
-<h2 id="快照仓库的文件类型">快照仓库的文件类型</h2>
+<h2 id="different-files-inside-a-snapshot-repository">Different files inside a snapshot repository</h2>
 
-<p>下面，我们看看一个快照仓库的不同文件的概况。这里引用关于<a href="https://github.com/elastic/elasticsearch/blob/7.12/server/src/main/java/org/elasticsearch/repositories/blobstore/package-info.java" title="快照仓库存储的 Javadoc - Elasticsearch 7.12">快照仓库存储的 Elasticsearch 7.12 版的官方 Javadoc（节选）</a>：</p>
+<p>Below, let’s take a look the different files stored inside a snapshot repository. Here is an excerpt from the <a href="https://github.com/elastic/elasticsearch/blob/7.12/server/src/main/java/org/elasticsearch/repositories/blobstore/package-info.java">Javadoc of Elasticsearch 7.12 about Snapshot Repository</a>:</p>
 
 <div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code> STORE_ROOT
  |- index-N           - JSON serialized {@link org.elasticsearch.repositories.RepositoryData} containing a list of all snapshot ids
@@ -475,92 +472,92 @@
     ......
 </code></pre></div></div>
 
-<p>以表格形式再整理一下：</p>
+<p>Organize them again in a table:</p>
 
 <table>
   <thead>
     <tr>
-      <th style="text-align: left">文件路径</th>
-      <th style="text-align: left">解释</th>
+      <th style="text-align: left">File path</th>
+      <th style="text-align: left">explanation</th>
     </tr>
   </thead>
   <tbody>
     <tr>
       <td style="text-align: left"><code class="language-plaintext highlighter-rouge">index-N</code></td>
-      <td style="text-align: left">以 JSON 格式序列化的 <code class="language-plaintext highlighter-rouge">RepositoryData</code>，包含所有的快照 IDs 以及它们所对应的索引。N 代表这个文件是第几代。</td>
+      <td style="text-align: left"><code class="language-plaintext highlighter-rouge">RepositoryData</code> serialized in JSON format, including all snapshot IDs and their corresponding indexes. N represents the generation of this file.</td>
     </tr>
     <tr>
       <td style="text-align: left"><code class="language-plaintext highlighter-rouge">index.latest</code></td>
-      <td style="text-align: left">文件是一个指针，以数字形式表示最后一代的 index 文件，也就是上面所说的数字 N。这里的 N 是一个 16 进制的数字，比如说第 100 代的 index（十进制），最后就以 16 进制中的 64 表示，因为 64 = 16*6 + 4。</td>
+      <td style="text-align: left">The file is a pointer that represents the last generation index file in digital form, which is the number N mentioned above. Here N is a hexadecimal number, for example, the index of the 100th generation (decimal), and finally represented by 64 in hexadecimal, because 64 = 16*6 + 4.</td>
     </tr>
     <tr>
       <td style="text-align: left"><code class="language-plaintext highlighter-rouge">incompatible-snapshots</code></td>
-      <td style="text-align: left">所有的已经不再与与当前集群版本兼容的快照 ID 列表</td>
+      <td style="text-align: left">A list of all snapshot IDs that are no longer compatible with the current cluster version</td>
     </tr>
     <tr>
       <td style="text-align: left"><code class="language-plaintext highlighter-rouge">snap-20131010.dat</code></td>
-      <td style="text-align: left">以 SMILE 格式序列化的 <code class="language-plaintext highlighter-rouge">SnapshotInfo</code>，用来表示快照 20131010 所对应的信息</td>
+      <td style="text-align: left"><code class="language-plaintext highlighter-rouge">SnapshotInfo</code> serialized in SMILE format, used to represent the information corresponding to the snapshot 20131010</td>
     </tr>
     <tr>
       <td style="text-align: left"><code class="language-plaintext highlighter-rouge">meta-20131010.dat</code></td>
-      <td style="text-align: left">以 SMILE 格式序列化的 <code class="language-plaintext highlighter-rouge">Metadata</code>，用来表示快照 20131010 所对应的全局元数据（global metadata）</td>
+      <td style="text-align: left"><code class="language-plaintext highlighter-rouge">Metadata</code> serialized in SMILE format, used to represent the metadata corresponding to the snapshot 20131010  (includes only global metadata)</td>
     </tr>
     <tr>
       <td style="text-align: left"><code class="language-plaintext highlighter-rouge">indices/</code></td>
-      <td style="text-align: left">所有的索引数据</td>
+      <td style="text-align: left">Data for all indices</td>
     </tr>
     <tr>
       <td style="text-align: left"><code class="language-plaintext highlighter-rouge">indices/Ac1342-B_x/</code></td>
-      <td style="text-align: left">索引 foo 所对应的数据。索引在仓库中的 UUID 是 Ac1342-B_x。但不要跟索引的 UUID 混淆。</td>
+      <td style="text-align: left">Index the data corresponding to foo. The UUID of the index in the repository is Ac1342-B_x. But do not confuse with the UUID of the index.</td>
     </tr>
     <tr>
       <td style="text-align: left"><code class="language-plaintext highlighter-rouge">indices/Ac1342-B_x/meta-20131010.dat</code></td>
-      <td style="text-align: left">索引 foo 以 JSON 格式序列化的 <code class="language-plaintext highlighter-rouge">IndexMetadata</code></td>
+      <td style="text-align: left">Index foo <code class="language-plaintext highlighter-rouge">IndexMetadata</code> serialized in JSON format</td>
     </tr>
     <tr>
       <td style="text-align: left"><code class="language-plaintext highlighter-rouge">indices/Ac1342-B_x/0/</code></td>
-      <td style="text-align: left">索引 foo 分片 0 所对应的数据</td>
+      <td style="text-align: left">Index foo data corresponding to shard 0</td>
     </tr>
     <tr>
       <td style="text-align: left"><code class="language-plaintext highlighter-rouge">indices/Ac1342-B_x/0/__1</code></td>
-      <td style="text-align: left">以数字结尾的文件是由旧版的 Elasticsearch 创建的</td>
+      <td style="text-align: left">Files ending in numbers were created by an older version of Elasticsearch</td>
     </tr>
     <tr>
       <td style="text-align: left"><code class="language-plaintext highlighter-rouge">indices/Ac1342-B_x/0/__2</code></td>
-      <td style="text-align: left">同上</td>
+      <td style="text-align: left">Same as above</td>
     </tr>
     <tr>
-      <td style="text-align: left"><code class="language-plaintext highlighter-rouge">indices/Ac1342-B_x/0/__VPO5oDMVT5y4Akv8T_AO_A</code></td>
-      <td style="text-align: left">segments 文件，具体的跟真正 segment 的 mappings 见 <code class="language-plaintext highlighter-rouge">snap-*</code> 文件</td>
+      <td style="text-align: left"><code class="language-plaintext highlighter-rouge">Indices / Ac1342-B_x / 0 / __ VPO5oDMVT5y4Akv8T_AO_A</code></td>
+      <td style="text-align: left">segment files, with specific mappings real segment, see <code class="language-plaintext highlighter-rouge">snap-*</code> file</td>
     </tr>
     <tr>
       <td style="text-align: left"><code class="language-plaintext highlighter-rouge">indices/Ac1342-B_x/0/__1gbJy18wS_2kv1qI7FgKuQ</code></td>
-      <td style="text-align: left">同上</td>
+      <td style="text-align: left">Same as above</td>
     </tr>
     <tr>
       <td style="text-align: left"><code class="language-plaintext highlighter-rouge">indices/Ac1342-B_x/0/__R8JvZAHlSMyMXyZc2SS8Zg</code></td>
-      <td style="text-align: left">同上</td>
+      <td style="text-align: left">Same as above</td>
     </tr>
     <tr>
       <td style="text-align: left"><code class="language-plaintext highlighter-rouge">indices/Ac1342-B_x/0/snap-20131010.dat</code></td>
-      <td style="text-align: left">快照 20131010 以 SMILE 格式序列化的 <code class="language-plaintext highlighter-rouge">BlobStoreIndexShardSnapshot</code></td>
+      <td style="text-align: left">Snapshot 20131010 <code class="language-plaintext highlighter-rouge">BlobStoreIndexShardSnapshot</code> serialized in SMILE format</td>
     </tr>
     <tr>
       <td style="text-align: left"><code class="language-plaintext highlighter-rouge">indices/Ac1342-B_x/0/snap-20131011.dat</code></td>
-      <td style="text-align: left">快照 20131011 以 SMILE 格式序列化的 <code class="language-plaintext highlighter-rouge">BlobStoreIndexShardSnapshot</code></td>
+      <td style="text-align: left">Snapshot 20131011 <code class="language-plaintext highlighter-rouge">BlobStoreIndexShardSnapshot</code> serialized in SMILE format</td>
     </tr>
     <tr>
       <td style="text-align: left"><code class="language-plaintext highlighter-rouge">indices/Ac1342-B_x/0/index-123</code></td>
-      <td style="text-align: left">分片 0 以 SMILE 格式序列化的 <code class="language-plaintext highlighter-rouge">BlobStoreIndexShardSnapshots</code>。如果以数字结尾的话，证明是旧版 Elasticsearch 创建的，如果是以 UUID 结尾的话，则是被新版 Elasticsearch 创建的。</td>
+      <td style="text-align: left">Shard 0 <code class="language-plaintext highlighter-rouge">BlobStoreIndexShardSnapshots</code> serialized in SMILE format. Files with numeric suffixes were created by older versions, newer ES versions use a uuid suffix instead</td>
     </tr>
   </tbody>
 </table>
 
-<h2 id="准备数据">准备数据</h2>
+<h2 id="data-preparation">Data Preparation</h2>
 
-<p>接下来，让我们来看看一些比较重要的文件。</p>
+<p>Next, let’s take a look at some of the more important files.</p>
 
-<p>不过在开始前，先在本地准备一下，启动 Elasticsearch，创建一些数据和快照。</p>
+<p>But before getting started, we need to prepare the data locally: by starting Elasticsearch, and creating some data and snapshots.</p>
 
 <div class="language-sh highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nv">es_repo</span><span class="o">=</span><span class="s2">"</span><span class="k">${</span><span class="nv">HOME</span><span class="k">}</span><span class="s2">/es-backup/blog-snapshot-repo-structure/"</span>
 
@@ -603,7 +600,7 @@ curl <span class="nt">-X</span> PUT localhost:9200/_snapshot/my_repo/my_snapshot
 }'</span>
 </code></pre></div></div>
 
-<p>然后进入本地文件夹 blog-snapshot-repo-structure，确保仓库 my_repo 以及里面的文件都准备就绪：</p>
+<p>Then enter the local folder <code class="language-plaintext highlighter-rouge">blog-snapshot-repo-structure</code>, make sure the repository <code class="language-plaintext highlighter-rouge">my_repo</code> and the files in it are ready:</p>
 
 <div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>➜  blog-snapshot-repo-structure find my_repo
 my_repo
@@ -621,9 +618,9 @@ my_repo/meta-2hiUzvH3RPCp9iOeiTa6TQ.dat
 my_repo/snap-2hiUzvH3RPCp9iOeiTa6TQ.dat
 </code></pre></div></div>
 
-<p>下面，我们可以进一步探索文件内容啦！</p>
+<p>Now, we can further explore the contents of the repository!</p>
 
-<h2 id="index-n-文件">index-N 文件</h2>
+<h2 id="file-index-n">File index-N</h2>
 
 <div class="language-sh highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nb">cat </span>index-0 | jq
 </code></pre></div></div>
@@ -665,30 +662,30 @@ health status index    uuid                   pri rep docs.count docs.deleted st
 yellow open   my_index Uz7B9HV2SJ6peiLiUMJhyg   1   1          1            0      3.9kb          3.9kb
 </code></pre></div></div>
 
-<p>上述文件 index-0 表示第 0 代（generation 0）快照。它是以 JSON 格式序列化的 <code class="language-plaintext highlighter-rouge">RepositoryData</code>，包含所有的快照 IDs 以及它们所对应的索引。索引 my_index 在仓库中的 UUID 是 Uxom82JcSfORXgbtZ4jLSg，它在集群中对应的 UUID 是 Uz7B9HV2SJ6peiLiUMJhyg。这个索引被一个快照所引用，也就是快照 my_snapshot_1（2hiUzvH3RPCp9iOeiTa6TQ）。</p>
+<p>The above file <code class="language-plaintext highlighter-rouge">index-0</code> represents generation 0 of the snapshot repository. It is a <code class="language-plaintext highlighter-rouge">RepositoryData</code> serialized in JSON format, which contains all the snapshot IDs and their corresponding indexes. The UUID of the index <code class="language-plaintext highlighter-rouge">my_index</code> in the repository is <code class="language-plaintext highlighter-rouge">Uxom82JcSfORXgbtZ4jLSg</code>, and its corresponding UUID in the cluster is <code class="language-plaintext highlighter-rouge">Uz7B9HV2SJ6peiLiUMJhyg</code>. This index is referenced by a snapshot, which is the snapshot <code class="language-plaintext highlighter-rouge">my_snapshot_1</code> (<code class="language-plaintext highlighter-rouge">2hiUzvH3RPCp9iOeiTa6TQ</code>).</p>
 
-<h2 id="indexlatest-文件">index.latest 文件</h2>
+<h2 id="file-indexlatest">File index.latest</h2>
 
-<p>index.latest 文件是一个指针，以数字形式表示最后一代的 index 文件，也就是上面所说的数字 N。这里的 N 是一个 16 进制的数字，比如说第 100 代的 index（十进制），最后就以 16 进制中的 64 表示，因为 64 = 16*6 + 4。在上文准备的仓库 my_repo 中，因为是只进行了一次快照，所以它是第 0 代：</p>
+<p>The <code class="language-plaintext highlighter-rouge">index.latest</code> file is a pointer that represents the last-generation index file in numerical form, which is the number N mentioned above. Here N is a hexadecimal number, for example, the index of the 100th generation (decimal) is represented as 64 in hexadecimal, because 64 = 16*6 + 4. In the repository <code class="language-plaintext highlighter-rouge">my_repo</code> prepared above, since only one snapshot was taken, it is the 0th generation:</p>
 
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>➜  hexdump index.latest
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>➜ hexdump index.latest
 0000000 00 00 00 00 00 00 00 00
 0000008
 </code></pre></div></div>
 
-<p>下面，让我们生成更多的文档，然后造出更多的快照，这样我们就可以更好地查看 <code class="language-plaintext highlighter-rouge">index.latest</code> 的变化：</p>
+<p>Now, let’s generate more documents and create more snapshots, so that we can better view the changes in <code class="language-plaintext highlighter-rouge">index.latest</code>:</p>
 
 <div class="language-sh highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">for </span>i <span class="k">in</span> <span class="o">{</span>2..20<span class="o">}</span>
 <span class="k">do
   </span><span class="nb">echo</span> <span class="s2">"Creating document </span><span class="k">${</span><span class="nv">i</span><span class="k">}</span><span class="s2">"</span>
   curl <span class="nt">-s</span> <span class="nt">-X</span> PUT <span class="s2">"localhost:9200/my_index/_doc/</span><span class="k">${</span><span class="nv">i</span><span class="k">}</span><span class="s2">"</span> <span class="se">\</span>
-    <span class="nt">-H</span> <span class="s1">'Content-Type: application/json'</span> <span class="se">\</span>
+    <span class="nt">-H</span><span class="s1">'Content-Type: application/json'</span> <span class="se">\</span>
     <span class="nt">-d</span> <span class="s2">"{</span><span class="se">\"</span><span class="s2">msg</span><span class="se">\"</span><span class="s2">: </span><span class="se">\"</span><span class="s2">Hello Elasticsearch </span><span class="k">${</span><span class="nv">i</span><span class="k">}</span><span class="se">\"</span><span class="s2">}"</span>
 
   <span class="nb">echo</span> <span class="s2">"Creating snapshot </span><span class="k">${</span><span class="nv">i</span><span class="k">}</span><span class="s2">"</span>
   curl <span class="nt">-s</span> <span class="nt">-X</span> PUT <span class="s2">"localhost:9200/_snapshot/my_repo/my_snapshot_</span><span class="k">${</span><span class="nv">i</span><span class="k">}</span><span class="s2">"</span> <span class="se">\</span>
-    <span class="nt">-H</span> <span class="s1">'Content-Type: application/json'</span> <span class="se">\</span>
-    <span class="nt">-d</span> <span class="s1">'{
+    <span class="nt">-H</span><span class="s1">'Content-Type: application/json'</span> <span class="se">\</span>
+    <span class="nt">-d</span><span class="s1">'{
     "indices": "my_index",
     "include_global_state": false,
     "metadata": {
@@ -699,46 +696,46 @@ yellow open   my_index Uz7B9HV2SJ6peiLiUMJhyg   1   1          1            0   
 <span class="k">done</span>
 </code></pre></div></div>
 
-<p>这个时候，index.latest 变成了第 19 代（从 0 代开始，所以其实是第 20 次）。19 = 16*1 + 3</p>
+<p>At this time, <code class="language-plaintext highlighter-rouge">index.latest</code> has become the 19th generation (starting from the 0 generation, so it is actually the 20th generation). 19 = 16*1 + 3</p>
 
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>➜  hexdump index.latest
-0000000 00 00 00 00 00 00 00 13
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>➜ hexdump index.latest
+0000000 00 00 00 00 00 00 00 00 13
 0000008
 </code></pre></div></div>
 
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>➜  echo 'ibase=16; 13' | bc
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>➜ echo'ibase=16; 13' | bc
 19
 </code></pre></div></div>
 
-<p>那 Elasticsearch 是如何通过 index-N 和 index.latest 文件加载仓库数据 <code class="language-plaintext highlighter-rouge">RepositoryData</code> 的呢？</p>
+<p>But how does Elasticsearch load the <code class="language-plaintext highlighter-rouge">RepositoryData</code> through <code class="language-plaintext highlighter-rouge">index-N</code> and <code class="language-plaintext highlighter-rouge">index.latest</code> files?</p>
 
-<p>加载 RepositoryData 以及索引名称到其仓库 IndexId 的映射，这是通过调用 BlobStoreRepository.getRepositoryData 完成的。具体实现如下：</p>
+<p>Loading <code class="language-plaintext highlighter-rouge">RepositoryData</code> and the mapping of index name to its repository <code class="language-plaintext highlighter-rouge">IndexId</code>, which is done by calling <code class="language-plaintext highlighter-rouge">BlobStoreRepository.getRepositoryData()</code>. The specific implementation is as follows (<a href="https://github.com/elastic/elasticsearch/blob/7.12/server/src/main/java/org/elasticsearch/repositories/blobstore/package-info.java">extracted from Javadoc</a>):</p>
 
 <ol>
-  <li>第一步：储存
+  <li>Step 1: Storing repository data
     <ol>
-      <li>blobstore 仓库将 RepositoryData 存储在仓库根目录下的 /index-N 处以递增后缀 N 命名的文件中。</li>
-      <li>对于每个 BlobStoreRepository，集群状态中都存在一个 RepositoryMetadata 类型的条目。它跟踪当前有效的第 N 代以及尝试写入的最新一代。</li>
-      <li>blobstore 还将最近的 N 存储为 64 位长度，直接在存储库根目录下的文件 /index.latest 中。</li>
+      <li>The blobstore repository stores the <code class="language-plaintext highlighter-rouge">RepositoryData</code> in blobs named with incrementing suffix <code class="language-plaintext highlighter-rouge">N</code> at <code class="language-plaintext highlighter-rouge">/index-N</code> directly under the repository’s root.</li>
+      <li>For each <code class="language-plaintext highlighter-rouge">BlobStoreRepository</code> an entry of type <code class="language-plaintext highlighter-rouge">RepositoryMetadata</code> exists in the cluster state. It tracks the current valid generation <code class="language-plaintext highlighter-rouge">N</code> as well as the latest generation that a write was attempted for.</li>
+      <li>The blobstore also stores the most recent <code class="language-plaintext highlighter-rouge">N</code> as a 64bit long in the blob <code class="language-plaintext highlighter-rouge">/index.latest</code> directly under the repository’s root.</li>
     </ol>
   </li>
-  <li>第二步：确定 N 的值
+  <li>Step 2: Determine the value of N
     <ol>
-      <li>首先，通过在仓库根目录下列出所有带有前缀 index- 的 blob，然后选择 N 值最高的文件，获取所有索引为 N 的文件列表，从而找到最新的  <code class="language-plaintext highlighter-rouge">RepositoryData</code></li>
-      <li>如果此操作因仓库的 BlobContainer 不支持列表操作而失败（在只读仓库会出现这样的情况），则从 index.latest 文件中读取 N 的最大值。</li>
+      <li>First, find the most recent <code class="language-plaintext highlighter-rouge">RepositoryData</code> by getting a list of all index-N blobs through listing all blobs with prefix “index-“ under the repository root and then selecting the one with the highest value for N.</li>
+      <li>If this operation fails because the repository’s <code class="language-plaintext highlighter-rouge">BlobContainer</code> does not support list operations (in the case of read-only repositories), read the highest value of N from the <code class="language-plaintext highlighter-rouge">index.latest</code> blob.</li>
     </ol>
   </li>
-  <li>第三步：反序列化
+  <li>Step 3: Deserialization
     <ol>
-      <li>使用刚刚确定的 N 值并获取 /index-N blob 并从中反序列化 RepositoryData。</li>
-      <li>如果由于存储库中既不存在 index.latest 也不存在任何 index-N 文件，则找不到 N 的值，则假定它为空并返回 <code class="language-plaintext highlighter-rouge">RepositoryData.EMPTY</code>。</li>
+      <li>Use the just determined value of <code class="language-plaintext highlighter-rouge">N</code> and get the <code class="language-plaintext highlighter-rouge">/index-N</code> blob and deserialize the <code class="language-plaintext highlighter-rouge">RepositoryData</code> from it.</li>
+      <li>If no value of <code class="language-plaintext highlighter-rouge">N</code> could be found since neither an <code class="language-plaintext highlighter-rouge">index.latest</code> nor any <code class="language-plaintext highlighter-rouge">index-N</code> blobs exist in the repository, it is assumed to be empty and <code class="language-plaintext highlighter-rouge">RepositoryData#EMPTY</code> is returned.</li>
     </ol>
   </li>
 </ol>
 
-<h2 id="仓库层面的快照信息">仓库层面的快照信息</h2>
+<h2 id="repo-level-snapshot-info">Repo-Level Snapshot Info</h2>
 
-<p>以 SMILE 格式序列化的 <code class="language-plaintext highlighter-rouge">SnapshotInfo</code>，用来表示快照所对应的信息。下面是快照 my_snapshot_20 所对应的信息 <code class="language-plaintext highlighter-rouge">snap-WbjaeQk1T4u2JrGfsWlHsw.dat</code>。值得一提的是，SMILE格式的文件没办法直接查看（比如使用 cat）。你需要专门的解调工具，比如 <a href="https://github.com/cowtowncoder/Jackformer" title="cowtowncoder/Jackformer">cowtowncoder/Jackformer</a>。转成 JSON 以后得到以下的结果：</p>
+<p><code class="language-plaintext highlighter-rouge">SnapshotInfo</code> serialized in SMILE format is used to represent the information related to the snapshot. The following is the snapshot info for <code class="language-plaintext highlighter-rouge">my_snapshot_20</code> (<code class="language-plaintext highlighter-rouge">snap-WbjaeQk1T4u2JrGfsWlHsw.dat</code>). By the way, it is worth mentioning that there is no way to directly inspect files in SMILE format (for example, using <code class="language-plaintext highlighter-rouge">cat</code>). You need a special demodulation tool, such as <a href="https://github.com/cowtowncoder/Jackformer">cowtowncoder/Jackformer</a>. After converting to JSON, we obtain the results as:</p>
 
 <div class="language-js highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">// decoded version of repository-level snapshot info</span>
 <span class="c1">// $STORE_ROOT/snap-WbjaeQk1T4u2JrGfsWlHsw.dat</span>
@@ -765,7 +762,9 @@ yellow open   my_index Uz7B9HV2SJ6peiLiUMJhyg   1   1          1            0   
 <span class="p">}</span>
 </code></pre></div></div>
 
-<h2 id="分片层面的快照信息">分片层面的快照信息</h2>
+<h2 id="shard-level-snapshot-info">Shard-Level Snapshot Info</h2>
+
+<p>We can do the same thing for shard-level snapshot information, such as this one <code class="language-plaintext highlighter-rouge">snap-WbjaeQk1T4u2JrGfsWlHsw.dat</code>:</p>
 
 <div class="language-js highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">// decoded version of shard-level snapshot info</span>
 <span class="c1">// $STORE_ROOT/indices/Uxom82JcSfORXgbtZ4jLSg/0/snap-WbjaeQk1T4u2JrGfsWlHsw.dat</span>
@@ -818,56 +817,33 @@ yellow open   my_index Uz7B9HV2SJ6peiLiUMJhyg   1   1          1            0   
 <span class="p">}</span>
 </code></pre></div></div>
 
-<h2 id="扩展">扩展</h2>
+<h2 id="going-further">Going Further</h2>
 
-<p>如何从这篇文章中拓展出去？</p>
-
-<ul>
-  <li>如果你想了解更多关于 Snapshot Repository 的内部文件格式或者加载机制，可以查看<a href="https://github.com/elastic/elasticsearch/blob/7.12/server/src/main/java/org/elasticsearch/repositories/blobstore/package-info.java" title="快照仓库存储的 Javadoc - Elasticsearch 7.12">快照仓库存储的 Elasticsearch 7.12 版的官方 Javadoc</a></li>
-  <li>如果你想了解更多关于 Snapshot Repository 的运行原理，可以查看 Steve Mushero 在 Medium 上面写的文章 <a href="https://steve-mushero.medium.com/how-elasticsearch-snapshots-work-3824fdfc4493" title="How Elasticsearch Snapshots Work">How Elasticsearch Snapshots Work</a></li>
-  <li>如果你想了解更多关于 SMILE 格式的信息，可以查询维基百科 <a href="https://en.wikipedia.org/wiki/Smile_%28data_interchange_format%29" title="Smile (data interchange format) - Wikipedia">Smile (data interchange format)</a>或者查看 Ayush Gupta 在 Medium 上面写的文章 <a href="https://medium.com/code-with-ayush/understanding-smile-a-data-format-based-on-json-29972a37d376" title="Understanding Smile — A data format based on JSON">Understanding Smile — A data format based on JSON</a></li>
-</ul>
-
-<h2 id="结论">结论</h2>
-
-<p>在本文中，我们走进 Elasticsearch 的快照仓库，看到了它的内部结构。我们还进一步地了解了 index-N、index.latest、和一些跟快照相关的文件。希望明白这个结构，它能使你对 Elasticsearch 快照功能有更好的了解，也能在生产线出问题的时候，提供更多排除故障的思路。最后，我们简要地看到了一些让大家拓展出去的资源。希望这篇文章能够给你带来一些思考，让你的系统变得更好用。如果你有兴趣了解更多的资讯，欢迎关注我的 GitHub 账号 <a href="https://github.com/mincong-h" title="GitHub">mincong-h</a> 或者微信订阅号【码农小黄】。谢谢大家！</p>
-
-<h2 id="参考文献">参考文献</h2>
+<p>How to expand from this article?</p>
 
 <ul>
-  <li>Tatu Saloranta, <a href="https://github.com/cowtowncoder/Jackformer">“Web app for flexible data transforms”</a>, <em>GitHub</em>, 2021.</li>
-  <li>Ayush Gupta, <a href="https://medium.com/code-with-ayush/understanding-smile-a-data-format-based-on-json-29972a37d376">“Understanding Smile — A data format based on JSON”</a>, <em>Medium</em>, 2019.</li>
-  <li>Wikipedia, <a href="https://en.wikipedia.org/wiki/Smile_%28data_interchange_format%29">“Smile (data interchange format)”</a>, <em>Wikipedia</em>, 2021.</li>
+  <li>If you want to know more about the internal file format or loading mechanism of snapshot repository, you can check the <a href="https://github.com/elastic/elasticsearch/blob/7.12/server/src/main/java/org/elasticsearch/repositories/blobstore/package-info.java">official Javadoc of Elasticsearch (7.12) of the snapshot repository</a></li>
+  <li>If you want to learn more about how Snapshot Repository works, you can check out <a href="https://steve-mushero.medium.com/how-elasticsearch-snapshots-work-3824fdfc4493">How Elasticsearch Snapshots Work</a> by Steve Mushero on Medium</li>
+  <li>If you want to know more about SMILE format, you can check Wikipedia <a href="https://en.wikipedia.org/wiki/Smile_%28data_interchange_format%29">Smile (data interchange format)</a> or check Ayush Gupta’s article on Medium <a href="https://medium.com/code-with-ayush/understanding-smile-a-data-format-based-on-json-29972a37d376">Understanding Smile — A data format based on JSON</a></li>
 </ul>
 
-<!--
- WeChat:
-   写作不易，希望大家点个赞、点个在看支持一下，谢谢！
-   ![](https://mincong.io/assets/wechat-QR-code.jpg)
+<h2 id="conclusion">Conclusion</h2>
 
- CSDN:
-   ![扫码关注](https://img-blog.csdnimg.cn/img_convert/f07c6cc9272c721180bad20c599e4ff7.png#pic_center =600x333)
--->
+<p>In this article, we walked into Elasticsearch’s snapshot repository and saw its internal structure. We also learn more about <code class="language-plaintext highlighter-rouge">index-N</code>, <code class="language-plaintext highlighter-rouge">index.latest</code>, and some other files related to snapshots. I hope that by knowing these files, it will give you a have a better understanding of Elasticsearch’s “snapshot and restore” feature, and also give you more ideas for troubleshooting when there is an issue on production. Finally, we briefly saw some resources to expand out. You can subscribe to the <a href="/feed.xml">feed of my blog</a>, follow me on <a href="https://twitter.com/mincong_h">Twitter</a> or <a href="https://github.com/mincong-h/">GitHub</a>. Hope you enjoy this article, see you the next time!</p>
 </div><section class="article__sharing d-print-none"></section><div class="d-print-none"><footer class="article__footer"><meta itemprop="dateModified" content="2021-09-04T10:11:10+02:00"><!-- start custom article footer snippet -->
 
 <!-- end custom article footer snippet -->
 <div class="article__subscribe"><div class="subscribe">
   <i class="fas fa-rss"></i>
-  <a type="application/rss+xml" href="/feed.xml">订阅</a>
-</div><div style="text-align: center">
-  <img
-    src="/assets/wechat-QR-code.jpg"
-    alt="WeChat QR Code"
-    width="400px"
-    style="max-width: 100%">
+  <a type="application/rss+xml" href="/feed.xml">Subscribe</a>
 </div></div><div class="article__license"><div class="license">
-    <p>本文遵守 <a itemprop="license" rel="license" href="https://creativecommons.org/licenses/by/4.0/">Attribution 4.0 International</a> 许可协议。
+    <p>This work is licensed under a <a itemprop="license" rel="license" href="https://creativecommons.org/licenses/by/4.0/">Attribution 4.0 International</a> license.
       <a rel="license" href="https://creativecommons.org/licenses/by/4.0/">
         <img alt="Attribution 4.0 International" src="https://i.creativecommons.org/l/by/4.0/88x31.png" />
       </a>
     </p>
   </div></div></footer>
-<div class="article__section-navigator clearfix"><div class="previous"><span>上篇</span><a href="/cn/elasticsearch-settings/">一文了解 Elasticsearch 设置</a></div><div class="next"><span>下篇</span><a href="/cn/elasticsearch-snapshot-plugins/">Elasticsearch 的快照插件</a></div></div></div>
+<div class="article__section-navigator clearfix"><div class="previous"><span>PREVIOUS</span><a href="/en/elasticsearch-settings/">Elasticsearch Settings</a></div></div></div>
 
 </div>
 
@@ -902,8 +878,8 @@ yellow open   my_index Uz7B9HV2SJ6peiLiUMJhyg   1   1          1            0   
   *  RECOMMENDED CONFIGURATION VARIABLES: EDIT AND UNCOMMENT THE SECTION BELOW TO INSERT DYNAMIC VALUES FROM YOUR PLATFORM OR CMS.
   *  LEARN WHY DEFINING THESE VARIABLES IS IMPORTANT: https://disqus.com/admin/universalcode/#configuration-variables*/
   var disqus_config = function () {
-    this.page.url = 'https://mincong.io/cn/elasticsearch-snapshot-repository-structure/';
-    this.page.identifier = '/cn/elasticsearch-snapshot-repository-structure';
+    this.page.url = 'https://mincong.io/en/elasticsearch-snapshot-repository-structure/';
+    this.page.identifier = '/en/elasticsearch-snapshot-repository-structure';
   };
   (function() { // DON'T EDIT BELOW THIS LINE
     var d = document, s = d.createElement('script');
@@ -920,24 +896,24 @@ yellow open   my_index Uz7B9HV2SJ6peiLiUMJhyg   1   1          1            0   
 <footer class="footer py-4 js-page-footer">
   <div class="main"><div itemscope itemtype="http://schema.org/Person">
       <meta itemprop="name" content="Mincong Huang"><meta itemprop="url" content="/"><meta itemprop="description" content="I am an amazing person."><div class="footer__author-links"><div class="author-links">
-  <ul class="menu menu--nowrap menu--inline"><li title="给我发邮件。">
+  <ul class="menu menu--nowrap menu--inline"><li title="Send me an Email.">
       <a class="button button--circle mail-button" itemprop="email" href="mailto:mincong.h@gmail.com" target="_blank">
         <i class="fas fa-envelope"></i>
-      </a><li title="在 Twitter 上关注我。">
+      </a><li title="Follow me on Twitter.">
         <a class="button button--circle twitter-button" itemprop="sameAs" href="https://twitter.com/mincong_h" target="_blank">
           <div class="icon"><svg fill="#000000" width="24px" height="24px" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg">
   <path d="M1024.032 194.432c-37.664 16.704-78.176 28-120.672 33.088 43.36-26.016 76.672-67.168 92.384-116.224-40.608 24.064-85.568 41.568-133.408 50.976-38.336-40.832-92.928-66.336-153.344-66.336-116.032 0-210.08 94.048-210.08 210.08 0 16.48 1.856 32.512 5.44 47.872-174.592-8.768-329.408-92.416-433.024-219.52-18.08 31.04-28.448 67.104-28.448 105.632 0 72.896 37.088 137.184 93.472 174.88-34.432-1.088-66.816-10.528-95.168-26.272-0.032 0.864-0.032 1.76-0.032 2.656 0 101.792 72.416 186.688 168.512 205.984-17.632 4.8-36.192 7.36-55.36 7.36-13.536 0-26.688-1.312-39.52-3.776 26.72 83.456 104.32 144.192 196.256 145.888-71.904 56.352-162.496 89.92-260.928 89.92-16.96 0-33.664-0.992-50.112-2.944 92.96 59.616 203.392 94.4 322.048 94.4 386.432 0 597.728-320.128 597.728-597.76 0-9.12-0.192-18.176-0.608-27.168 41.056-29.632 76.672-66.624 104.832-108.736z" />
 </svg>
 </div>
         </a>
-      </li><li title="在 Linkedin 上关注我。">
+      </li><li title="Follow me on Linkedin.">
         <a class="button button--circle linkedin-button" itemprop="sameAs" href="https://www.linkedin.com/in/mincong-huang" target="_blank">
           <div class="icon"><svg fill="#000000" width="24px" height="24px" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg">
   <path d="M260.096 155.648c0 27.307008-9.899008 50.516992-29.696 69.632-19.796992 19.115008-45.396992 28.672-76.8 28.672-30.036992 0-54.612992-9.556992-73.728-28.672-19.115008-19.115008-28.672-42.324992-28.672-69.632 0-28.672 9.556992-52.224 28.672-70.656 19.115008-18.432 44.372992-27.648 75.776-27.648 31.403008 0 56.32 9.216 74.752 27.648 18.432 18.432 28.331008 41.984 29.696 70.656 0 0 0 0 0 0m-202.752 808.96c0 0 0-632.832 0-632.832 0 0 196.608 0 196.608 0 0 0 0 632.832 0 632.832 0 0-196.608 0-196.608 0 0 0 0 0 0 0m313.344-430.08c0-58.708992-1.364992-126.292992-4.096-202.752 0 0 169.984 0 169.984 0 0 0 10.24 88.064 10.24 88.064 0 0 4.096 0 4.096 0 40.96-68.267008 105.812992-102.4 194.56-102.4 68.267008 0 123.220992 22.868992 164.864 68.608 41.643008 45.739008 62.464 113.664 62.464 203.776 0 0 0 374.784 0 374.784 0 0-196.608 0-196.608 0 0 0 0-350.208 0-350.208 0-91.476992-33.451008-137.216-100.352-137.216-47.787008 0-81.236992 24.576-100.352 73.728-4.096 8.192-6.144 24.576-6.144 49.152 0 0 0 364.544 0 364.544 0 0-198.656 0-198.656 0 0 0 0-430.08 0-430.08 0 0 0 0 0 0" />
 </svg>
 </div>
         </a>
-      </li><li title="在 Github 上关注我。">
+      </li><li title="Follow me on Github.">
         <a class="button button--circle github-button" itemprop="sameAs" href="https://github.com/mincong-h" target="_blank">
           <div class="icon"><svg fill="#000000" width="24px" height="24px" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg">
   <path class="svgpath" data-index="path_0" fill="#272636" d="M0 525.2c0 223.6 143.3 413.7 343 483.5 26.9 6.8 22.8-12.4 22.8-25.4l0-88.7c-155.3 18.2-161.5-84.6-172-101.7-21.1-36-70.8-45.2-56-62.3 35.4-18.2 71.4 4.6 113.1 66.3 30.2 44.7 89.1 37.2 119 29.7 6.5-26.9 20.5-50.9 39.7-69.6C248.8 728.2 181.7 630 181.7 513.2c0-56.6 18.7-108.7 55.3-150.7-23.3-69.3 2.2-128.5 5.6-137.3 66.5-6 135.5 47.6 140.9 51.8 37.8-10.2 80.9-15.6 129.1-15.6 48.5 0 91.8 5.6 129.8 15.9 12.9-9.8 77-55.8 138.8-50.2 3.3 8.8 28.2 66.7 6.3 135 37.1 42.1 56 94.6 56 151.4 0 117-67.5 215.3-228.8 243.7 26.9 26.6 43.6 63.4 43.6 104.2l0 128.8c0.9 10.3 0 20.5 17.2 20.5C878.1 942.4 1024 750.9 1024 525.3c0-282.9-229.3-512-512-512C229.1 13.2 0 242.3 0 525.2L0 525.2z" />
@@ -1108,7 +1084,7 @@ yellow open   my_index Uz7B9HV2SJ6peiLiUMJhyg   1   1          1            0   
 })();
 </script><div class="search search--dark">
   <div class="main">
-    <div class="search__header">搜索</div>
+    <div class="search__header">Search</div>
     <div class="search-bar">
       <div class="search-box js-search-box">
         <div class="search-box__icon-search"><i class="fas fa-search"></i></div>
@@ -1118,7 +1094,7 @@ yellow open   my_index Uz7B9HV2SJ6peiLiUMJhyg   1   1          1            0   
         </div>
       </div>
       <button class="button button--theme-dark button--pill search__cancel js-search-toggle">
-        取消</button>
+        Cancel</button>
     </div>
     <div class="search-result js-search-result"></div>
   </div>

@@ -1,5 +1,430 @@
-<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" xml:lang="en"><generator uri="https://jekyllrb.com/" version="4.2.0">Jekyll</generator><link href="https://mincong.io/feed.xml" rel="self" type="application/atom+xml" /><link href="https://mincong.io/" rel="alternate" type="text/html" hreflang="en" /><updated>2021-09-24T21:46:45+02:00</updated><id>https://mincong.io/feed.xml</id><title type="html">Mincong Huang</title><subtitle>Hi, welcome to my blog! I'm a software engineer at Datadog. I write blog posts in my free time. My blogs are bits and pieces of my tech journey. Most of them are related to Java. Hope you enjoy them! My opinions are my own, not Datadog's. This blog is powered by Jekyll, a simple, blog-aware, static sites solution.
-</subtitle><author><name>Mincong Huang</name><email>mincong.h@gmail.com</email></author><entry xml:lang="en"><title type="html">Elasticsearch Settings</title><link href="https://mincong.io/en/elasticsearch-settings/" rel="alternate" type="text/html" title="Elasticsearch Settings" /><published>2021-08-21T18:07:13+02:00</published><updated>2021-08-21T18:07:13+02:00</updated><id>https://mincong.io/en/elasticsearch-settings</id><content type="html" xml:base="https://mincong.io/en/elasticsearch-settings/">&lt;p class=&quot;info&quot;&gt;This article is translated with Google Translate and reviewed by Mincong.&lt;/p&gt;
+<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" xml:lang="en"><generator uri="https://jekyllrb.com/" version="4.2.0">Jekyll</generator><link href="https://mincong.io/feed.xml" rel="self" type="application/atom+xml" /><link href="https://mincong.io/" rel="alternate" type="text/html" hreflang="en" /><updated>2021-09-25T22:11:16+02:00</updated><id>https://mincong.io/feed.xml</id><title type="html">Mincong Huang</title><subtitle>Hi, welcome to my blog! I'm a software engineer at Datadog. I write blog posts in my free time. My blogs are bits and pieces of my tech journey. Most of them are related to Java. Hope you enjoy them! My opinions are my own, not Datadog's. This blog is powered by Jekyll, a simple, blog-aware, static sites solution.
+</subtitle><author><name>Mincong Huang</name><email>mincong.h@gmail.com</email></author><entry xml:lang="en"><title type="html">Internal Structure Of Snapshot Repository</title><link href="https://mincong.io/en/elasticsearch-snapshot-repository-structure/" rel="alternate" type="text/html" title="Internal Structure Of Snapshot Repository" /><published>2021-09-04T10:11:10+02:00</published><updated>2021-09-04T10:11:10+02:00</updated><id>https://mincong.io/en/elasticsearch-snapshot-repository-structure</id><content type="html" xml:base="https://mincong.io/en/elasticsearch-snapshot-repository-structure/">&lt;p class=&quot;info&quot;&gt;This article is translated with Google Translate and reviewed by Mincong.&lt;/p&gt;
+
+&lt;h2 id=&quot;introduction&quot;&gt;Introduction&lt;/h2&gt;
+
+&lt;p&gt;If you use an Elasticsearch cluster in production, I believe you must have heard of Elasticsearch’s &lt;a href=&quot;https://www.elastic.co/guide/en/elasticsearch/reference/7.x/snapshot-restore-apis.html&quot;&gt;snapshot and restore feature&lt;/a&gt;, because it is an important means to ensure that cluster data is not lost. There are a lot of materials on the Internet about how to use Elasticsearch snapshots, but there are very few articles about its implementation. Today, I want to discuss with you the internal structure of the Elasticsearch snapshot repository. Knowing it can give us a better understanding of how Elasticsearch’s snapshots work, and can also provide more ideas for troubleshooting when there is a problem in production.&lt;/p&gt;
+
+&lt;p&gt;After reading this article, you will understand:&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;What is a snapshot repository?&lt;/li&gt;
+  &lt;li&gt;Different files inside a snapshot repository&lt;/li&gt;
+  &lt;li&gt;Learning more about &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;index-N&lt;/code&gt; files&lt;/li&gt;
+  &lt;li&gt;Learning more about the &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;index.latest&lt;/code&gt; file&lt;/li&gt;
+  &lt;li&gt;Learning more about snapshot information files&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;Without further ado, let’s get started right away!&lt;/p&gt;
+
+&lt;h2 id=&quot;what-is-a-snapshot-repository&quot;&gt;What is a snapshot repository?&lt;/h2&gt;
+
+&lt;p&gt;A snapshot repository is a location where Elasticsearch stores snapshots. One snapshot repository can store multiple snapshots. Snapshots are how Elasticsearch backups your data. You can create a snapshot for one single index or multiple indices. Inside a snapshot repository, snapshots are incremental: new snapshots will only snapshot those parts that were not snapshotted in the previous snapshot to avoid wasting time and storage space. There are many types of snapshot repositories: they can be local repository or remote repositories for  cloud providers, such as AWS S3, Google Cloud Storage, Azure Blob Storage, Aliyun OSS, etc.&lt;/p&gt;
+
+&lt;h2 id=&quot;different-files-inside-a-snapshot-repository&quot;&gt;Different files inside a snapshot repository&lt;/h2&gt;
+
+&lt;p&gt;Below, let’s take a look the different files stored inside a snapshot repository. Here is an excerpt from the &lt;a href=&quot;https://github.com/elastic/elasticsearch/blob/7.12/server/src/main/java/org/elasticsearch/repositories/blobstore/package-info.java&quot;&gt;Javadoc of Elasticsearch 7.12 about Snapshot Repository&lt;/a&gt;:&lt;/p&gt;
+
+&lt;div class=&quot;language-plaintext highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt; STORE_ROOT
+ |- index-N           - JSON serialized {@link org.elasticsearch.repositories.RepositoryData} containing a list of all snapshot ids
+ |                      and the indices belonging to each snapshot, N is the generation of the file
+ |- index.latest      - contains the numeric value of the latest generation of the index file (i.e. N from above)
+ |- incompatible-snapshots - list of all snapshot ids that are no longer compatible with the current version of the cluster
+ |- snap-20131010.dat - SMILE serialized {@link org.elasticsearch.snapshots.SnapshotInfo} for snapshot &quot;20131010&quot;
+ |- meta-20131010.dat - SMILE serialized {@link org.elasticsearch.cluster.metadata.Metadata } for snapshot &quot;20131010&quot;
+ |                      (includes only global metadata)
+ |- snap-20131011.dat - SMILE serialized {@link org.elasticsearch.snapshots.SnapshotInfo} for snapshot &quot;20131011&quot;
+ |- meta-20131011.dat - SMILE serialized {@link org.elasticsearch.cluster.metadata.Metadata } for snapshot &quot;20131011&quot;
+ .....
+ |- indices/ - data for all indices
+    |- Ac1342-B_x/ - data for index &quot;foo&quot; which was assigned the unique id Ac1342-B_x (not to be confused with the actual index uuid)
+    |  |             in the repository
+    |  |- meta-20131010.dat - JSON Serialized {@link org.elasticsearch.cluster.metadata.IndexMetadata} for index &quot;foo&quot;
+    |  |- 0/ - data for shard &quot;0&quot; of index &quot;foo&quot;
+    |  |  |- __1                      \  (files with numeric names were created by older ES versions)
+    |  |  |- __2                      |
+    |  |  |- __VPO5oDMVT5y4Akv8T_AO_A |- files from different segments see snap-* for their mappings to real segment files
+    |  |  |- __1gbJy18wS_2kv1qI7FgKuQ |
+    |  |  |- __R8JvZAHlSMyMXyZc2SS8Zg /
+    |  |  .....
+    |  |  |- snap-20131010.dat - SMILE serialized {@link org.elasticsearch.index.snapshots.blobstore.BlobStoreIndexShardSnapshot} for
+    |  |  |                      snapshot &quot;20131010&quot;
+    |  |  |- snap-20131011.dat - SMILE serialized {@link org.elasticsearch.index.snapshots.blobstore.BlobStoreIndexShardSnapshot} for
+    |  |  |                      snapshot &quot;20131011&quot;
+    |  |  |- index-123         - SMILE serialized {@link org.elasticsearch.index.snapshots.blobstore.BlobStoreIndexShardSnapshots} for
+    |  |  |                      the shard (files with numeric suffixes were created by older versions, newer ES versions use a uuid
+    |  |  |                      suffix instead)
+    |  |
+    |  |- 1/ - data for shard &quot;1&quot; of index &quot;foo&quot;
+    |  |  |- __1
+    |  |  |- index-Zc2SS8ZgR8JvZAHlSMyMXy - SMILE serialized {@code BlobStoreIndexShardSnapshots} for the shard
+    |  |  .....
+    |  |
+    |  |-2/
+    |  ......
+    |
+    |- 1xB0D8_B3y/ - data for index &quot;bar&quot; which was assigned the unique id of 1xB0D8_B3y in the repository
+    ......
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;Organize them again in a table:&lt;/p&gt;
+
+&lt;table&gt;
+  &lt;thead&gt;
+    &lt;tr&gt;
+      &lt;th style=&quot;text-align: left&quot;&gt;File path&lt;/th&gt;
+      &lt;th style=&quot;text-align: left&quot;&gt;explanation&lt;/th&gt;
+    &lt;/tr&gt;
+  &lt;/thead&gt;
+  &lt;tbody&gt;
+    &lt;tr&gt;
+      &lt;td style=&quot;text-align: left&quot;&gt;&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;index-N&lt;/code&gt;&lt;/td&gt;
+      &lt;td style=&quot;text-align: left&quot;&gt;&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;RepositoryData&lt;/code&gt; serialized in JSON format, including all snapshot IDs and their corresponding indexes. N represents the generation of this file.&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td style=&quot;text-align: left&quot;&gt;&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;index.latest&lt;/code&gt;&lt;/td&gt;
+      &lt;td style=&quot;text-align: left&quot;&gt;The file is a pointer that represents the last generation index file in digital form, which is the number N mentioned above. Here N is a hexadecimal number, for example, the index of the 100th generation (decimal), and finally represented by 64 in hexadecimal, because 64 = 16*6 + 4.&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td style=&quot;text-align: left&quot;&gt;&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;incompatible-snapshots&lt;/code&gt;&lt;/td&gt;
+      &lt;td style=&quot;text-align: left&quot;&gt;A list of all snapshot IDs that are no longer compatible with the current cluster version&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td style=&quot;text-align: left&quot;&gt;&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;snap-20131010.dat&lt;/code&gt;&lt;/td&gt;
+      &lt;td style=&quot;text-align: left&quot;&gt;&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;SnapshotInfo&lt;/code&gt; serialized in SMILE format, used to represent the information corresponding to the snapshot 20131010&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td style=&quot;text-align: left&quot;&gt;&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;meta-20131010.dat&lt;/code&gt;&lt;/td&gt;
+      &lt;td style=&quot;text-align: left&quot;&gt;&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;Metadata&lt;/code&gt; serialized in SMILE format, used to represent the metadata corresponding to the snapshot 20131010  (includes only global metadata)&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td style=&quot;text-align: left&quot;&gt;&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;indices/&lt;/code&gt;&lt;/td&gt;
+      &lt;td style=&quot;text-align: left&quot;&gt;Data for all indices&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td style=&quot;text-align: left&quot;&gt;&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;indices/Ac1342-B_x/&lt;/code&gt;&lt;/td&gt;
+      &lt;td style=&quot;text-align: left&quot;&gt;Index the data corresponding to foo. The UUID of the index in the repository is Ac1342-B_x. But do not confuse with the UUID of the index.&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td style=&quot;text-align: left&quot;&gt;&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;indices/Ac1342-B_x/meta-20131010.dat&lt;/code&gt;&lt;/td&gt;
+      &lt;td style=&quot;text-align: left&quot;&gt;Index foo &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;IndexMetadata&lt;/code&gt; serialized in JSON format&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td style=&quot;text-align: left&quot;&gt;&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;indices/Ac1342-B_x/0/&lt;/code&gt;&lt;/td&gt;
+      &lt;td style=&quot;text-align: left&quot;&gt;Index foo data corresponding to shard 0&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td style=&quot;text-align: left&quot;&gt;&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;indices/Ac1342-B_x/0/__1&lt;/code&gt;&lt;/td&gt;
+      &lt;td style=&quot;text-align: left&quot;&gt;Files ending in numbers were created by an older version of Elasticsearch&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td style=&quot;text-align: left&quot;&gt;&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;indices/Ac1342-B_x/0/__2&lt;/code&gt;&lt;/td&gt;
+      &lt;td style=&quot;text-align: left&quot;&gt;Same as above&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td style=&quot;text-align: left&quot;&gt;&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;Indices / Ac1342-B_x / 0 / __ VPO5oDMVT5y4Akv8T_AO_A&lt;/code&gt;&lt;/td&gt;
+      &lt;td style=&quot;text-align: left&quot;&gt;segment files, with specific mappings real segment, see &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;snap-*&lt;/code&gt; file&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td style=&quot;text-align: left&quot;&gt;&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;indices/Ac1342-B_x/0/__1gbJy18wS_2kv1qI7FgKuQ&lt;/code&gt;&lt;/td&gt;
+      &lt;td style=&quot;text-align: left&quot;&gt;Same as above&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td style=&quot;text-align: left&quot;&gt;&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;indices/Ac1342-B_x/0/__R8JvZAHlSMyMXyZc2SS8Zg&lt;/code&gt;&lt;/td&gt;
+      &lt;td style=&quot;text-align: left&quot;&gt;Same as above&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td style=&quot;text-align: left&quot;&gt;&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;indices/Ac1342-B_x/0/snap-20131010.dat&lt;/code&gt;&lt;/td&gt;
+      &lt;td style=&quot;text-align: left&quot;&gt;Snapshot 20131010 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;BlobStoreIndexShardSnapshot&lt;/code&gt; serialized in SMILE format&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td style=&quot;text-align: left&quot;&gt;&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;indices/Ac1342-B_x/0/snap-20131011.dat&lt;/code&gt;&lt;/td&gt;
+      &lt;td style=&quot;text-align: left&quot;&gt;Snapshot 20131011 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;BlobStoreIndexShardSnapshot&lt;/code&gt; serialized in SMILE format&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td style=&quot;text-align: left&quot;&gt;&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;indices/Ac1342-B_x/0/index-123&lt;/code&gt;&lt;/td&gt;
+      &lt;td style=&quot;text-align: left&quot;&gt;Shard 0 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;BlobStoreIndexShardSnapshots&lt;/code&gt; serialized in SMILE format. Files with numeric suffixes were created by older versions, newer ES versions use a uuid suffix instead&lt;/td&gt;
+    &lt;/tr&gt;
+  &lt;/tbody&gt;
+&lt;/table&gt;
+
+&lt;h2 id=&quot;data-preparation&quot;&gt;Data Preparation&lt;/h2&gt;
+
+&lt;p&gt;Next, let’s take a look at some of the more important files.&lt;/p&gt;
+
+&lt;p&gt;But before getting started, we need to prepare the data locally: by starting Elasticsearch, and creating some data and snapshots.&lt;/p&gt;
+
+&lt;div class=&quot;language-sh highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;nv&quot;&gt;es_repo&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;${&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;HOME&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;}&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;/es-backup/blog-snapshot-repo-structure/&quot;&lt;/span&gt;
+
+&lt;span class=&quot;c&quot;&gt;# Start Elasticsearch&lt;/span&gt;
+docker run &lt;span class=&quot;se&quot;&gt;\&lt;/span&gt;
+  &lt;span class=&quot;nt&quot;&gt;--rm&lt;/span&gt; &lt;span class=&quot;se&quot;&gt;\&lt;/span&gt;
+  &lt;span class=&quot;nt&quot;&gt;-p&lt;/span&gt; 9200:9200 &lt;span class=&quot;se&quot;&gt;\&lt;/span&gt;
+  &lt;span class=&quot;nt&quot;&gt;-p&lt;/span&gt; 9300:9300 &lt;span class=&quot;se&quot;&gt;\&lt;/span&gt;
+  &lt;span class=&quot;nt&quot;&gt;-e&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot;discovery.type=single-node&quot;&lt;/span&gt; &lt;span class=&quot;se&quot;&gt;\&lt;/span&gt;
+  &lt;span class=&quot;nt&quot;&gt;-e&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot;cluster.name=es-docker-cluster&quot;&lt;/span&gt; &lt;span class=&quot;se&quot;&gt;\&lt;/span&gt;
+  &lt;span class=&quot;nt&quot;&gt;-e&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot;path.repo=/opt/elasticsearch/backup&quot;&lt;/span&gt; &lt;span class=&quot;se&quot;&gt;\&lt;/span&gt;
+  &lt;span class=&quot;nt&quot;&gt;-v&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;${&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;es_repo&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;}&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;:/opt/elasticsearch/backup&quot;&lt;/span&gt; &lt;span class=&quot;se&quot;&gt;\&lt;/span&gt;
+  docker.elastic.co/elasticsearch/elasticsearch:7.12.0
+
+&lt;span class=&quot;c&quot;&gt;# Create document&lt;/span&gt;
+curl &lt;span class=&quot;nt&quot;&gt;-X&lt;/span&gt; PUT localhost:9200/my_index/_doc/1 &lt;span class=&quot;se&quot;&gt;\&lt;/span&gt;
+  &lt;span class=&quot;nt&quot;&gt;-H&lt;/span&gt; &lt;span class=&quot;s1&quot;&gt;'Content-Type: application/json'&lt;/span&gt; &lt;span class=&quot;se&quot;&gt;\&lt;/span&gt;
+  &lt;span class=&quot;nt&quot;&gt;-d&lt;/span&gt; &lt;span class=&quot;s1&quot;&gt;'{&quot;msg&quot;: &quot;Hello Elasticsearch&quot;}'&lt;/span&gt;
+
+&lt;span class=&quot;c&quot;&gt;# Create snapshot repository&lt;/span&gt;
+curl &lt;span class=&quot;nt&quot;&gt;-X&lt;/span&gt; PUT localhost:9200/_snapshot/my_repo &lt;span class=&quot;se&quot;&gt;\&lt;/span&gt;
+  &lt;span class=&quot;nt&quot;&gt;-H&lt;/span&gt; &lt;span class=&quot;s1&quot;&gt;'Content-Type: application/json'&lt;/span&gt; &lt;span class=&quot;se&quot;&gt;\&lt;/span&gt;
+  &lt;span class=&quot;nt&quot;&gt;-d&lt;/span&gt; &lt;span class=&quot;s1&quot;&gt;'{
+  &quot;type&quot;: &quot;fs&quot;,
+  &quot;settings&quot;: {
+    &quot;location&quot;: &quot;my_repo&quot;
+  }
+}'&lt;/span&gt;
+
+&lt;span class=&quot;c&quot;&gt;# Create snapshot&lt;/span&gt;
+curl &lt;span class=&quot;nt&quot;&gt;-X&lt;/span&gt; PUT localhost:9200/_snapshot/my_repo/my_snapshot_1 &lt;span class=&quot;se&quot;&gt;\&lt;/span&gt;
+  &lt;span class=&quot;nt&quot;&gt;-H&lt;/span&gt; &lt;span class=&quot;s1&quot;&gt;'Content-Type: application/json'&lt;/span&gt; &lt;span class=&quot;se&quot;&gt;\&lt;/span&gt;
+  &lt;span class=&quot;nt&quot;&gt;-d&lt;/span&gt; &lt;span class=&quot;s1&quot;&gt;'{
+  &quot;indices&quot;: &quot;my_index&quot;,
+  &quot;include_global_state&quot;: false,
+  &quot;metadata&quot;: {
+    &quot;taken_by&quot;: &quot;Mincong&quot;,
+    &quot;taken_because&quot;: &quot;https://mincong.io is the best blog for learning Elasticsearch&quot;
+  }
+}'&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;Then enter the local folder &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;blog-snapshot-repo-structure&lt;/code&gt;, make sure the repository &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;my_repo&lt;/code&gt; and the files in it are ready:&lt;/p&gt;
+
+&lt;div class=&quot;language-plaintext highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;➜  blog-snapshot-repo-structure find my_repo
+my_repo
+my_repo/index-0
+my_repo/indices
+my_repo/indices/Uxom82JcSfORXgbtZ4jLSg
+my_repo/indices/Uxom82JcSfORXgbtZ4jLSg/0
+my_repo/indices/Uxom82JcSfORXgbtZ4jLSg/0/index-MwjmFzyOT_2NI6DdXLcsNw
+my_repo/indices/Uxom82JcSfORXgbtZ4jLSg/0/__IlzZcMdOSkC-j6xx0Qj04A
+my_repo/indices/Uxom82JcSfORXgbtZ4jLSg/0/snap-2hiUzvH3RPCp9iOeiTa6TQ.dat
+my_repo/indices/Uxom82JcSfORXgbtZ4jLSg/0/__jQbQk7YYTwW8G5gL_RtR8w
+my_repo/indices/Uxom82JcSfORXgbtZ4jLSg/meta-N1BHtXsBYxjWXi8lXhTR.dat
+my_repo/index.latest
+my_repo/meta-2hiUzvH3RPCp9iOeiTa6TQ.dat
+my_repo/snap-2hiUzvH3RPCp9iOeiTa6TQ.dat
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;Now, we can further explore the contents of the repository!&lt;/p&gt;
+
+&lt;h2 id=&quot;file-index-n&quot;&gt;File index-N&lt;/h2&gt;
+
+&lt;div class=&quot;language-sh highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;nb&quot;&gt;cat &lt;/span&gt;index-0 | jq
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;div class=&quot;language-js highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+  &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;min_version&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;7.12.0&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
+  &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;uuid&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;C87ijmZURAK3ij8MsAaDAw&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
+  &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;cluster_id&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;aSNpPgDAShyYAiKhsun6IA&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
+  &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;snapshots&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;[&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+      &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;name&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;my_snapshot_1&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
+      &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;uuid&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;2hiUzvH3RPCp9iOeiTa6TQ&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
+      &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;state&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;1&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
+      &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;index_metadata_lookup&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+        &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;Uxom82JcSfORXgbtZ4jLSg&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;Uz7B9HV2SJ6peiLiUMJhyg-_na_-1-2-1&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;
+      &lt;span class=&quot;p&quot;&gt;},&lt;/span&gt;
+      &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;version&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;7.12.0&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+  &lt;span class=&quot;p&quot;&gt;],&lt;/span&gt;
+  &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;indices&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;my_index&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+      &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;id&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;Uxom82JcSfORXgbtZ4jLSg&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
+      &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;snapshots&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;[&lt;/span&gt;
+        &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;2hiUzvH3RPCp9iOeiTa6TQ&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;
+      &lt;span class=&quot;p&quot;&gt;],&lt;/span&gt;
+      &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;shard_generations&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;[&lt;/span&gt;
+        &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;MwjmFzyOT_2NI6DdXLcsNw&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;
+      &lt;span class=&quot;p&quot;&gt;]&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+  &lt;span class=&quot;p&quot;&gt;},&lt;/span&gt;
+  &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;index_metadata_identifiers&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;Uz7B9HV2SJ6peiLiUMJhyg-_na_-1-2-1&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;N1BHtXsBYxjWXi8lXhTR&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;
+  &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;div class=&quot;language-plaintext highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;$ curl &quot;localhost:9200/_cat/indices/my_index?v&quot;
+health status index    uuid                   pri rep docs.count docs.deleted store.size pri.store.size
+yellow open   my_index Uz7B9HV2SJ6peiLiUMJhyg   1   1          1            0      3.9kb          3.9kb
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;The above file &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;index-0&lt;/code&gt; represents generation 0 of the snapshot repository. It is a &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;RepositoryData&lt;/code&gt; serialized in JSON format, which contains all the snapshot IDs and their corresponding indexes. The UUID of the index &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;my_index&lt;/code&gt; in the repository is &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;Uxom82JcSfORXgbtZ4jLSg&lt;/code&gt;, and its corresponding UUID in the cluster is &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;Uz7B9HV2SJ6peiLiUMJhyg&lt;/code&gt;. This index is referenced by a snapshot, which is the snapshot &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;my_snapshot_1&lt;/code&gt; (&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;2hiUzvH3RPCp9iOeiTa6TQ&lt;/code&gt;).&lt;/p&gt;
+
+&lt;h2 id=&quot;file-indexlatest&quot;&gt;File index.latest&lt;/h2&gt;
+
+&lt;p&gt;The &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;index.latest&lt;/code&gt; file is a pointer that represents the last-generation index file in numerical form, which is the number N mentioned above. Here N is a hexadecimal number, for example, the index of the 100th generation (decimal) is represented as 64 in hexadecimal, because 64 = 16*6 + 4. In the repository &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;my_repo&lt;/code&gt; prepared above, since only one snapshot was taken, it is the 0th generation:&lt;/p&gt;
+
+&lt;div class=&quot;language-plaintext highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;➜ hexdump index.latest
+0000000 00 00 00 00 00 00 00 00
+0000008
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;Now, let’s generate more documents and create more snapshots, so that we can better view the changes in &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;index.latest&lt;/code&gt;:&lt;/p&gt;
+
+&lt;div class=&quot;language-sh highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;k&quot;&gt;for &lt;/span&gt;i &lt;span class=&quot;k&quot;&gt;in&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;{&lt;/span&gt;2..20&lt;span class=&quot;o&quot;&gt;}&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;do
+  &lt;/span&gt;&lt;span class=&quot;nb&quot;&gt;echo&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot;Creating document &lt;/span&gt;&lt;span class=&quot;k&quot;&gt;${&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;i&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;}&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;&lt;/span&gt;
+  curl &lt;span class=&quot;nt&quot;&gt;-s&lt;/span&gt; &lt;span class=&quot;nt&quot;&gt;-X&lt;/span&gt; PUT &lt;span class=&quot;s2&quot;&gt;&quot;localhost:9200/my_index/_doc/&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;${&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;i&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;}&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;&lt;/span&gt; &lt;span class=&quot;se&quot;&gt;\&lt;/span&gt;
+    &lt;span class=&quot;nt&quot;&gt;-H&lt;/span&gt;&lt;span class=&quot;s1&quot;&gt;'Content-Type: application/json'&lt;/span&gt; &lt;span class=&quot;se&quot;&gt;\&lt;/span&gt;
+    &lt;span class=&quot;nt&quot;&gt;-d&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot;{&lt;/span&gt;&lt;span class=&quot;se&quot;&gt;\&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;msg&lt;/span&gt;&lt;span class=&quot;se&quot;&gt;\&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;: &lt;/span&gt;&lt;span class=&quot;se&quot;&gt;\&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;Hello Elasticsearch &lt;/span&gt;&lt;span class=&quot;k&quot;&gt;${&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;i&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;}&lt;/span&gt;&lt;span class=&quot;se&quot;&gt;\&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;}&quot;&lt;/span&gt;
+
+  &lt;span class=&quot;nb&quot;&gt;echo&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot;Creating snapshot &lt;/span&gt;&lt;span class=&quot;k&quot;&gt;${&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;i&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;}&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;&lt;/span&gt;
+  curl &lt;span class=&quot;nt&quot;&gt;-s&lt;/span&gt; &lt;span class=&quot;nt&quot;&gt;-X&lt;/span&gt; PUT &lt;span class=&quot;s2&quot;&gt;&quot;localhost:9200/_snapshot/my_repo/my_snapshot_&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;${&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;i&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;}&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;&lt;/span&gt; &lt;span class=&quot;se&quot;&gt;\&lt;/span&gt;
+    &lt;span class=&quot;nt&quot;&gt;-H&lt;/span&gt;&lt;span class=&quot;s1&quot;&gt;'Content-Type: application/json'&lt;/span&gt; &lt;span class=&quot;se&quot;&gt;\&lt;/span&gt;
+    &lt;span class=&quot;nt&quot;&gt;-d&lt;/span&gt;&lt;span class=&quot;s1&quot;&gt;'{
+    &quot;indices&quot;: &quot;my_index&quot;,
+    &quot;include_global_state&quot;: false,
+    &quot;metadata&quot;: {
+      &quot;taken_by&quot;: &quot;Mincong&quot;,
+      &quot;taken_because&quot;: &quot;https://mincong.io is the best blog for learning Elasticsearch&quot;
+    }
+  }'&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;done&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;At this time, &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;index.latest&lt;/code&gt; has become the 19th generation (starting from the 0 generation, so it is actually the 20th generation). 19 = 16*1 + 3&lt;/p&gt;
+
+&lt;div class=&quot;language-plaintext highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;➜ hexdump index.latest
+0000000 00 00 00 00 00 00 00 00 13
+0000008
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;div class=&quot;language-plaintext highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;➜ echo'ibase=16; 13' | bc
+19
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;But how does Elasticsearch load the &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;RepositoryData&lt;/code&gt; through &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;index-N&lt;/code&gt; and &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;index.latest&lt;/code&gt; files?&lt;/p&gt;
+
+&lt;p&gt;Loading &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;RepositoryData&lt;/code&gt; and the mapping of index name to its repository &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;IndexId&lt;/code&gt;, which is done by calling &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;BlobStoreRepository.getRepositoryData()&lt;/code&gt;. The specific implementation is as follows (&lt;a href=&quot;https://github.com/elastic/elasticsearch/blob/7.12/server/src/main/java/org/elasticsearch/repositories/blobstore/package-info.java&quot;&gt;extracted from Javadoc&lt;/a&gt;):&lt;/p&gt;
+
+&lt;ol&gt;
+  &lt;li&gt;Step 1: Storing repository data
+    &lt;ol&gt;
+      &lt;li&gt;The blobstore repository stores the &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;RepositoryData&lt;/code&gt; in blobs named with incrementing suffix &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;N&lt;/code&gt; at &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;/index-N&lt;/code&gt; directly under the repository’s root.&lt;/li&gt;
+      &lt;li&gt;For each &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;BlobStoreRepository&lt;/code&gt; an entry of type &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;RepositoryMetadata&lt;/code&gt; exists in the cluster state. It tracks the current valid generation &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;N&lt;/code&gt; as well as the latest generation that a write was attempted for.&lt;/li&gt;
+      &lt;li&gt;The blobstore also stores the most recent &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;N&lt;/code&gt; as a 64bit long in the blob &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;/index.latest&lt;/code&gt; directly under the repository’s root.&lt;/li&gt;
+    &lt;/ol&gt;
+  &lt;/li&gt;
+  &lt;li&gt;Step 2: Determine the value of N
+    &lt;ol&gt;
+      &lt;li&gt;First, find the most recent &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;RepositoryData&lt;/code&gt; by getting a list of all index-N blobs through listing all blobs with prefix “index-“ under the repository root and then selecting the one with the highest value for N.&lt;/li&gt;
+      &lt;li&gt;If this operation fails because the repository’s &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;BlobContainer&lt;/code&gt; does not support list operations (in the case of read-only repositories), read the highest value of N from the &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;index.latest&lt;/code&gt; blob.&lt;/li&gt;
+    &lt;/ol&gt;
+  &lt;/li&gt;
+  &lt;li&gt;Step 3: Deserialization
+    &lt;ol&gt;
+      &lt;li&gt;Use the just determined value of &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;N&lt;/code&gt; and get the &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;/index-N&lt;/code&gt; blob and deserialize the &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;RepositoryData&lt;/code&gt; from it.&lt;/li&gt;
+      &lt;li&gt;If no value of &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;N&lt;/code&gt; could be found since neither an &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;index.latest&lt;/code&gt; nor any &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;index-N&lt;/code&gt; blobs exist in the repository, it is assumed to be empty and &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;RepositoryData#EMPTY&lt;/code&gt; is returned.&lt;/li&gt;
+    &lt;/ol&gt;
+  &lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;h2 id=&quot;repo-level-snapshot-info&quot;&gt;Repo-Level Snapshot Info&lt;/h2&gt;
+
+&lt;p&gt;&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;SnapshotInfo&lt;/code&gt; serialized in SMILE format is used to represent the information related to the snapshot. The following is the snapshot info for &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;my_snapshot_20&lt;/code&gt; (&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;snap-WbjaeQk1T4u2JrGfsWlHsw.dat&lt;/code&gt;). By the way, it is worth mentioning that there is no way to directly inspect files in SMILE format (for example, using &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;cat&lt;/code&gt;). You need a special demodulation tool, such as &lt;a href=&quot;https://github.com/cowtowncoder/Jackformer&quot;&gt;cowtowncoder/Jackformer&lt;/a&gt;. After converting to JSON, we obtain the results as:&lt;/p&gt;
+
+&lt;div class=&quot;language-js highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;c1&quot;&gt;// decoded version of repository-level snapshot info&lt;/span&gt;
+&lt;span class=&quot;c1&quot;&gt;// $STORE_ROOT/snap-WbjaeQk1T4u2JrGfsWlHsw.dat&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+  &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;snapshot&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;name&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;my_snapshot_20&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
+    &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;uuid&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;WbjaeQk1T4u2JrGfsWlHsw&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
+    &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;version_id&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;7120099&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
+    &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;indices&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;[&lt;/span&gt; &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;my_index&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;],&lt;/span&gt;
+    &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;data_streams&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;[&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;],&lt;/span&gt;
+    &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;state&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;SUCCESS&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
+    &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;include_global_state&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;kc&quot;&gt;false&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
+    &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;metadata&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+      &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;taken_by&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;Mincong&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
+      &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;taken_because&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;https://mincong.io is the best blog for learning Elasticsearch&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;},&lt;/span&gt;
+    &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;start_time&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;1630835219489&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
+    &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;end_time&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;1630835222295&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
+    &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;total_shards&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;1&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
+    &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;successful_shards&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;1&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
+    &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;failures&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;[&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;],&lt;/span&gt;
+    &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;feature_states&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;[&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;]&lt;/span&gt;
+  &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;h2 id=&quot;shard-level-snapshot-info&quot;&gt;Shard-Level Snapshot Info&lt;/h2&gt;
+
+&lt;p&gt;We can do the same thing for shard-level snapshot information, such as this one &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;snap-WbjaeQk1T4u2JrGfsWlHsw.dat&lt;/code&gt;:&lt;/p&gt;
+
+&lt;div class=&quot;language-js highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;c1&quot;&gt;// decoded version of shard-level snapshot info&lt;/span&gt;
+&lt;span class=&quot;c1&quot;&gt;// $STORE_ROOT/indices/Uxom82JcSfORXgbtZ4jLSg/0/snap-WbjaeQk1T4u2JrGfsWlHsw.dat&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+  &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;name&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;my_snapshot_20&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
+  &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;index_version&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;12&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
+  &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;start_time&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;1630835221092&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
+  &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;time&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
+  &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;number_of_files&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
+  &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;total_size&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
+  &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;files&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;[&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;name&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;__5NSZ0_cESkq6xuZO0KsflA&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
+    &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;physical_name&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;_b.cfe&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
+    &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;length&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;479&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
+    &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;checksum&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;10v9n85&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
+    &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;part_size&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;9223372036854775807&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
+    &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;written_by&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;8.8.0&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;
+  &lt;span class=&quot;p&quot;&gt;},&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;name&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;__409YH-VqThKfHoKO64Jw3A&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
+    &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;physical_name&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;_c.cfs&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
+    &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;length&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;3921&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
+    &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;checksum&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;aro23l&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
+    &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;part_size&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;9223372036854775807&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
+    &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;written_by&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;8.8.0&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;
+  &lt;span class=&quot;p&quot;&gt;},&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;name&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;__-y2SRorARLmutzx_8R0pdA&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
+    &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;physical_name&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;_7.cfs&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
+    &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;length&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;2954&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
+    &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;checksum&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;40ricv&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
+    &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;part_size&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;9223372036854775807&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
+    &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;written_by&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;8.8.0&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;
+  &lt;span class=&quot;p&quot;&gt;},&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;name&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;v__eBFWiPBIRqetvzlHocSdmg&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
+    &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;physical_name&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;_c.si&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
+    &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;length&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;405&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
+    &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;checksum&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;1raps0i&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
+    &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;part_size&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;9223372036854775807&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
+    &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;written_by&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;8.8.0&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
+    &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;meta_hash&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;P9dsFxNMdWNlbmU4NlNlZ21lbnRJbmZvAAAAAIZgkzI3PmaEHCzgC37ywlIAAAAACAAAAAgAAAAAAQAAAAgAAAAIAAAAAAAAAA4BDAJvcwVMaW51eAxqYXZhLnZlcnNpb24GMTUuMC4xB29zLmFyY2gFYW1kNjQUamF2YS5ydW50aW1lLnZlcnNpb24IMTUuMC4xKzkGc291cmNlBW1lcmdlCm9zLnZlcnNpb24QNS4xMC4yNS1saW51eGtpdAtqYXZhLnZlbmRvcgxBZG9wdE9wZW5KREsPamF2YS52bS52ZXJzaW9uCDE1LjAuMSs5Dmx1Y2VuZS52ZXJzaW9uBTguOC4wE21lcmdlTWF4TnVtU2VnbWVudHMCLTELbWVyZ2VGYWN0b3ICMTAJdGltZXN0YW1wDTE2MzA4MzUyMTg2MDQDBl9jLmNmcwVfYy5zaQZfYy5jZmUBH0x1Y2VuZTg3U3RvcmVkRmllbGRzRm9ybWF0Lm1vZGUKQkVTVF9TUEVFRADAKJPoAAAAAAAAAADkIQAS&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;
+  &lt;span class=&quot;p&quot;&gt;},&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;name&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;v__H3vg9g8aRsCMh3Ni-GypSA&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
+    &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;physical_name&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;_b.si&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
+    &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;length&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;367&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
+    &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;checksum&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;1ms49nm&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
+    &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;part_size&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;9223372036854775807&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
+    &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;written_by&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;8.8.0&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
+    &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;meta_hash&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;P9dsFxNMdWNlbmU4NlNlZ21lbnRJbmZvAAAAAIZgkzI3PmaEHCzgC37ywlEAAAAACAAAAAgAAAAAAQAAAAgAAAAIAAAAAAAAAAMBCgJvcwVMaW51eAtqYXZhLnZlbmRvcgxBZG9wdE9wZW5KREsMamF2YS52ZXJzaW9uBjE1LjAuMQ9qYXZhLnZtLnZlcnNpb24IMTUuMC4xKzkObHVjZW5lLnZlcnNpb24FOC44LjAHb3MuYXJjaAVhbWQ2NBRqYXZhLnJ1bnRpbWUudmVyc2lvbggxNS4wLjErOQZzb3VyY2UFZmx1c2gKb3MudmVyc2lvbhA1LjEwLjI1LWxpbnV4a2l0CXRpbWVzdGFtcA0xNjMwODM1MjE5MTkzAwZfYi5jZmUGX2IuY2ZzBV9iLnNpAR9MdWNlbmU4N1N0b3JlZEZpZWxkc0Zvcm1hdC5tb2RlCkJFU1RfU1BFRUQAwCiT6AAAAAAAAAAA09nN4g==&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;
+  &lt;span class=&quot;p&quot;&gt;},&lt;/span&gt;
+  &lt;span class=&quot;p&quot;&gt;...&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;]&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;h2 id=&quot;going-further&quot;&gt;Going Further&lt;/h2&gt;
+
+&lt;p&gt;How to expand from this article?&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;If you want to know more about the internal file format or loading mechanism of snapshot repository, you can check the &lt;a href=&quot;https://github.com/elastic/elasticsearch/blob/7.12/server/src/main/java/org/elasticsearch/repositories/blobstore/package-info.java&quot;&gt;official Javadoc of Elasticsearch (7.12) of the snapshot repository&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;If you want to learn more about how Snapshot Repository works, you can check out &lt;a href=&quot;https://steve-mushero.medium.com/how-elasticsearch-snapshots-work-3824fdfc4493&quot;&gt;How Elasticsearch Snapshots Work&lt;/a&gt; by Steve Mushero on Medium&lt;/li&gt;
+  &lt;li&gt;If you want to know more about SMILE format, you can check Wikipedia &lt;a href=&quot;https://en.wikipedia.org/wiki/Smile_%28data_interchange_format%29&quot;&gt;Smile (data interchange format)&lt;/a&gt; or check Ayush Gupta’s article on Medium &lt;a href=&quot;https://medium.com/code-with-ayush/understanding-smile-a-data-format-based-on-json-29972a37d376&quot;&gt;Understanding Smile — A data format based on JSON&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h2 id=&quot;conclusion&quot;&gt;Conclusion&lt;/h2&gt;
+
+&lt;p&gt;In this article, we walked into Elasticsearch’s snapshot repository and saw its internal structure. We also learn more about &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;index-N&lt;/code&gt;, &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;index.latest&lt;/code&gt;, and some other files related to snapshots. I hope that by knowing these files, it will give you a have a better understanding of Elasticsearch’s “snapshot and restore” feature, and also give you more ideas for troubleshooting when there is an issue on production. Finally, we briefly saw some resources to expand out. You can subscribe to the &lt;a href=&quot;/feed.xml&quot;&gt;feed of my blog&lt;/a&gt;, follow me on &lt;a href=&quot;https://twitter.com/mincong_h&quot;&gt;Twitter&lt;/a&gt; or &lt;a href=&quot;https://github.com/mincong-h/&quot;&gt;GitHub&lt;/a&gt;. Hope you enjoy this article, see you the next time!&lt;/p&gt;</content><author><name>Mincong Huang</name><email>mincong.h@gmail.com</email></author><category term="elasticsearch" /><category term="elasticsearch" /><category term="java" /><summary type="html">This article takes you to the Elasticsearch snapshot repository to explore its internal structure and understand the contents and uses of different files.</summary><media:thumbnail xmlns:media="http://search.yahoo.com/mrss/" url="https://mincong.io/assets/bg-dmitrij-paskevic-YjVa-F9P9kk-unsplash.jpg" /><media:content medium="image" url="https://mincong.io/assets/bg-dmitrij-paskevic-YjVa-F9P9kk-unsplash.jpg" xmlns:media="http://search.yahoo.com/mrss/" /></entry><entry xml:lang="en"><title type="html">Elasticsearch Settings</title><link href="https://mincong.io/en/elasticsearch-settings/" rel="alternate" type="text/html" title="Elasticsearch Settings" /><published>2021-08-21T18:07:13+02:00</published><updated>2021-08-21T18:07:13+02:00</updated><id>https://mincong.io/en/elasticsearch-settings</id><content type="html" xml:base="https://mincong.io/en/elasticsearch-settings/">&lt;p class=&quot;info&quot;&gt;This article is translated with Google Translate and reviewed by Mincong.&lt;/p&gt;
 
 &lt;h2 id=&quot;introduction&quot;&gt;Introduction&lt;/h2&gt;
 
@@ -3628,196 +4053,4 @@ on &lt;a href=&quot;https://twitter.com/mincong_h&quot;&gt;Twitter&lt;/a&gt; or
 &lt;a href=&quot;https://www.elastic.co/guide/en/elasticsearch/reference/7.x/cluster-get-settings.html&quot;&gt;https://www.elastic.co/guide/en/elasticsearch/reference/7.x/cluster-get-settings.html&lt;/a&gt;&lt;/li&gt;
   &lt;li&gt;Elastic, “Cluster-level shard allocation and routing settings”, &lt;em&gt;elastic.co&lt;/em&gt;, 2021.
 &lt;a href=&quot;https://www.elastic.co/guide/en/elasticsearch/reference/7.12/modules-cluster.html&quot;&gt;https://www.elastic.co/guide/en/elasticsearch/reference/7.12/modules-cluster.html&lt;/a&gt;&lt;/li&gt;
-&lt;/ul&gt;</content><author><name>Mincong Huang</name><email>mincong.h@gmail.com</email></author><category term="elasticsearch" /><category term="elasticsearch" /><summary type="html">Understanding different disk watermarks: low, high, and flood-stage in Elasticsearch. The symptom when the cluster reaches these values and how to mitigate or avoid the issues. Also, how to better operate your clusters using these watermarks.</summary><media:thumbnail xmlns:media="http://search.yahoo.com/mrss/" url="https://mincong.io/assets/bg-kelly-sikkema-_whs7FPfkwQ-unsplash.jpg" /><media:content medium="image" url="https://mincong.io/assets/bg-kelly-sikkema-_whs7FPfkwQ-unsplash.jpg" xmlns:media="http://search.yahoo.com/mrss/" /></entry><entry xml:lang="en"><title type="html">JUnit 5: Dynamic Tests with TestFactory</title><link href="https://mincong.io/2021/04/09/junit-5-dynamic-tests/" rel="alternate" type="text/html" title="JUnit 5: Dynamic Tests with TestFactory" /><published>2021-04-09T02:54:59+02:00</published><updated>2021-04-09T02:54:59+02:00</updated><id>https://mincong.io/2021/04/09/junit-5-dynamic-tests</id><content type="html" xml:base="https://mincong.io/2021/04/09/junit-5-dynamic-tests/">&lt;h2 id=&quot;introduction&quot;&gt;Introduction&lt;/h2&gt;
-
-&lt;p&gt;In this article, I am going to share with you how to write dynamic tests
-in JUnit 5 using &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;@TestFactory&lt;/code&gt;. Dynamic testing is a new programming model
-introduced in JUnit 5. It is useful to create tests that cannot be defined at
-compile time (e.g. loaded via an external resource) or to create tests
-that cannot be expressed easily via &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;@ParameterizedTest&lt;/code&gt;.&lt;/p&gt;
-
-&lt;p&gt;After reading this article, you will understand:&lt;/p&gt;
-
-&lt;ul&gt;
-  &lt;li&gt;The basic syntax of dynamic test&lt;/li&gt;
-  &lt;li&gt;Different return types for &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;@TestFactory&lt;/code&gt;&lt;/li&gt;
-  &lt;li&gt;The lifecycle of dynamic test&lt;/li&gt;
-  &lt;li&gt;Checking the result in IDE&lt;/li&gt;
-  &lt;li&gt;How to go further from here&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;p&gt;Now, let’s get started!&lt;/p&gt;
-
-&lt;h2 id=&quot;basic-syntax&quot;&gt;Basic Syntax&lt;/h2&gt;
-
-&lt;p&gt;According to the &lt;a href=&quot;https://junit.org/junit5/docs/current/user-guide/&quot;&gt;JUnit 5 User Guide&lt;/a&gt;,
-the standard &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;@Test&lt;/code&gt; annotation in JUnit Jupiter described in Annotations is very
-similar to the &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;@Test&lt;/code&gt; annotation in JUnit 4. Both describe methods that implement
-test cases. These test cases are static in the sense that they are fully
-specified at compile-time, and their behavior cannot be changed by anything
-happening at runtime. Assumptions provide a basic form of dynamic behavior but
-are intentionally rather limited in their expressiveness.&lt;/p&gt;
-
-&lt;p&gt;In addition to these standard tests, a completely new kind of test programming
-model has been introduced in JUnit Jupiter. This new kind of test is a dynamic
-test which is generated at runtime by a factory method that is annotated with
-&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;@TestFactory&lt;/code&gt;.&lt;/p&gt;
-
-&lt;p&gt;The basic syntax of a dynamic test is:&lt;/p&gt;
-
-&lt;div class=&quot;language-java highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;nd&quot;&gt;@TestFactory&lt;/span&gt;  &lt;span class=&quot;c1&quot;&gt;// 1&lt;/span&gt;
-&lt;span class=&quot;nc&quot;&gt;Stream&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;nc&quot;&gt;DynamicTest&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;&amp;gt;&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;dynamicTestStream&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;()&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;{&lt;/span&gt;  &lt;span class=&quot;c1&quot;&gt;// 2&lt;/span&gt;
-  &lt;span class=&quot;k&quot;&gt;return&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;IntStream&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;of&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;3&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;6&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;9&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt;
-      &lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;mapToObj&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;v&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;-&amp;gt;&lt;/span&gt;
-          &lt;span class=&quot;n&quot;&gt;dynamicTest&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;v&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;+&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&quot; is a multiple of 3&quot;&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;()&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;-&amp;gt;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;assertEquals&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;v&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;%&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;3&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;))&lt;/span&gt;  &lt;span class=&quot;c1&quot;&gt;// 3&lt;/span&gt;
-      &lt;span class=&quot;o&quot;&gt;);&lt;/span&gt;
-&lt;span class=&quot;o&quot;&gt;}&lt;/span&gt;
-&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
-
-&lt;p&gt;In the example above, we specified several things:&lt;/p&gt;
-
-&lt;ol&gt;
-  &lt;li&gt;The annotation &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;@TestFactory&lt;/code&gt; so that JUnit 5 can recognize this method as a
-test factory containing multiple dynamic tests.&lt;/li&gt;
-  &lt;li&gt;The return type of the method is a stream of &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;DynamicTest&lt;/code&gt;. Note that you
-don’t have to use &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;Stream&lt;/code&gt; and there are other choices. We will talk about
-that in the next section.&lt;/li&gt;
-  &lt;li&gt;Use static method &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;org.junit.jupiter.api.DynamicTest.dynamicTest&lt;/code&gt; to create a
-dynamic test. Each &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;dynamicTest&lt;/code&gt; consists of two parts: a string for the
-display name and an &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;Executable&lt;/code&gt; for the assertions.&lt;/li&gt;
-&lt;/ol&gt;
-
-&lt;p&gt;Once we have them, we can run the test. There is no additional dependency
-required. In the following sections, we are going
-to explore a bit more into detail different pieces.&lt;/p&gt;
-
-&lt;h2 id=&quot;return-types-for-test-factory&quot;&gt;Return Types For Test Factory&lt;/h2&gt;
-
-&lt;p&gt;In the section above, we saw that we can return a list of dynamic tests as
-&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;Stream&amp;lt;DynamicTest&amp;gt;&lt;/code&gt;:&lt;/p&gt;
-
-&lt;div class=&quot;language-java highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;nc&quot;&gt;Stream&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;nc&quot;&gt;DynamicTest&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;&amp;gt;&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;dynamicTests&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;()&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;{&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;...&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;}&lt;/span&gt;
-&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
-
-&lt;p&gt;But it does not have to be in this way. We can also specify other types for
-returning the tests. As far as this type is iterable, JUnit 5 is happy about it.
-For example, you can use &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;Collection&lt;/code&gt;, Iterable&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;, &lt;/code&gt;Iterator&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;, &lt;/code&gt;Stream&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;, or array
-of &lt;/code&gt;DynamicTest&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;. Besides that, you can also consider using &lt;/code&gt;DynamicContainer`
-which can contain multiple tests inside it. See &lt;a href=&quot;https://junit.org/junit5/docs/current/user-guide/&quot;&gt;JUnit 5 - User
-Guide&lt;/a&gt; for more
-information about that.&lt;/p&gt;
-
-&lt;h2 id=&quot;lifecycle-of-dynamic-tests&quot;&gt;Lifecycle Of Dynamic Tests&lt;/h2&gt;
-
-&lt;p&gt;The execution lifecycle of a dynamic test is different from the standard &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;@Test&lt;/code&gt;
-case. The lifecycle callbacks, &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;@BeforeEach&lt;/code&gt; and &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;@AfterEach&lt;/code&gt;, are &lt;em&gt;not&lt;/em&gt;
-executed for each dynamic test, but the whole &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;@TestFactory&lt;/code&gt;. Therefore, we
-need to be very careful about using class-level variables because they won’t be
-reset properly.&lt;/p&gt;
-
-&lt;p&gt;Stardard &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;@Test&lt;/code&gt;:&lt;/p&gt;
-
-&lt;ol&gt;
-  &lt;li&gt;Execute &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;@BeforeEach&lt;/code&gt;&lt;/li&gt;
-  &lt;li&gt;Execute &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;@Test&lt;/code&gt;&lt;/li&gt;
-  &lt;li&gt;Execute &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;@AfterEach&lt;/code&gt;&lt;/li&gt;
-&lt;/ol&gt;
-
-&lt;p&gt;Dynamic tests via &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;@TestFactory&lt;/code&gt;:&lt;/p&gt;
-
-&lt;ol&gt;
-  &lt;li&gt;Execute &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;@BeforeEach&lt;/code&gt;&lt;/li&gt;
-  &lt;li&gt;Execute &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;@TestFactory&lt;/code&gt;
-    &lt;ul&gt;
-      &lt;li&gt;Execute dynamic test 1&lt;/li&gt;
-      &lt;li&gt;Execute dynamic test 2&lt;/li&gt;
-      &lt;li&gt;Execute dynamic test 3&lt;/li&gt;
-      &lt;li&gt;…&lt;/li&gt;
-    &lt;/ul&gt;
-  &lt;/li&gt;
-  &lt;li&gt;Execute &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;@AfterEach&lt;/code&gt;&lt;/li&gt;
-&lt;/ol&gt;
-
-&lt;h2 id=&quot;ide&quot;&gt;IDE&lt;/h2&gt;
-
-&lt;p&gt;When running dynamic tests in IntelliJ IDEA (2020.3.1), you can find the results
-as follows:&lt;/p&gt;
-
-&lt;p&gt;&lt;img src=&quot;/assets/20210409-dynamic-test.png&quot; alt=&quot;Dynamic tests in IntelliJ IDEA&quot; /&gt;&lt;/p&gt;
-
-&lt;p&gt;where each dynamic test has its result and its display name.&lt;/p&gt;
-
-&lt;h2 id=&quot;should-we-use-dynamic-tests&quot;&gt;Should We Use Dynamic Tests?&lt;/h2&gt;
-
-&lt;p&gt;Actually, I prefer using &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;@ParameterizedTest&lt;/code&gt; over &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;@TestFactory&lt;/code&gt; because it
-has the full lifecycle support (&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;@BeforeEach&lt;/code&gt; and &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;@AfterEach&lt;/code&gt;) while the test
-factory doesn’t. Both of them support display names so it’s not a problem.
-Usually,
-the test cases can be defined at compile-time.&lt;/p&gt;
-
-&lt;p&gt;&lt;em&gt;So why should we dynamic tests?&lt;/em&gt;&lt;/p&gt;
-
-&lt;p&gt;I believe there are two reasons: when the tests cannot be expressed at compile-time or when the parameterized tests are not good enough.&lt;/p&gt;
-
-&lt;ol&gt;
-  &lt;li&gt;
-    &lt;p&gt;Runtime test sources. When the tests cannot be expressed at compiled time,
-you may want to load them at runtime. Dynamic tests support this via the
-following methods:&lt;/p&gt;
-
-    &lt;div class=&quot;language-java highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;nc&quot;&gt;DynamicTest&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;dynamicTest&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nc&quot;&gt;String&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;no&quot;&gt;URI&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;Executable&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt;
-&lt;span class=&quot;nc&quot;&gt;DynamicContainer&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;dynamicContainer&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nc&quot;&gt;String&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;no&quot;&gt;URI&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;Stream&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt;
-&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;    &lt;/div&gt;
-
-    &lt;p&gt;Therefore, you can pass the sources via a URI. It can be something in the
-classpath, in the filesystem, etc.&lt;/p&gt;
-  &lt;/li&gt;
-  &lt;li&gt;
-    &lt;p&gt;Because parameterized tests are not good enough. This is my test. I wanted to
-use some exceptions as input sources, and assert the exception handling
-mechanism by asserting these exceptions one after another. However, &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;@ParameterizedTest&lt;/code&gt;
-seems only support basic Java types: primitives or &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;String&lt;/code&gt;, so passing an
-exception as input is not possible. So I ended up using dynamic tests for
-this purpose.&lt;/p&gt;
-  &lt;/li&gt;
-&lt;/ol&gt;
-
-&lt;p&gt;There are probably other motivations as well. Please let me know what you think
-by leaving a comment :)&lt;/p&gt;
-
-&lt;h2 id=&quot;going-further&quot;&gt;Going Further&lt;/h2&gt;
-
-&lt;p&gt;How to go further from here?&lt;/p&gt;
-
-&lt;ul&gt;
-  &lt;li&gt;To learn more about JUnit 5 in general, read &lt;a href=&quot;https://junit.org/junit5/docs/current/user-guide/&quot;&gt;JUnit 5 - User
-Guide&lt;/a&gt;&lt;/li&gt;
-  &lt;li&gt;To learn more about JUnit 5 Parmaterized Tests, I have another blog post that
-may interest you &lt;a href=&quot;/2021/01/31/juni5-parameterized-tests/&quot;&gt;Writing Parameterized Tests in JUnit 5&lt;/a&gt;&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;p&gt;You can also see the source code of this article on GitHub under
-&lt;a href=&quot;https://github.com/mincong-h/java-examples/blob/blog/junit5-dynamic-tests/junit5/src/test/java/io/mincong/junit5/dynamic_test/NumberTest.java&quot;&gt;mincong-h/java-examples&lt;/a&gt;.&lt;/p&gt;
-
-&lt;h2 id=&quot;conclusion&quot;&gt;Conclusion&lt;/h2&gt;
-
-&lt;p&gt;In this article, we saw how to write dynamic tests via &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;@TestFactory&lt;/code&gt;, the
-different return types for &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;@TestFactory&lt;/code&gt;, such as &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;Collection&lt;/code&gt;, &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;Iterable&lt;/code&gt;,
-&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;Iterator&lt;/code&gt;, array, or &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;Stream&lt;/code&gt; of dynamic tests. We also see the lifecycle of
-dynamic tests, which do not benefit from the &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;@BeforeEach&lt;/code&gt; and &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;@AfterEach&lt;/code&gt;
-callbacks for each individual dynamic test, how do the results look like in IDE,
-and how to go further from here.
-Interested to know more? You can subscribe to &lt;a href=&quot;/feed.xml&quot;&gt;the feed of my blog&lt;/a&gt;, follow me
-on &lt;a href=&quot;https://twitter.com/mincong_h&quot;&gt;Twitter&lt;/a&gt; or
-&lt;a href=&quot;https://github.com/mincong-h/&quot;&gt;GitHub&lt;/a&gt;. Hope you enjoy this article, see you the next time!&lt;/p&gt;
-
-&lt;h2 id=&quot;references&quot;&gt;References&lt;/h2&gt;
-
-&lt;ul&gt;
-  &lt;li&gt;JUnit Team, “JUnit 5 - User Guide”, &lt;em&gt;junit.org&lt;/em&gt;, 2021.
-&lt;a href=&quot;https://junit.org/junit5/docs/current/user-guide/&quot;&gt;https://junit.org/junit5/docs/current/user-guide/&lt;/a&gt;&lt;/li&gt;
-  &lt;li&gt;Baeldung, “Guide to Dynamic Tests in Junit 5”, &lt;em&gt;baeldung.com&lt;/em&gt;, 2021.
-&lt;a href=&quot;https://www.baeldung.com/junit5-dynamic-tests&quot;&gt;https://www.baeldung.com/junit5-dynamic-tests&lt;/a&gt;&lt;/li&gt;
-  &lt;li&gt;Satish Varma, “Junit 5 dynamic tests @TestFactory with examples”,
-&lt;em&gt;JavaByDeveloper&lt;/em&gt;, 2020. &lt;a href=&quot;https://javabydeveloper.com/junit-5-dynamic-tests-testfactory-with-examples/&quot;&gt;https://javabydeveloper.com/junit-5-dynamic-tests-testfactory-with-examples/&lt;/a&gt;&lt;/li&gt;
-&lt;/ul&gt;</content><author><name>Mincong Huang</name><email>mincong.h@gmail.com</email></author><category term="java-testing" /><category term="java" /><category term="junit" /><category term="junit5" /><category term="testing" /><summary type="html">How to write dynamic tests using @TestFactory in JUnit 5? This article explains the syntax, different return types, the test lifecycle, and potential use-cases.</summary><media:thumbnail xmlns:media="http://search.yahoo.com/mrss/" url="https://mincong.io/assets/bg-mike-kenneally-tNALoIZhqVM-unsplash.jpg" /><media:content medium="image" url="https://mincong.io/assets/bg-mike-kenneally-tNALoIZhqVM-unsplash.jpg" xmlns:media="http://search.yahoo.com/mrss/" /></entry></feed>
+&lt;/ul&gt;</content><author><name>Mincong Huang</name><email>mincong.h@gmail.com</email></author><category term="elasticsearch" /><category term="elasticsearch" /><summary type="html">Understanding different disk watermarks: low, high, and flood-stage in Elasticsearch. The symptom when the cluster reaches these values and how to mitigate or avoid the issues. Also, how to better operate your clusters using these watermarks.</summary><media:thumbnail xmlns:media="http://search.yahoo.com/mrss/" url="https://mincong.io/assets/bg-kelly-sikkema-_whs7FPfkwQ-unsplash.jpg" /><media:content medium="image" url="https://mincong.io/assets/bg-kelly-sikkema-_whs7FPfkwQ-unsplash.jpg" xmlns:media="http://search.yahoo.com/mrss/" /></entry></feed>
