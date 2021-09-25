@@ -2,7 +2,7 @@
 layout:              post
 title:               Internal Structure Of Snapshot Repository
 subtitle:            >
-    Given one sentence to expand the title or explain why this article may interest your readers.
+    Do you know these files?
 
 lang:                en
 date:                2021-09-04 10:11:10 +0200
@@ -10,7 +10,8 @@ categories:          [elasticsearch]
 tags:                [elasticsearch, java]
 comments:            true
 excerpt:             >
-    TODO
+    Do you know these files?
+
 image:               /assets/bg-dmitrij-paskevic-YjVa-F9P9kk-unsplash.jpg
 cover:               /assets/bg-dmitrij-paskevic-YjVa-F9P9kk-unsplash.jpg
 article_header:
