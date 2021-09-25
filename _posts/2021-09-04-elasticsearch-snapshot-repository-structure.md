@@ -10,7 +10,7 @@ categories:          [elasticsearch]
 tags:                [elasticsearch, java]
 comments:            true
 excerpt:             >
-    Do you know these files?
+    This article takes you to the Elasticsearch snapshot repository to explore its internal structure and understand the contents and uses of different files. 
 
 image:               /assets/bg-dmitrij-paskevic-YjVa-F9P9kk-unsplash.jpg
 cover:               /assets/bg-dmitrij-paskevic-YjVa-F9P9kk-unsplash.jpg
@@ -295,7 +295,7 @@ Loading `RepositoryData` and the mapping of index name to its repository `IndexI
 
 ## Repo-Level Snapshot Info
 
-`SnapshotInfo` serialized in SMILE format is used to represent the information related to the snapshot. The following is the snapshot info for `my_snapshot_20` (`snap-WbjaeQk1T4u2JrGfsWlHsw.dat`). By the way, it is worth mentioning that there is no way to directly inspect files in SMILE format (for example, using `cat`). You need a special demodulation tool, such as [cowtowncoder/Jackformer](https://github.com/cowtowncoder/Jackformer). After converting to JSON, the following results are obtained: 
+`SnapshotInfo` serialized in SMILE format is used to represent the information related to the snapshot. The following is the snapshot info for `my_snapshot_20` (`snap-WbjaeQk1T4u2JrGfsWlHsw.dat`). By the way, it is worth mentioning that there is no way to directly inspect files in SMILE format (for example, using `cat`). You need a special demodulation tool, such as [cowtowncoder/Jackformer](https://github.com/cowtowncoder/Jackformer). After converting to JSON, we obtain the results as:
 
 ```js
 // decoded version of repository-level snapshot info
@@ -323,6 +323,70 @@ Loading `RepositoryData` and the mapping of index name to its repository `IndexI
 }
 ```
 
+## Shard-Level Snapshot Info
+
+We can do the same thing for shard-level snapshot information, such as this one `snap-WbjaeQk1T4u2JrGfsWlHsw.dat`:
+
+```js
+// decoded version of shard-level snapshot info
+// $STORE_ROOT/indices/Uxom82JcSfORXgbtZ4jLSg/0/snap-WbjaeQk1T4u2JrGfsWlHsw.dat
+{
+  "name" : "my_snapshot_20",
+  "index_version" : 12,
+  "start_time" : 1630835221092,
+  "time" : 0,
+  "number_of_files" : 0,
+  "total_size" : 0,
+  "files" : [ {
+    "name" : "__5NSZ0_cESkq6xuZO0KsflA",
+    "physical_name" : "_b.cfe",
+    "length" : 479,
+    "checksum" : "10v9n85",
+    "part_size" : 9223372036854775807,
+    "written_by" : "8.8.0"
+  }, {
+    "name" : "__409YH-VqThKfHoKO64Jw3A",
+    "physical_name" : "_c.cfs",
+    "length" : 3921,
+    "checksum" : "aro23l",
+    "part_size" : 9223372036854775807,
+    "written_by" : "8.8.0"
+  }, {
+    "name" : "__-y2SRorARLmutzx_8R0pdA",
+    "physical_name" : "_7.cfs",
+    "length" : 2954,
+    "checksum" : "40ricv",
+    "part_size" : 9223372036854775807,
+    "written_by" : "8.8.0"
+  }, {
+    "name" : "v__eBFWiPBIRqetvzlHocSdmg",
+    "physical_name" : "_c.si",
+    "length" : 405,
+    "checksum" : "1raps0i",
+    "part_size" : 9223372036854775807,
+    "written_by" : "8.8.0",
+    "meta_hash" : "P9dsFxNMdWNlbmU4NlNlZ21lbnRJbmZvAAAAAIZgkzI3PmaEHCzgC37ywlIAAAAACAAAAAgAAAAAAQAAAAgAAAAIAAAAAAAAAA4BDAJvcwVMaW51eAxqYXZhLnZlcnNpb24GMTUuMC4xB29zLmFyY2gFYW1kNjQUamF2YS5ydW50aW1lLnZlcnNpb24IMTUuMC4xKzkGc291cmNlBW1lcmdlCm9zLnZlcnNpb24QNS4xMC4yNS1saW51eGtpdAtqYXZhLnZlbmRvcgxBZG9wdE9wZW5KREsPamF2YS52bS52ZXJzaW9uCDE1LjAuMSs5Dmx1Y2VuZS52ZXJzaW9uBTguOC4wE21lcmdlTWF4TnVtU2VnbWVudHMCLTELbWVyZ2VGYWN0b3ICMTAJdGltZXN0YW1wDTE2MzA4MzUyMTg2MDQDBl9jLmNmcwVfYy5zaQZfYy5jZmUBH0x1Y2VuZTg3U3RvcmVkRmllbGRzRm9ybWF0Lm1vZGUKQkVTVF9TUEVFRADAKJPoAAAAAAAAAADkIQAS"
+  }, {
+    "name" : "v__H3vg9g8aRsCMh3Ni-GypSA",
+    "physical_name" : "_b.si",
+    "length" : 367,
+    "checksum" : "1ms49nm",
+    "part_size" : 9223372036854775807,
+    "written_by" : "8.8.0",
+    "meta_hash" : "P9dsFxNMdWNlbmU4NlNlZ21lbnRJbmZvAAAAAIZgkzI3PmaEHCzgC37ywlEAAAAACAAAAAgAAAAAAQAAAAgAAAAIAAAAAAAAAAMBCgJvcwVMaW51eAtqYXZhLnZlbmRvcgxBZG9wdE9wZW5KREsMamF2YS52ZXJzaW9uBjE1LjAuMQ9qYXZhLnZtLnZlcnNpb24IMTUuMC4xKzkObHVjZW5lLnZlcnNpb24FOC44LjAHb3MuYXJjaAVhbWQ2NBRqYXZhLnJ1bnRpbWUudmVyc2lvbggxNS4wLjErOQZzb3VyY2UFZmx1c2gKb3MudmVyc2lvbhA1LjEwLjI1LWxpbnV4a2l0CXRpbWVzdGFtcA0xNjMwODM1MjE5MTkzAwZfYi5jZmUGX2IuY2ZzBV9iLnNpAR9MdWNlbmU4N1N0b3JlZEZpZWxkc0Zvcm1hdC5tb2RlCkJFU1RfU1BFRUQAwCiT6AAAAAAAAAAA09nN4g=="
+  },
+  ... ]
+}
+```
+
+## Going Further
+
+How to expand from this article?
+
+* If you want to know more about the internal file format or loading mechanism of snapshot repository, you can check the [official Javadoc of Elasticsearch (7.12) of the snapshot repository](https://github.com/elastic/elasticsearch/blob/7.12/server/src/main/java/org/elasticsearch/repositories/blobstore/package-info.java)
+* If you want to learn more about how Snapshot Repository works, you can check out [How Elasticsearch Snapshots Work](https://steve-mushero.medium.com/how-elasticsearch-snapshots-work-3824fdfc4493) by Steve Mushero on Medium
+* If you want to know more about SMILE format, you can check Wikipedia [Smile (data interchange format)](https://en.wikipedia.org/wiki/Smile_%28data_interchange_format%29) or check Ayush Gupta's article on Medium [Understanding Smile — A data format based on JSON](https://medium.com/code-with-ayush/understanding-smile-a-data-format-based-on-json-29972a37d376)
+
 ## Conclusion
 
-You can subscribe to the [feed of my blog](/feed.xml), follow me on [Twitter](https://twitter.com/mincong_h) or [GitHub](https://github.com/mincong-h/). Hope you enjoy this article, see you the next time!
+In this article, we walked into Elasticsearch's snapshot repository and saw its internal structure. We also learn more about `index-N`, `index.latest`, and some other files related to snapshots. I hope that by knowing these files, it will give you a have a better understanding of Elasticsearch's "snapshot and restore" feature, and also give you more ideas for troubleshooting when there is an issue on production. Finally, we briefly saw some resources to expand out. You can subscribe to the [feed of my blog](/feed.xml), follow me on [Twitter](https://twitter.com/mincong_h) or [GitHub](https://github.com/mincong-h/). Hope you enjoy this article, see you the next time!
