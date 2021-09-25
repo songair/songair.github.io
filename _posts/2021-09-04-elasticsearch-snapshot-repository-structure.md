@@ -293,6 +293,36 @@ Loading `RepositoryData` and the mapping of index name to its repository `IndexI
    1. Use the just determined value of `N` and get the `/index-N` blob and deserialize the `RepositoryData` from it.
    2. If no value of `N` could be found since neither an `index.latest` nor any `index-N` blobs exist in the repository, it is assumed to be empty and `RepositoryData#EMPTY` is returned.
 
+## Repo-Level Snapshot Info
+
+`SnapshotInfo` serialized in SMILE format is used to represent the information related to the snapshot. The following is the snapshot info for `my_snapshot_20` (`snap-WbjaeQk1T4u2JrGfsWlHsw.dat`). By the way, it is worth mentioning that there is no way to directly inspect files in SMILE format (for example, using `cat`). You need a special demodulation tool, such as [cowtowncoder/Jackformer](https://github.com/cowtowncoder/Jackformer). After converting to JSON, the following results are obtained: 
+
+```js
+// decoded version of repository-level snapshot info
+// $STORE_ROOT/snap-WbjaeQk1T4u2JrGfsWlHsw.dat
+{
+  "snapshot" : {
+    "name" : "my_snapshot_20",
+    "uuid" : "WbjaeQk1T4u2JrGfsWlHsw",
+    "version_id" : 7120099,
+    "indices" : [ "my_index" ],
+    "data_streams" : [ ],
+    "state" : "SUCCESS",
+    "include_global_state" : false,
+    "metadata" : {
+      "taken_by" : "Mincong",
+      "taken_because" : "https://mincong.io is the best blog for learning Elasticsearch"
+    },
+    "start_time" : 1630835219489,
+    "end_time" : 1630835222295,
+    "total_shards" : 1,
+    "successful_shards" : 1,
+    "failures" : [ ],
+    "feature_states" : [ ]
+  }
+}
+```
+
 ## Conclusion
 
 You can subscribe to the [feed of my blog](/feed.xml), follow me on [Twitter](https://twitter.com/mincong_h) or [GitHub](https://github.com/mincong-h/). Hope you enjoy this article, see you the next time!
