@@ -114,6 +114,123 @@ File path | explanation
 `indices/Ac1342-B_x/0/snap-20131011.dat` | Snapshot 20131011 `BlobStoreIndexShardSnapshot` serialized in SMILE format
 `indices/Ac1342-B_x/0/index-123` | Shard 0 `BlobStoreIndexShardSnapshots` serialized in SMILE format. Files with numeric suffixes were created by older versions, newer ES versions use a uuid suffix instead
 
+## Data Preparation
+
+Next, let's take a look at some of the more important files.
+
+But before getting started, we need to prepare the data locally: by starting Elasticsearch, and creating some data and snapshots.
+
+```sh
+es_repo="${HOME}/es-backup/blog-snapshot-repo-structure/"
+
+# Start Elasticsearch
+docker run \
+  --rm \
+  -p 9200:9200 \
+  -p 9300:9300 \
+  -e "discovery.type=single-node" \
+  -e "cluster.name=es-docker-cluster" \
+  -e "path.repo=/opt/elasticsearch/backup" \
+  -v "${es_repo}:/opt/elasticsearch/backup" \
+  docker.elastic.co/elasticsearch/elasticsearch:7.12.0
+
+# Create document
+curl -X PUT localhost:9200/my_index/_doc/1 \
+  -H 'Content-Type: application/json' \
+  -d '{"msg": "Hello Elasticsearch"}'
+
+# Create snapshot repository
+curl -X PUT localhost:9200/_snapshot/my_repo \
+  -H 'Content-Type: application/json' \
+  -d '{
+  "type": "fs",
+  "settings": {
+    "location": "my_repo"
+  }
+}'
+
+# Create snapshot
+curl -X PUT localhost:9200/_snapshot/my_repo/my_snapshot_1 \
+  -H 'Content-Type: application/json' \
+  -d '{
+  "indices": "my_index",
+  "include_global_state": false,
+  "metadata": {
+    "taken_by": "Mincong",
+    "taken_because": "https://mincong.io is the best blog for learning Elasticsearch"
+  }
+}'
+```
+
+Then enter the local folder `blog-snapshot-repo-structure`, make sure the repository `my_repo` and the files in it are ready: 
+
+```
+➜  blog-snapshot-repo-structure find my_repo
+my_repo
+my_repo/index-0
+my_repo/indices
+my_repo/indices/Uxom82JcSfORXgbtZ4jLSg
+my_repo/indices/Uxom82JcSfORXgbtZ4jLSg/0
+my_repo/indices/Uxom82JcSfORXgbtZ4jLSg/0/index-MwjmFzyOT_2NI6DdXLcsNw
+my_repo/indices/Uxom82JcSfORXgbtZ4jLSg/0/__IlzZcMdOSkC-j6xx0Qj04A
+my_repo/indices/Uxom82JcSfORXgbtZ4jLSg/0/snap-2hiUzvH3RPCp9iOeiTa6TQ.dat
+my_repo/indices/Uxom82JcSfORXgbtZ4jLSg/0/__jQbQk7YYTwW8G5gL_RtR8w
+my_repo/indices/Uxom82JcSfORXgbtZ4jLSg/meta-N1BHtXsBYxjWXi8lXhTR.dat
+my_repo/index.latest
+my_repo/meta-2hiUzvH3RPCp9iOeiTa6TQ.dat
+my_repo/snap-2hiUzvH3RPCp9iOeiTa6TQ.dat
+```
+
+Now, we can further explore the contents of the repository! 
+
+## File index-N
+
+
+```sh
+cat index-0 | jq
+```
+
+```js
+{
+  "min_version": "7.12.0",
+  "uuid": "C87ijmZURAK3ij8MsAaDAw",
+  "cluster_id": "aSNpPgDAShyYAiKhsun6IA",
+  "snapshots": [
+    {
+      "name": "my_snapshot_1",
+      "uuid": "2hiUzvH3RPCp9iOeiTa6TQ",
+      "state": 1,
+      "index_metadata_lookup": {
+        "Uxom82JcSfORXgbtZ4jLSg": "Uz7B9HV2SJ6peiLiUMJhyg-_na_-1-2-1"
+      },
+      "version": "7.12.0"
+    }
+  ],
+  "indices": {
+    "my_index": {
+      "id": "Uxom82JcSfORXgbtZ4jLSg",
+      "snapshots": [
+        "2hiUzvH3RPCp9iOeiTa6TQ"
+      ],
+      "shard_generations": [
+        "MwjmFzyOT_2NI6DdXLcsNw"
+      ]
+    }
+  },
+  "index_metadata_identifiers": {
+    "Uz7B9HV2SJ6peiLiUMJhyg-_na_-1-2-1": "N1BHtXsBYxjWXi8lXhTR"
+  }
+}
+```
+
+```
+$ curl "localhost:9200/_cat/indices/my_index?v"
+health status index    uuid                   pri rep docs.count docs.deleted store.size pri.store.size
+yellow open   my_index Uz7B9HV2SJ6peiLiUMJhyg   1   1          1            0      3.9kb          3.9kb
+```
+
+The above file `index-0` represents generation 0 of the snapshot repository. It is a `RepositoryData` serialized in JSON format, which contains all the snapshot IDs and their corresponding indexes. The UUID of the index `my_index` in the repository is `Uxom82JcSfORXgbtZ4jLSg`, and its corresponding UUID in the cluster is `Uz7B9HV2SJ6peiLiUMJhyg`. This index is referenced by a snapshot, which is the snapshot `my_snapshot_1` (`2hiUzvH3RPCp9iOeiTa6TQ`). 
+
 ## Conclusion
 
 You can subscribe to the [feed of my blog](/feed.xml), follow me on [Twitter](https://twitter.com/mincong_h) or [GitHub](https://github.com/mincong-h/). Hope you enjoy this article, see you the next time!
