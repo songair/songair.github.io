@@ -403,8 +403,8 @@
 <!-- end custom article top snippet -->
 <div class="article__content" itemprop="articleBody"><h2 id="overview">Overview</h2>
 
-<p>Recently I discovered an awesome Java library about configuration — <a href="https://github.com/lightbend/config">Typesafe
-Config</a>. It supports Java properties, JSON
+<p>Recently I discovered an awesome Java library about configuration — Typesafe
+Config (<a href="https://github.com/lightbend/config">GitHub</a>). It supports Java properties, JSON
 and a human-friendly JSON superset. It can load resources from different places: files,
 URLs, classpath. It supports types, loading convention, substitutions,
 properties merging, etc. It’s why I’m very excited to show what I learned to you.
@@ -419,7 +419,7 @@ After reading this article, you will understand:</p>
   <li>IDE support</li>
 </ul>
 
-<p>Let’s get started.</p>
+<p>Now, let’s get started!</p>
 
 <h2 id="dependency">Dependency</h2>
 
@@ -428,8 +428,13 @@ After reading this article, you will understand:</p>
 <div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nt">&lt;dependency&gt;</span>
   <span class="nt">&lt;groupId&gt;</span>com.typesafe<span class="nt">&lt;/groupId&gt;</span>
   <span class="nt">&lt;artifactId&gt;</span>config<span class="nt">&lt;/artifactId&gt;</span>
-  <span class="nt">&lt;version&gt;</span>1.4.0<span class="nt">&lt;/version&gt;</span>
+  <span class="nt">&lt;version&gt;</span>1.4.1<span class="nt">&lt;/version&gt;</span>
 <span class="nt">&lt;/dependency&gt;</span>
+</code></pre></div></div>
+
+<p>or via sbt:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>libraryDependencies += "com.typesafe" % "config" % "1.4.1"
 </code></pre></div></div>
 
 <h2 id="basic-structure">Basic Structure</h2>
@@ -485,16 +490,16 @@ following (first-listed are higher priority):</p>
 
 <ul>
   <li>system properties</li>
-  <li>“application.conf” (all resources on classpath with this name)</li>
-  <li>“application.json” (all resources on classpath with this name)</li>
-  <li>“application.properties” (all resources on classpath with this name)</li>
-  <li>“reference.conf” (all resources on classpath with this name)</li>
+  <li><code class="language-plaintext highlighter-rouge">application.conf</code> (all resources on classpath with this name)</li>
+  <li><code class="language-plaintext highlighter-rouge">application.json</code> (all resources on classpath with this name)</li>
+  <li><code class="language-plaintext highlighter-rouge">application.properties</code> (all resources on classpath with this name)</li>
+  <li><code class="language-plaintext highlighter-rouge">reference.conf</code> (all resources on classpath with this name)</li>
 </ul>
 
 <p>The idea is that libraries and frameworks should ship with a <code class="language-plaintext highlighter-rouge">reference.conf</code>
-in their jar. Applications should provide an <code class="language-plaintext highlighter-rouge">application.conf</code>, or if they
+in their JAR. Applications should provide an <code class="language-plaintext highlighter-rouge">application.conf</code>, or if they
 want to create multiple configurations in a single JVM, they could use
-ConfigFactory.load(“myapp”) to load their own <code class="language-plaintext highlighter-rouge">myapp.conf</code>.</p>
+<code class="language-plaintext highlighter-rouge">ConfigFactory.load("myapp")</code> to load their own <code class="language-plaintext highlighter-rouge">myapp.conf</code>.</p>
 
 <p>Beside method <code class="language-plaintext highlighter-rouge">ConfigFeature#load()</code>, you can also use the following methods to
 create a config object. They are convenient for tesing:</p>
@@ -527,8 +532,9 @@ avoid duplicating your logic. For example:</p>
 }
 </code></pre></div></div>
 
-<p>You can also take advantage of this for “inheritance” or optional system or
-environment variable overrides.</p>
+<p>You can also take advantage of this for inheritance, optional system, or
+environment variable overrides. Checkout <a href="https://github.com/lightbend/config#uses-of-substitutions">“Use of substitutions”</a>
+of the official guide for more details.</p>
 
 <h2 id="include">Include</h2>
 
@@ -576,7 +582,7 @@ one. If a key in the included object occurred before the include statement in
 the including object, the included key’s value overrides or merges with the
 earlier value, exactly as with duplicate keys found in a single file. When
 including file, extensions (<code class="language-plaintext highlighter-rouge">.conf</code>, <code class="language-plaintext highlighter-rouge">.json</code>, <code class="language-plaintext highlighter-rouge">.properties</code>) are not
-needed. You can also include configuration from URL or classpath. See <a href="https://github.com/lightbend/config/blob/master/HOCON.md#includes">the HOCON spec</a> for more
+needed. You can also include configuration from URL or classpath. See <a href="https://github.com/lightbend/config/blob/main/HOCON.md#includes">the HOCON spec</a> for more
 detail.</p>
 
 <h2 id="unit-format">Unit Format</h2>
@@ -592,7 +598,7 @@ Gets a value as a duration in a specified
 If the value is already a number, then it’s taken as milliseconds and then
 converted to the requested TimeUnit; if it’s a string, it’s parsed understanding units
  suffixes like “10m” or “5ns” as documented in the
-<a href="https://github.com/lightbend/config/blob/master/HOCON.md">HOCON</a> spec.</p>
+<a href="https://github.com/lightbend/config/blob/main/HOCON.md">HOCON</a> spec.</p>
 
 <table>
   <thead>
@@ -774,9 +780,11 @@ on <a href="https://twitter.com/mincong_h">Twitter</a> or
   <li>Roman Janusz, AVSystem, JetBrains, “HOCON Plugins | JetBrains”, <em>JetBrains</em>.
 <a href="https://plugins.jetbrains.com/plugin/10481-hocon">https://plugins.jetbrains.com/plugin/10481-hocon</a></li>
   <li>Typesafe Config authors, “HOCON Spec”, <em>Lightend</em>.
-<a href="https://github.com/lightbend/config/blob/master/HOCON.md">https://github.com/lightbend/config/blob/master/HOCON.md</a></li>
+<a href="https://github.com/lightbend/config/blob/main/HOCON.md">https://github.com/lightbend/config/blob/main/HOCON.md</a></li>
 </ul>
-</div><section class="article__sharing d-print-none"></section><div class="d-print-none"><footer class="article__footer"><meta itemprop="dateModified" content="2019-12-08T17:58:50+01:00"><!-- start custom article footer snippet -->
+</div><section class="article__sharing d-print-none"></section><div class="d-print-none"><footer class="article__footer"><span>Last updated
+      <time itemprop="dateModified" datetime="2021-10-03T10:42:41+02:00">Oct 03, 2021</time>
+    </span><!-- start custom article footer snippet -->
 
 <!-- end custom article footer snippet -->
 <div class="article__subscribe"><div class="subscribe">
