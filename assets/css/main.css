@@ -619,7 +619,7 @@ a.disabled, a:disabled { color: rgba(252, 77, 80, 0.2) !important; }
 
 pre, code { font-family: Menlo, Monaco, Consolas, Andale Mono, lucida console, Courier New, monospace; }
 
-code { font-size: 0.7rem; line-height: 1.4; }
+code { font-size: 0.85rem; line-height: 1.4; }
 
 figure > img { display: block; }
 
