@@ -24,6 +24,8 @@ wechat:              false
 ads:                 none
 ---
 
+## Introduction
+
 ## Conclusion
 
 You can subscribe to the [feed of my blog](/feed.xml), follow me on [Twitter](https://twitter.com/mincong_h) or [GitHub](https://github.com/mincong-h/). Hope you enjoy this article, see you the next time!
