@@ -47,11 +47,11 @@ After reading this article, you will understand:
 If you don't have time to read the entire article, here is a table for
 summarizing the difference.
 
-Scope    | Error Type       | Methods                                      | Retryable
-:------: | :--------------- | :------------------------------------------- |:---
-Activity | ApplicationError | `temporal.NewNonRetryableApplicationError()` | No
-Activity | ApplicationError | `temporal.NewApplicationError()`             | Yes
-Activity | error            | `fmt.Errorf()`, `errors.New()`               | Yes
+Scope    | Error Type       | Methods | Retryable (Default) | Retryable (Override)
+:------: | :--------------- | :------ |:------------------- | :-------------------
+Activity | `ApplicationError` | `temporal.NewNonRetryableApplicationError()` | No | -
+Activity | `ApplicationError` | `temporal.NewApplicationError()` | Yes | -
+Activity | Other errors | `fmt.Errorf()`, `errors.New()` | Yes | Retry Policy
 
 ## Retryable and Non-Retryable Application Error
 
@@ -141,7 +141,22 @@ func MyWorkflowWithRetryPolicy(ctx workflow.Context, name string) (string, error
 }
 ```
 
+The reason why Temporal has retry policy are probably because:
+
+* `temporal.NewNonRetryableApplicationError(...)` does not fit all the usecases.
+  Sometime users already know the error types that they don't want to retry, but
+  they don't want to determine the error types themselves for each activity and
+  fire a non-retryable applicaton error, since it makes the activity verbose.
+* Bringing the control at workflow level. An activity can be used for multiple
+  workflows, e.g. primitive activities for GitHub, Slack, Build, Kubernetes, etc.
+  Depending on the case of each workflow, some may want to retry while others
+  don't.
+* Actually retry policy is not only used to activity. It can be used as part of
+  the activity options, child workflow options, or event the top-level workflow
+  options.
+
 ## TODO
+
 go doc
 
 https://github.com/temporalio/temporal/blob/06b863741d386fb540420431bf157dd26509c464/service/history/workflow/retry.go#L110-L141
