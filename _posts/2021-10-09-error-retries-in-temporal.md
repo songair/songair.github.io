@@ -51,7 +51,9 @@ Scope    | Error Type       | Methods | Retryable (Default) | Retryable (Overrid
 :------: | :--------------- | :------ |:------------------- | :-------------------
 Activity | `ApplicationError` | `temporal.NewNonRetryableApplicationError()` | No | -
 Activity | `ApplicationError` | `temporal.NewApplicationError()` | Yes | -
-Activity | Other errors | `fmt.Errorf()`, `errors.New()` | Yes | Retry Policy
+Activity | Other errors | `fmt.Errorf()`, `errors.New()` | Yes | Retry policy (activity options)
+Top-level workflow | All | - | No | Retry policy (start workflow options)
+Child workflow | All | - | No | Retry policy (child workflow options)
 
 ## Retryable and Non-Retryable Application Error
 
@@ -88,10 +90,11 @@ func MyActivity(ctx context.Context, name string) (string, error) {
 
 This is easy to understand: Temporal wants to provide a fault-tolerant system so
 that it can retry automatically when thing goes wrong. So at activity-level,
-error are retried, unless user asks Temporal to not retry explicitly via wrapper
+error are retried by default, unless user asks Temporal to not retry explicitly via wrapper
 method `temporal.NewNonRetryableApplicationError(...)`.
 
-`ApplicationError` determines whether an error is retryable using its internal
+If we dive into the source code, you can see that
+`ApplicationError` determines the retry-ability of an error using its internal
 boolean attribute `nonRetryable`:
 
 ```go
@@ -141,19 +144,85 @@ func MyWorkflowWithRetryPolicy(ctx workflow.Context, name string) (string, error
 }
 ```
 
-The reason why Temporal has retry policy are probably because:
+But, why Temporal has `NonRetryableErrorTypes` in Retry Policy? In my opionion,
+there are several reasons:
 
-* `temporal.NewNonRetryableApplicationError(...)` does not fit all the usecases.
+* **`temporal.NewNonRetryableApplicationError(...)` is not enough.**
+  It does not fit all the usecases.
   Sometime users already know the error types that they don't want to retry, but
   they don't want to determine the error types themselves for each activity and
   fire a non-retryable applicaton error, since it makes the activity verbose.
-* Bringing the control at workflow level. An activity can be used for multiple
+* **Bringing the control at workflow level.** An activity can be used for multiple
   workflows, e.g. primitive activities for GitHub, Slack, Build, Kubernetes, etc.
   Depending on the case of each workflow, some may want to retry while others
   don't.
-* Actually retry policy is not only used to activity. It can be used as part of
+* **Retry policy is not only used by activity.** It can be used as part of
   the activity options, child workflow options, or event the top-level workflow
-  options.
+  options. Since the policy controls the retry activitation, having
+  `NonRetryableErrorTypes` allows to refine the activiations on different
+  types of error.
+
+## Using Retry Policy
+
+Now, let's see how to use retry policy in different cases.
+
+### Activity Options
+
+Enable custom retry policy as activity options:
+
+```go
+func MyWorkflowWithRetryPolicy(ctx workflow.Context, name string) (string, error) {
+	ctx = workflow.WithActivityOptions(ctx, workflow.ActivityOptions{
+		StartToCloseTimeout: 10 * time.Second,
+		RetryPolicy:         retryPolicy,
+	})
+	...
+}
+```
+
+In this case, failed activities will be retried, more precisely:
+
+- Errors having type defined in `NonRetryableErrorTypes` won't be retried
+- Errors wrapped into non-retryable application error won't be retried
+- Other application errors will be retried
+
+### Child Workflow Options
+
+Enable custom retry policy as child workflow options:
+
+```go
+func MyWorkflowWithChildWorkflowRetryPolicy(ctx workflow.Context, name string) (string, error) {
+	ctx = workflow.WithChildOptions(ctx, workflow.ChildWorkflowOptions{
+		WorkflowRunTimeout: 10 * time.Second,
+		RetryPolicy:        &retryPolicy,
+	})
+	...
+}
+```
+
+In this case, failed child workflow will be retried (which is not the case by
+default). The child workflow will be retried on all types of errors, except the ones
+defined in `NonRetryableErrorTypes` in the retry policy.
+
+### Top-Level Workflow Options
+
+Enable custom retry policy as top-level workflow options:
+
+```go
+startOptions := client.StartWorkflowOptions{
+	ID:                  id,
+	TaskQueue:           ts.taskQueueName,
+	WorkflowRunTimeout:  20 * time.Second,
+	WorkflowTaskTimeout: 3 * time.Second,
+	RetryPolicy:         &retryPolicy,
+}
+err := ts.executeWorkflowWithOption(startOptions, workflowFn, nil)
+```
+
+In this case, top-level workflow will be retried by the server on all types of
+errors, except the ones defined in `NonRetryableErrorTypes` in the retry policy.
+
+## Maximum Attempts
 
 ## TODO
 
