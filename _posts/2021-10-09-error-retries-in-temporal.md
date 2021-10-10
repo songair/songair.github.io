@@ -224,12 +224,39 @@ errors, except the ones defined in `NonRetryableErrorTypes` in the retry policy.
 
 ## Maximum Attempts
 
-## TODO
+_For how many times is the server going to retry?_
 
-go doc
+When the custom retry policy is defined, the answer is obvious: the server is
+going to retry `MaximumAttempts` times, defined in the policy. If the policy is
+defined, but `MaximumAttempts` is not set or set to 0, it means unlimited, and
+we rely on activity `ScheduleToCloseTimeout` to stop.
 
-https://github.com/temporalio/temporal/blob/06b863741d386fb540420431bf157dd26509c464/service/history/workflow/retry.go#L110-L141
+When the custom retry policy is not defined, for activities, it means using the
+default retry policy. The default RetryPolicy provided by the server specifies
+([v1.10.0](https://github.com/temporalio/sdk-go/blob/9d143aa8634807e523b3ac199a0447b9cf147e72/internal/activity.go#L127-L131)):
+
+- InitialInterval of 1 second
+- BackoffCoefficient of 2.0
+- MaximumInterval of 100 x InitialInterval
+- MaximumAttempts of 0 (unlimited)
+
+For top-level workflow or child workflow, it means that there are no
+retry because by default, Temporal retries activies, but not workflows
+([doc](https://docs.temporal.io/docs/go/retries/)).
 
 ## Conclusion
 
 You can subscribe to the [feed of my blog](/feed.xml), follow me on [Twitter](https://twitter.com/mincong_h) or [GitHub](https://github.com/mincong-h/). Hope you enjoy this article, see you the next time!
+
+## References
+
+- Temporal, "Activity and Workflow Retries", _Temporal Documentation_, 2021.
+  <https://docs.temporal.io/docs/go/retries/>
+- Temporal, "Error Handling in Go", _Temporal Documentation_, 2021.
+  <https://docs.temporal.io/docs/go/error-handling/>
+- Temporal, "Testing and Debugging", _Temporal Documentation_, 2021.
+  <https://docs.temporal.io/docs/go/testing/>
+- Temporal, "Temporal Go SDK", _GitHub_, 2021.
+  <https://github.com/temporalio/sdk-go>
+- Temporal, "Temporal Go SDK Samples", _GitHub_, 2021.
+  <https://github.com/temporalio/samples-go>
