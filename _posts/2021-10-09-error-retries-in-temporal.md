@@ -36,6 +36,7 @@ it's missing something that I need as a developer. So I decide to write this
 article, to share my understanding of error retries in Temporal in Go SDK, as a
 complementary to the official documents. And hopefully, it will clarify
 different situations and give you a clearer picture of how errors are retried.
+This article is written with Temporal Go SDK v1.10.0 (15 Sept 2021).
 
 After reading this article, you will understand:
 
@@ -45,6 +46,12 @@ After reading this article, you will understand:
 
 If you don't have time to read the entire article, here is a table for
 summarizing the difference.
+
+Scope    | Error Type       | Methods                                      | Retryable
+:------: | :--------------- | :------------------------------------------- |:---
+Activity | ApplicationError | `temporal.NewNonRetryableApplicationError()` | No
+Activity | ApplicationError | `temporal.NewApplicationError()`             | Yes
+Activity | error            | `fmt.Errorf()`, `errors.New()`               | Yes
 
 ## Retryable and Non-Retryable Application Error
 
@@ -83,6 +90,56 @@ This is easy to understand: Temporal wants to provide a fault-tolerant system so
 that it can retry automatically when thing goes wrong. So at activity-level,
 error are retried, unless user asks Temporal to not retry explicitly via wrapper
 method `temporal.NewNonRetryableApplicationError(...)`.
+
+`ApplicationError` determines whether an error is retryable using its internal
+boolean attribute `nonRetryable`:
+
+```go
+// go.temporal.io/sdk@v1.10.0/internal/error.go
+type (
+	// ApplicationError returned from activity implementations with message and optional details.
+	ApplicationError struct {
+		temporalError
+		msg          string
+		errType      string
+		nonRetryable bool
+		cause        error
+		details      converter.EncodedValues
+	}
+	...
+}
+```
+
+One possible usecase for `temporal.NewNonRetryableApplicationError(...)` is when
+interacting with a third-party service. When that service returns a
+deterministic error indicating that required action cannot be performed, you may
+not want to retry. For example, when a resource deletion request is rejected by
+the third party service because it is still in used, you probably
+don't want to retry. Therefore, calling
+`temporal.NewNonRetryableApplicationError(...)` is a good choice.
+
+## Non-Retryable Error Types in Retry Policy
+
+Another way to define non-retryable error types for activity is to provide a
+custom `RetryPolicy` as part of the `ActivityOptions` or `ChildWorkflowOptions`.
+For example, to avoid retrying errors of type `MyError`, we can make it as
+non-retryable as follows:
+
+```go
+func MyWorkflowWithRetryPolicy(ctx workflow.Context, name string) (string, error) {
+	ctx = workflow.WithActivityOptions(ctx, workflow.ActivityOptions{
+		StartToCloseTimeout: 10 * time.Second,
+		RetryPolicy: &temporal.RetryPolicy{
+			InitialInterval:    1 * time.Second,
+			BackoffCoefficient: 2,
+			MaximumInterval:    1 * time.Minute,
+			MaximumAttempts:    5,
+			NonRetryableErrorTypes: []string{"MyError"}, // HERE
+		},
+	})
+	...
+}
+```
 
 ## TODO
 go doc
