@@ -246,6 +246,15 @@ retry because by default, Temporal retries activies, but not workflows
 
 ## Conclusion
 
+In this article, we saw the retryable and non-retryable application errors in
+Temporal; we saw the non-retryable error tpes defined by `RetryPolicy`; we saw
+how to use retry policy as activity options, child workflow options, and
+start workflow options for top-level workflows; and we also discuss the maximum
+attempts for retries in different cases.
+
+I hope that this article gives you more insights about how error retries is done
+in Temporal workflow. The source code of this article is also available on
+[GitHub](https://github.com/mincong-h/learning-go/pull/15).
 You can subscribe to the [feed of my blog](/feed.xml), follow me on [Twitter](https://twitter.com/mincong_h) or [GitHub](https://github.com/mincong-h/). Hope you enjoy this article, see you the next time!
 
 ## References
