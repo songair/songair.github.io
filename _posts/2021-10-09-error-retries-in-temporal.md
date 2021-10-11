@@ -42,7 +42,9 @@ After reading this article, you will understand:
 
 * The difference between retryable and non-retryable error at acvitity level
 * How to write unit tests?
-
+* Non-retryable error types in retry policy
+* How to use retry policy?
+* The maximum attempts when retrying
 
 If you don't have time to read the entire article, here is a table for
 summarizing the difference.
