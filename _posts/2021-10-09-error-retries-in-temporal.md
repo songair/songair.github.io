@@ -10,7 +10,11 @@ categories:          [temporal]
 tags:                [temporal, go]
 comments:            true
 excerpt:             >
-    TODO
+    This article discusses the error retries in workflow engine Temporal
+    (https://temporal.io/), including retryable and non-retryable application
+    error, non-retryable error types in retry policy, retry policy usage in 3
+    different levels (activity, child workflow, top-level workflow options),
+    maximum attempts, and more.
 
 image:               /assets/bg-pablo-garcia-saldana-lPQIndZz8Mo-unsplash.jpg
 cover:               /assets/bg-pablo-garcia-saldana-lPQIndZz8Mo-unsplash.jpg
