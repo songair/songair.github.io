@@ -10,10 +10,9 @@ categories:          [temporal]
 tags:                [temporal, go]
 comments:            true
 excerpt:             >
-    This article discusses the error retries in workflow engine Temporal
-    (https://temporal.io/), including retryable and non-retryable application
-    error, non-retryable error types in retry policy, retry policy usage in 3
-    different levels (activity, child workflow, top-level workflow options),
+    This article discusses the error retries in workflow engine Temporal,
+    including retryable and non-retryable application errors,
+    error types in retry policy, retry policy usage in different levels,
     maximum attempts, and more.
 
 image:               /assets/bg-pablo-garcia-saldana-lPQIndZz8Mo-unsplash.jpg
@@ -45,10 +44,10 @@ This article is written with Temporal Go SDK v1.10.0 (15 Sept 2021).
 After reading this article, you will understand:
 
 * The difference between retryable and non-retryable error at acvitity level
-* How to write unit tests?
 * Non-retryable error types in retry policy
 * How to use retry policy?
 * The maximum attempts when retrying
+* How to write unit tests?
 
 If you don't have time to read the entire article, here is a table for
 summarizing the difference.
@@ -111,7 +110,7 @@ type (
 		temporalError
 		msg          string
 		errType      string
-		nonRetryable bool
+		nonRetryable bool  // HERE
 		cause        error
 		details      converter.EncodedValues
 	}
@@ -143,7 +142,7 @@ func MyWorkflowWithRetryPolicy(ctx workflow.Context, name string) (string, error
 			BackoffCoefficient: 2,
 			MaximumInterval:    1 * time.Minute,
 			MaximumAttempts:    5,
-			NonRetryableErrorTypes: []string{"MyError"}, // HERE
+			NonRetryableErrorTypes: []string{"MyError"},  // HERE
 		},
 	})
 	...
@@ -249,6 +248,45 @@ default retry policy. The default RetryPolicy provided by the server specifies
 For top-level workflow or child workflow, it means that there are no
 retry because by default, Temporal retries activies, but not workflows
 ([doc](https://docs.temporal.io/docs/go/retries/)).
+
+## Writing Unit Tests
+
+Now we understand how the error retries mechanism works, it's time to write some
+tests. Yes, writing tests because we need it: we need it to assert the retry
+behavior, to assert the number of retry attempts, to assert the completion and
+the result of the workflow, etc.
+
+Here is an example for demonstrating that an applicaton error "oops" is
+retryable and the activity is being executed twice: the first time failed and
+the second time succeed.
+
+```go
+func (ts *WorkflowTestSuite) TestActivityError_ExplicitRetryableError() {
+	// Given
+	executionCount := 0
+	ts.env.OnActivity(MyActivity, mock.Anything, mock.Anything).Return(func(ctx context.Context, msg string) (string, error) {
+		executionCount++
+		if executionCount == 1 {
+			return "", temporal.NewApplicationError("oops", "test")
+		} else {
+			return "Hello, UnitTest!", nil
+		}
+	})
+
+	// When
+	ts.env.ExecuteWorkflow(MyWorkflow, "UnitTest")
+
+	// Then
+	ts.True(ts.env.IsWorkflowCompleted())
+
+	var result string
+	ts.NoError(ts.env.GetWorkflowResult(&result))
+	ts.Equal("Hello, UnitTest!", result)
+	ts.Equal(2, executionCount, "1st execution failed and 2nd execution succeed")
+}
+```
+
+See <https://github.com/mincong-h/learning-go/pull/15> for more samples.
 
 ## Conclusion
 
