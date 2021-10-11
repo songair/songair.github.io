@@ -176,7 +176,7 @@ Enable custom retry policy as activity options:
 func MyWorkflowWithRetryPolicy(ctx workflow.Context, name string) (string, error) {
 	ctx = workflow.WithActivityOptions(ctx, workflow.ActivityOptions{
 		StartToCloseTimeout: 10 * time.Second,
-		RetryPolicy:         retryPolicy,
+		RetryPolicy:         &retryPolicy,
 	})
 	...
 }
