@@ -1,5 +1,332 @@
-<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" xml:lang="en"><generator uri="https://jekyllrb.com/" version="4.2.0">Jekyll</generator><link href="https://mincong.io/feed.xml" rel="self" type="application/atom+xml" /><link href="https://mincong.io/" rel="alternate" type="text/html" hreflang="en" /><updated>2021-10-07T08:30:56+02:00</updated><id>https://mincong.io/feed.xml</id><title type="html">Mincong Huang</title><subtitle>Hi, welcome to my blog! I'm a software engineer at Datadog. I write blog posts in my free time. My blogs are bits and pieces of my tech journey. Most of them are related to Java. Hope you enjoy them! My opinions are my own, not Datadog's. This blog is powered by Jekyll, a simple, blog-aware, static sites solution.
-</subtitle><author><name>Mincong Huang</name><email>mincong.h@gmail.com</email></author><entry xml:lang="en"><title type="html">Internal Structure Of Snapshot Repository</title><link href="https://mincong.io/en/elasticsearch-snapshot-repository-structure/" rel="alternate" type="text/html" title="Internal Structure Of Snapshot Repository" /><published>2021-09-04T10:11:10+02:00</published><updated>2021-09-04T10:11:10+02:00</updated><id>https://mincong.io/en/elasticsearch-snapshot-repository-structure</id><content type="html" xml:base="https://mincong.io/en/elasticsearch-snapshot-repository-structure/">&lt;p class=&quot;info&quot;&gt;This article is translated with Google Translate and reviewed by Mincong.&lt;/p&gt;
+<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" xml:lang="en"><generator uri="https://jekyllrb.com/" version="4.2.0">Jekyll</generator><link href="https://mincong.io/feed.xml" rel="self" type="application/atom+xml" /><link href="https://mincong.io/" rel="alternate" type="text/html" hreflang="en" /><updated>2021-10-11T23:08:18+02:00</updated><id>https://mincong.io/feed.xml</id><title type="html">Mincong Huang</title><subtitle>Hi, welcome to my blog! I'm a software engineer at Datadog. I write blog posts in my free time. My blogs are bits and pieces of my tech journey. Most of them are related to Java. Hope you enjoy them! My opinions are my own, not Datadog's. This blog is powered by Jekyll, a simple, blog-aware, static sites solution.
+</subtitle><author><name>Mincong Huang</name><email>mincong.h@gmail.com</email></author><entry xml:lang="en"><title type="html">Error Retries in Temporal Workflow</title><link href="https://mincong.io/en/error-retries-in-temporal/" rel="alternate" type="text/html" title="Error Retries in Temporal Workflow" /><published>2021-10-09T22:08:20+02:00</published><updated>2021-10-09T22:08:20+02:00</updated><id>https://mincong.io/en/error-retries-in-temporal</id><content type="html" xml:base="https://mincong.io/en/error-retries-in-temporal/">&lt;h2 id=&quot;introduction&quot;&gt;Introduction&lt;/h2&gt;
+
+&lt;p&gt;When working with Temporal to build workflows, you will have to face to error
+handling at some point because workflow and activity can fail for different
+reasons. Temporal Go SDK defines its &lt;a href=&quot;https://docs.temporal.io/docs/go/error-handling/&quot;&gt;error
+handling&lt;/a&gt; logic and &lt;a href=&quot;https://docs.temporal.io/docs/go/retries/&quot;&gt;activity
+and workflow retries&lt;/a&gt; in the official
+documentation. But whenever I visit those pages, I always feel that
+it’s missing something that I need as a developer. So I decide to write this
+article, to share my understanding of error retries in Temporal in Go SDK, as a
+complementary to the official documents. And hopefully, it will clarify
+different situations and give you a clearer picture of how errors are retried.
+This article is written with Temporal Go SDK v1.10.0 (15 Sept 2021).&lt;/p&gt;
+
+&lt;p&gt;After reading this article, you will understand:&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;The difference between retryable and non-retryable error at acvitity level&lt;/li&gt;
+  &lt;li&gt;Non-retryable error types in retry policy&lt;/li&gt;
+  &lt;li&gt;How to use retry policy?&lt;/li&gt;
+  &lt;li&gt;The maximum attempts when retrying&lt;/li&gt;
+  &lt;li&gt;How to write unit tests?&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;If you don’t have time to read the entire article, here is a table for
+summarizing the difference.&lt;/p&gt;
+
+&lt;table&gt;
+  &lt;thead&gt;
+    &lt;tr&gt;
+      &lt;th style=&quot;text-align: center&quot;&gt;Scope&lt;/th&gt;
+      &lt;th style=&quot;text-align: left&quot;&gt;Error Type&lt;/th&gt;
+      &lt;th style=&quot;text-align: left&quot;&gt;Methods&lt;/th&gt;
+      &lt;th style=&quot;text-align: left&quot;&gt;Retryable (Default)&lt;/th&gt;
+      &lt;th style=&quot;text-align: left&quot;&gt;Retryable (Override)&lt;/th&gt;
+    &lt;/tr&gt;
+  &lt;/thead&gt;
+  &lt;tbody&gt;
+    &lt;tr&gt;
+      &lt;td style=&quot;text-align: center&quot;&gt;Activity&lt;/td&gt;
+      &lt;td style=&quot;text-align: left&quot;&gt;&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;ApplicationError&lt;/code&gt;&lt;/td&gt;
+      &lt;td style=&quot;text-align: left&quot;&gt;&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;temporal.NewNonRetryableApplicationError()&lt;/code&gt;&lt;/td&gt;
+      &lt;td style=&quot;text-align: left&quot;&gt;No&lt;/td&gt;
+      &lt;td style=&quot;text-align: left&quot;&gt;-&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td style=&quot;text-align: center&quot;&gt;Activity&lt;/td&gt;
+      &lt;td style=&quot;text-align: left&quot;&gt;&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;ApplicationError&lt;/code&gt;&lt;/td&gt;
+      &lt;td style=&quot;text-align: left&quot;&gt;&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;temporal.NewApplicationError()&lt;/code&gt;&lt;/td&gt;
+      &lt;td style=&quot;text-align: left&quot;&gt;Yes&lt;/td&gt;
+      &lt;td style=&quot;text-align: left&quot;&gt;-&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td style=&quot;text-align: center&quot;&gt;Activity&lt;/td&gt;
+      &lt;td style=&quot;text-align: left&quot;&gt;Other errors&lt;/td&gt;
+      &lt;td style=&quot;text-align: left&quot;&gt;&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;fmt.Errorf()&lt;/code&gt;, &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;errors.New()&lt;/code&gt;&lt;/td&gt;
+      &lt;td style=&quot;text-align: left&quot;&gt;Yes&lt;/td&gt;
+      &lt;td style=&quot;text-align: left&quot;&gt;Retry policy (activity options)&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td style=&quot;text-align: center&quot;&gt;Top-level workflow&lt;/td&gt;
+      &lt;td style=&quot;text-align: left&quot;&gt;All&lt;/td&gt;
+      &lt;td style=&quot;text-align: left&quot;&gt;-&lt;/td&gt;
+      &lt;td style=&quot;text-align: left&quot;&gt;No&lt;/td&gt;
+      &lt;td style=&quot;text-align: left&quot;&gt;Retry policy (start workflow options)&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td style=&quot;text-align: center&quot;&gt;Child workflow&lt;/td&gt;
+      &lt;td style=&quot;text-align: left&quot;&gt;All&lt;/td&gt;
+      &lt;td style=&quot;text-align: left&quot;&gt;-&lt;/td&gt;
+      &lt;td style=&quot;text-align: left&quot;&gt;No&lt;/td&gt;
+      &lt;td style=&quot;text-align: left&quot;&gt;Retry policy (child workflow options)&lt;/td&gt;
+    &lt;/tr&gt;
+  &lt;/tbody&gt;
+&lt;/table&gt;
+
+&lt;h2 id=&quot;retryable-and-non-retryable-application-error&quot;&gt;Retryable and Non-Retryable Application Error&lt;/h2&gt;
+
+&lt;p&gt;By default, Temporal retries activities, but not workflows. According to
+official documentation &lt;a href=&quot;https://docs.temporal.io/docs/go/error-handling/&quot;&gt;Error Handling in
+Go&lt;/a&gt;, if the activity returns
+an error as &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;errors.New()&lt;/code&gt; or &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;fmt.Errorf()&lt;/code&gt;, that error will be converted to
+&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;*temporal.ApplicationError&lt;/code&gt;, which is retryable. If you don’t want the error to
+be retried, you can return a non-retryable application error from the activity.&lt;/p&gt;
+
+&lt;div class=&quot;language-go highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;k&quot;&gt;func&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;MyActivity&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;ctx&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;context&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Context&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;name&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;string&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;string&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;error&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+	&lt;span class=&quot;o&quot;&gt;...&lt;/span&gt;
+	&lt;span class=&quot;c&quot;&gt;// retryable&lt;/span&gt;
+	&lt;span class=&quot;k&quot;&gt;return&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&quot;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;fmt&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Errorf&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;oops&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;div class=&quot;language-go highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;k&quot;&gt;func&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;MyActivity&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;ctx&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;context&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Context&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;name&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;string&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;string&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;error&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+	&lt;span class=&quot;o&quot;&gt;...&lt;/span&gt;
+	&lt;span class=&quot;c&quot;&gt;// retryable&lt;/span&gt;
+	&lt;span class=&quot;k&quot;&gt;return&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&quot;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;temporal&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;NewApplicationError&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;oops&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&quot;test&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;div class=&quot;language-go highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;k&quot;&gt;func&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;MyActivity&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;ctx&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;context&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Context&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;name&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;string&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;string&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;error&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+	&lt;span class=&quot;o&quot;&gt;...&lt;/span&gt;
+	&lt;span class=&quot;c&quot;&gt;// non-retryable&lt;/span&gt;
+	&lt;span class=&quot;k&quot;&gt;return&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&quot;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;temporal&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;NewNonRetryableApplicationError&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;oops&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&quot;test&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;err&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;This is easy to understand: Temporal wants to provide a fault-tolerant system so
+that it can retry automatically when thing goes wrong. So at activity-level,
+error are retried by default, unless user asks Temporal to not retry explicitly via wrapper
+method &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;temporal.NewNonRetryableApplicationError(...)&lt;/code&gt;.&lt;/p&gt;
+
+&lt;p&gt;If we dive into the source code, you can see that
+&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;ApplicationError&lt;/code&gt; determines the retry-ability of an error using its internal
+boolean attribute &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;nonRetryable&lt;/code&gt;:&lt;/p&gt;
+
+&lt;div class=&quot;language-go highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;c&quot;&gt;// go.temporal.io/sdk@v1.10.0/internal/error.go&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;type&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;
+	&lt;span class=&quot;c&quot;&gt;// ApplicationError returned from activity implementations with message and optional details.&lt;/span&gt;
+	&lt;span class=&quot;n&quot;&gt;ApplicationError&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;struct&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+		&lt;span class=&quot;n&quot;&gt;temporalError&lt;/span&gt;
+		&lt;span class=&quot;n&quot;&gt;msg&lt;/span&gt;          &lt;span class=&quot;kt&quot;&gt;string&lt;/span&gt;
+		&lt;span class=&quot;n&quot;&gt;errType&lt;/span&gt;      &lt;span class=&quot;kt&quot;&gt;string&lt;/span&gt;
+		&lt;span class=&quot;n&quot;&gt;nonRetryable&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;bool&lt;/span&gt;  &lt;span class=&quot;c&quot;&gt;// HERE&lt;/span&gt;
+		&lt;span class=&quot;n&quot;&gt;cause&lt;/span&gt;        &lt;span class=&quot;kt&quot;&gt;error&lt;/span&gt;
+		&lt;span class=&quot;n&quot;&gt;details&lt;/span&gt;      &lt;span class=&quot;n&quot;&gt;converter&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;EncodedValues&lt;/span&gt;
+	&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+	&lt;span class=&quot;o&quot;&gt;...&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;One possible usecase for &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;temporal.NewNonRetryableApplicationError(...)&lt;/code&gt; is when
+interacting with a third-party service. When that service returns a
+deterministic error indicating that required action cannot be performed, you may
+not want to retry. For example, when a resource deletion request is rejected by
+the third party service because it is still in used, you probably
+don’t want to retry. Therefore, calling
+&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;temporal.NewNonRetryableApplicationError(...)&lt;/code&gt; is a good choice.&lt;/p&gt;
+
+&lt;h2 id=&quot;non-retryable-error-types-in-retry-policy&quot;&gt;Non-Retryable Error Types in Retry Policy&lt;/h2&gt;
+
+&lt;p&gt;Another way to define non-retryable error types for activity is to provide a
+custom &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;RetryPolicy&lt;/code&gt; as part of the &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;ActivityOptions&lt;/code&gt; or &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;ChildWorkflowOptions&lt;/code&gt;.
+For example, to avoid retrying errors of type &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;MyError&lt;/code&gt;, we can make it as
+non-retryable as follows:&lt;/p&gt;
+
+&lt;div class=&quot;language-go highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;k&quot;&gt;func&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;MyWorkflowWithRetryPolicy&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;ctx&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;workflow&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Context&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;name&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;string&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;string&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;error&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+	&lt;span class=&quot;n&quot;&gt;ctx&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;workflow&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;WithActivityOptions&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;ctx&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;workflow&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;ActivityOptions&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+		&lt;span class=&quot;n&quot;&gt;StartToCloseTimeout&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;m&quot;&gt;10&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;*&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;time&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Second&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
+		&lt;span class=&quot;n&quot;&gt;RetryPolicy&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;&amp;amp;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;temporal&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;RetryPolicy&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+			&lt;span class=&quot;n&quot;&gt;InitialInterval&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;:&lt;/span&gt;    &lt;span class=&quot;m&quot;&gt;1&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;*&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;time&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Second&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
+			&lt;span class=&quot;n&quot;&gt;BackoffCoefficient&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;m&quot;&gt;2&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
+			&lt;span class=&quot;n&quot;&gt;MaximumInterval&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;:&lt;/span&gt;    &lt;span class=&quot;m&quot;&gt;1&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;*&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;time&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Minute&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
+			&lt;span class=&quot;n&quot;&gt;MaximumAttempts&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;:&lt;/span&gt;    &lt;span class=&quot;m&quot;&gt;5&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
+			&lt;span class=&quot;n&quot;&gt;NonRetryableErrorTypes&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;[]&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;string&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;MyError&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;},&lt;/span&gt;  &lt;span class=&quot;c&quot;&gt;// HERE&lt;/span&gt;
+		&lt;span class=&quot;p&quot;&gt;},&lt;/span&gt;
+	&lt;span class=&quot;p&quot;&gt;})&lt;/span&gt;
+	&lt;span class=&quot;o&quot;&gt;...&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;But, why Temporal has &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;NonRetryableErrorTypes&lt;/code&gt; in Retry Policy? In my opionion,
+there are several reasons:&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;&lt;strong&gt;&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;temporal.NewNonRetryableApplicationError(...)&lt;/code&gt; is not enough.&lt;/strong&gt;
+It does not fit all the usecases.
+Sometime users already know the error types that they don’t want to retry, but
+they don’t want to determine the error types themselves for each activity and
+fire a non-retryable applicaton error, since it makes the activity verbose.&lt;/li&gt;
+  &lt;li&gt;&lt;strong&gt;Bringing the control at workflow level.&lt;/strong&gt; An activity can be used for multiple
+workflows, e.g. primitive activities for GitHub, Slack, Build, Kubernetes, etc.
+Depending on the case of each workflow, some may want to retry while others
+don’t.&lt;/li&gt;
+  &lt;li&gt;&lt;strong&gt;Retry policy is not only used by activity.&lt;/strong&gt; It can be used as part of
+the activity options, child workflow options, or event the top-level workflow
+options. Since the policy controls the retry activitation, having
+&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;NonRetryableErrorTypes&lt;/code&gt; allows to refine the activiations on different
+types of error.&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h2 id=&quot;using-retry-policy&quot;&gt;Using Retry Policy&lt;/h2&gt;
+
+&lt;p&gt;Now, let’s see how to use retry policy in different cases.&lt;/p&gt;
+
+&lt;h3 id=&quot;activity-options&quot;&gt;Activity Options&lt;/h3&gt;
+
+&lt;p&gt;Enable custom retry policy as activity options:&lt;/p&gt;
+
+&lt;div class=&quot;language-go highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;k&quot;&gt;func&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;MyWorkflowWithRetryPolicy&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;ctx&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;workflow&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Context&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;name&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;string&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;string&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;error&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+	&lt;span class=&quot;n&quot;&gt;ctx&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;workflow&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;WithActivityOptions&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;ctx&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;workflow&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;ActivityOptions&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+		&lt;span class=&quot;n&quot;&gt;StartToCloseTimeout&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;m&quot;&gt;10&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;*&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;time&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Second&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
+		&lt;span class=&quot;n&quot;&gt;RetryPolicy&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;:&lt;/span&gt;         &lt;span class=&quot;o&quot;&gt;&amp;amp;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;retryPolicy&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
+	&lt;span class=&quot;p&quot;&gt;})&lt;/span&gt;
+	&lt;span class=&quot;o&quot;&gt;...&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;In this case, failed activities will be retried, more precisely:&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;Errors having type defined in &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;NonRetryableErrorTypes&lt;/code&gt; won’t be retried&lt;/li&gt;
+  &lt;li&gt;Errors wrapped into non-retryable application error won’t be retried&lt;/li&gt;
+  &lt;li&gt;Other application errors will be retried&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h3 id=&quot;child-workflow-options&quot;&gt;Child Workflow Options&lt;/h3&gt;
+
+&lt;p&gt;Enable custom retry policy as child workflow options:&lt;/p&gt;
+
+&lt;div class=&quot;language-go highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;k&quot;&gt;func&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;MyWorkflowWithChildWorkflowRetryPolicy&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;ctx&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;workflow&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Context&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;name&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;string&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;string&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;error&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+	&lt;span class=&quot;n&quot;&gt;ctx&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;workflow&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;WithChildOptions&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;ctx&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;workflow&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;ChildWorkflowOptions&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+		&lt;span class=&quot;n&quot;&gt;WorkflowRunTimeout&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;m&quot;&gt;10&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;*&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;time&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Second&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
+		&lt;span class=&quot;n&quot;&gt;RetryPolicy&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;:&lt;/span&gt;        &lt;span class=&quot;o&quot;&gt;&amp;amp;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;retryPolicy&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
+	&lt;span class=&quot;p&quot;&gt;})&lt;/span&gt;
+	&lt;span class=&quot;o&quot;&gt;...&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;In this case, failed child workflow will be retried (which is not the case by
+default). The child workflow will be retried on all types of errors, except the ones
+defined in &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;NonRetryableErrorTypes&lt;/code&gt; in the retry policy.&lt;/p&gt;
+
+&lt;h3 id=&quot;top-level-workflow-options&quot;&gt;Top-Level Workflow Options&lt;/h3&gt;
+
+&lt;p&gt;Enable custom retry policy as top-level workflow options:&lt;/p&gt;
+
+&lt;div class=&quot;language-go highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;n&quot;&gt;startOptions&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;:=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;client&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;StartWorkflowOptions&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+	&lt;span class=&quot;n&quot;&gt;ID&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;:&lt;/span&gt;                  &lt;span class=&quot;n&quot;&gt;id&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
+	&lt;span class=&quot;n&quot;&gt;TaskQueue&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;:&lt;/span&gt;           &lt;span class=&quot;n&quot;&gt;ts&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;taskQueueName&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
+	&lt;span class=&quot;n&quot;&gt;WorkflowRunTimeout&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;:&lt;/span&gt;  &lt;span class=&quot;m&quot;&gt;20&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;*&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;time&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Second&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
+	&lt;span class=&quot;n&quot;&gt;WorkflowTaskTimeout&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;m&quot;&gt;3&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;*&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;time&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Second&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
+	&lt;span class=&quot;n&quot;&gt;RetryPolicy&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;:&lt;/span&gt;         &lt;span class=&quot;o&quot;&gt;&amp;amp;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;retryPolicy&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+&lt;span class=&quot;n&quot;&gt;err&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;:=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;ts&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;executeWorkflowWithOption&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;startOptions&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;workflowFn&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;no&quot;&gt;nil&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;In this case, top-level workflow will be retried by the server on all types of
+errors, except the ones defined in &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;NonRetryableErrorTypes&lt;/code&gt; in the retry policy.&lt;/p&gt;
+
+&lt;h2 id=&quot;maximum-attempts&quot;&gt;Maximum Attempts&lt;/h2&gt;
+
+&lt;p&gt;&lt;em&gt;For how many times is the server going to retry?&lt;/em&gt;&lt;/p&gt;
+
+&lt;p&gt;When the custom retry policy is defined, the answer is obvious: the server is
+going to retry &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;MaximumAttempts&lt;/code&gt; times, defined in the policy. If the policy is
+defined, but &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;MaximumAttempts&lt;/code&gt; is not set or set to 0, it means unlimited, and
+we rely on activity &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;ScheduleToCloseTimeout&lt;/code&gt; to stop.&lt;/p&gt;
+
+&lt;p&gt;When the custom retry policy is not defined, for activities, it means using the
+default retry policy. The default RetryPolicy provided by the server specifies
+(&lt;a href=&quot;https://github.com/temporalio/sdk-go/blob/9d143aa8634807e523b3ac199a0447b9cf147e72/internal/activity.go#L127-L131&quot;&gt;v1.10.0&lt;/a&gt;):&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;InitialInterval of 1 second&lt;/li&gt;
+  &lt;li&gt;BackoffCoefficient of 2.0&lt;/li&gt;
+  &lt;li&gt;MaximumInterval of 100 x InitialInterval&lt;/li&gt;
+  &lt;li&gt;MaximumAttempts of 0 (unlimited)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;For top-level workflow or child workflow, it means that there are no
+retry because by default, Temporal retries activies, but not workflows
+(&lt;a href=&quot;https://docs.temporal.io/docs/go/retries/&quot;&gt;doc&lt;/a&gt;).&lt;/p&gt;
+
+&lt;h2 id=&quot;writing-unit-tests&quot;&gt;Writing Unit Tests&lt;/h2&gt;
+
+&lt;p&gt;Now we understand how the error retries mechanism works, it’s time to write some
+tests. Yes, writing tests because we need it: we need it to assert the retry
+behavior, to assert the number of retry attempts, to assert the completion and
+the result of the workflow, etc.&lt;/p&gt;
+
+&lt;p&gt;Here is an example for demonstrating that an applicaton error “oops” is
+retryable and the activity is being executed twice: the first time failed and
+the second time succeed.&lt;/p&gt;
+
+&lt;div class=&quot;language-go highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;k&quot;&gt;func&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;ts&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;WorkflowTestSuite&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;TestActivityError_ExplicitRetryableError&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;()&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+	&lt;span class=&quot;c&quot;&gt;// Given&lt;/span&gt;
+	&lt;span class=&quot;n&quot;&gt;executionCount&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;:=&lt;/span&gt; &lt;span class=&quot;m&quot;&gt;0&lt;/span&gt;
+	&lt;span class=&quot;n&quot;&gt;ts&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;env&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;OnActivity&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;MyActivity&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;mock&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Anything&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;mock&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Anything&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Return&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;func&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;ctx&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;context&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Context&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;msg&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;string&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;string&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;error&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+		&lt;span class=&quot;n&quot;&gt;executionCount&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;++&lt;/span&gt;
+		&lt;span class=&quot;k&quot;&gt;if&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;executionCount&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;==&lt;/span&gt; &lt;span class=&quot;m&quot;&gt;1&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+			&lt;span class=&quot;k&quot;&gt;return&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&quot;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;temporal&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;NewApplicationError&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;oops&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&quot;test&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+		&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;else&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+			&lt;span class=&quot;k&quot;&gt;return&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&quot;Hello, UnitTest!&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;no&quot;&gt;nil&lt;/span&gt;
+		&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+	&lt;span class=&quot;p&quot;&gt;})&lt;/span&gt;
+
+	&lt;span class=&quot;c&quot;&gt;// When&lt;/span&gt;
+	&lt;span class=&quot;n&quot;&gt;ts&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;env&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;ExecuteWorkflow&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;MyWorkflow&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&quot;UnitTest&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+
+	&lt;span class=&quot;c&quot;&gt;// Then&lt;/span&gt;
+	&lt;span class=&quot;n&quot;&gt;ts&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;True&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;ts&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;env&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;IsWorkflowCompleted&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;())&lt;/span&gt;
+
+	&lt;span class=&quot;k&quot;&gt;var&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;result&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;string&lt;/span&gt;
+	&lt;span class=&quot;n&quot;&gt;ts&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;NoError&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;ts&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;env&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;GetWorkflowResult&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;&amp;amp;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;result&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;))&lt;/span&gt;
+	&lt;span class=&quot;n&quot;&gt;ts&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Equal&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;Hello, UnitTest!&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;result&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+	&lt;span class=&quot;n&quot;&gt;ts&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Equal&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;m&quot;&gt;2&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;executionCount&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&quot;1st execution failed and 2nd execution succeed&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;See &lt;a href=&quot;https://github.com/mincong-h/learning-go/pull/15&quot;&gt;https://github.com/mincong-h/learning-go/pull/15&lt;/a&gt; for more samples.&lt;/p&gt;
+
+&lt;h2 id=&quot;conclusion&quot;&gt;Conclusion&lt;/h2&gt;
+
+&lt;p&gt;In this article, we saw the retryable and non-retryable application errors in
+Temporal; we saw the non-retryable error tpes defined by &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;RetryPolicy&lt;/code&gt;; we saw
+how to use retry policy as activity options, child workflow options, and
+start workflow options for top-level workflows; and we also discuss the maximum
+attempts for retries in different cases.&lt;/p&gt;
+
+&lt;p&gt;I hope that this article gives you more insights about how error retries is done
+in Temporal workflow. The source code of this article is also available on
+&lt;a href=&quot;https://github.com/mincong-h/learning-go/pull/15&quot;&gt;GitHub&lt;/a&gt;.
+You can subscribe to the &lt;a href=&quot;/feed.xml&quot;&gt;feed of my blog&lt;/a&gt;, follow me on &lt;a href=&quot;https://twitter.com/mincong_h&quot;&gt;Twitter&lt;/a&gt; or &lt;a href=&quot;https://github.com/mincong-h/&quot;&gt;GitHub&lt;/a&gt;. Hope you enjoy this article, see you the next time!&lt;/p&gt;
+
+&lt;h2 id=&quot;references&quot;&gt;References&lt;/h2&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;Temporal, “Activity and Workflow Retries”, &lt;em&gt;Temporal Documentation&lt;/em&gt;, 2021.
+&lt;a href=&quot;https://docs.temporal.io/docs/go/retries/&quot;&gt;https://docs.temporal.io/docs/go/retries/&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;Temporal, “Error Handling in Go”, &lt;em&gt;Temporal Documentation&lt;/em&gt;, 2021.
+&lt;a href=&quot;https://docs.temporal.io/docs/go/error-handling/&quot;&gt;https://docs.temporal.io/docs/go/error-handling/&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;Temporal, “Testing and Debugging”, &lt;em&gt;Temporal Documentation&lt;/em&gt;, 2021.
+&lt;a href=&quot;https://docs.temporal.io/docs/go/testing/&quot;&gt;https://docs.temporal.io/docs/go/testing/&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;Temporal, “Temporal Go SDK”, &lt;em&gt;GitHub&lt;/em&gt;, 2021.
+&lt;a href=&quot;https://github.com/temporalio/sdk-go&quot;&gt;https://github.com/temporalio/sdk-go&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;Temporal, “Temporal Go SDK Samples”, &lt;em&gt;GitHub&lt;/em&gt;, 2021.
+&lt;a href=&quot;https://github.com/temporalio/samples-go&quot;&gt;https://github.com/temporalio/samples-go&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;</content><author><name>Mincong Huang</name><email>mincong.h@gmail.com</email></author><category term="temporal" /><category term="temporal" /><category term="go" /><summary type="html">This article discusses the error retries in workflow engine Temporal, including retryable and non-retryable application errors, error types in retry policy, retry policy usage in different levels, maximum attempts, and more.</summary><media:thumbnail xmlns:media="http://search.yahoo.com/mrss/" url="https://mincong.io/assets/bg-pablo-garcia-saldana-lPQIndZz8Mo-unsplash.jpg" /><media:content medium="image" url="https://mincong.io/assets/bg-pablo-garcia-saldana-lPQIndZz8Mo-unsplash.jpg" xmlns:media="http://search.yahoo.com/mrss/" /></entry><entry xml:lang="en"><title type="html">Internal Structure Of Snapshot Repository</title><link href="https://mincong.io/en/elasticsearch-snapshot-repository-structure/" rel="alternate" type="text/html" title="Internal Structure Of Snapshot Repository" /><published>2021-09-04T10:11:10+02:00</published><updated>2021-09-04T10:11:10+02:00</updated><id>https://mincong.io/en/elasticsearch-snapshot-repository-structure</id><content type="html" xml:base="https://mincong.io/en/elasticsearch-snapshot-repository-structure/">&lt;p class=&quot;info&quot;&gt;This article is translated with Google Translate and reviewed by Mincong.&lt;/p&gt;
 
 &lt;h2 id=&quot;introduction&quot;&gt;Introduction&lt;/h2&gt;
 
@@ -3812,245 +4139,4 @@ on &lt;a href=&quot;https://twitter.com/mincong_h&quot;&gt;Twitter&lt;/a&gt; or
 &lt;em&gt;dev.to&lt;/em&gt;, 2020. &lt;a href=&quot;https://dev.to/miguendes/everything-you-need-to-know-about-python-s-namedtuples-1l12&quot;&gt;https://dev.to/miguendes/everything-you-need-to-know-about-python-s-namedtuples-1l12&lt;/a&gt;&lt;/li&gt;
   &lt;li&gt;卡拉先生, “Elasticsearch配置yaml中文教程”, &lt;em&gt;kalasearch.cn&lt;/em&gt;, 2020.
 &lt;a href=&quot;https://kalasearch.cn/community/tutorials/how-to-configure-yaml-file-for-elastic-search/&quot;&gt;https://kalasearch.cn/community/tutorials/how-to-configure-yaml-file-for-elastic-search/&lt;/a&gt;&lt;/li&gt;
-&lt;/ul&gt;</content><author><name>Mincong Huang</name><email>mincong.h@gmail.com</email></author><category term="elasticsearch" /><category term="python" /><category term="elasticsearch" /><category term="python" /><category term="jinja" /><summary type="html">This article explains how to generate the configuration for Elasticsearch using Python templating engine Jinja 2 by going through a basic use-case. It also explains features about Jinja2, testing, and more.</summary><media:thumbnail xmlns:media="http://search.yahoo.com/mrss/" url="https://mincong.io/assets/bg-heiman-ip-iFk8n8ntVDU-unsplash.jpg" /><media:content medium="image" url="https://mincong.io/assets/bg-heiman-ip-iFk8n8ntVDU-unsplash.jpg" xmlns:media="http://search.yahoo.com/mrss/" /></entry><entry xml:lang="en"><title type="html">Disk Watermarks In Elasticsearch</title><link href="https://mincong.io/2021/04/10/disk-watermarks-in-elasticsearch/" rel="alternate" type="text/html" title="Disk Watermarks In Elasticsearch" /><published>2021-04-10T01:00:00+02:00</published><updated>2021-04-10T01:00:00+02:00</updated><id>https://mincong.io/2021/04/10/disk-watermarks-in-elasticsearch</id><content type="html" xml:base="https://mincong.io/2021/04/10/disk-watermarks-in-elasticsearch/">&lt;h2 id=&quot;introduction&quot;&gt;Introduction&lt;/h2&gt;
-
-&lt;p&gt;If you operate one or multiple Easticsearch clusters, you probably already heard about disk watermarks.
-There are three disk watermarks in Elasticsearch: low, high, flood-stage. They are cluster-level settings and
-are important for shard allocations. Its primary goal is to ensure all the nodes have enough disk space and
-avoid disk full problems. In this article, we are going to explore their definition, the
-symptom when the watermark is reached, and different solutions (i.e. how to avoid it in the first place or how to
-mitigate when it happens).&lt;/p&gt;
-
-&lt;p&gt;After reading this article, you will understand:&lt;/p&gt;
-
-&lt;ul&gt;
-  &lt;li&gt;How to get and update the watermarks in Elasticsearch?&lt;/li&gt;
-  &lt;li&gt;Low disk watermark&lt;/li&gt;
-  &lt;li&gt;High disk watermark&lt;/li&gt;
-  &lt;li&gt;Flood-stage disk watermark&lt;/li&gt;
-  &lt;li&gt;How to avoid disk full problem?&lt;/li&gt;
-  &lt;li&gt;How to go further from here?&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;p&gt;This article is written for Elasticsearch 6.x and 7.x. Now, let’s get started!&lt;/p&gt;
-
-&lt;h2 id=&quot;overview&quot;&gt;Overview&lt;/h2&gt;
-
-&lt;p&gt;Elasticsearch considers the available disk space on a node before deciding whether
-to allocate new shards to that node or to actively relocate shards away from that node.&lt;/p&gt;
-
-&lt;p&gt;Below are the settings that can be configured in the &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;elasticsearch.yml&lt;/code&gt; config file or updated
-dynamically on a live cluster with the cluster-update-settings API:&lt;/p&gt;
-
-&lt;table&gt;
-  &lt;thead&gt;
-    &lt;tr&gt;
-      &lt;th style=&quot;text-align: left&quot;&gt;Setting&lt;/th&gt;
-      &lt;th style=&quot;text-align: left&quot;&gt;Description&lt;/th&gt;
-    &lt;/tr&gt;
-  &lt;/thead&gt;
-  &lt;tbody&gt;
-    &lt;tr&gt;
-      &lt;td style=&quot;text-align: left&quot;&gt;&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;cluster.routing.allocation.disk.watermark.low&lt;/code&gt;&lt;/td&gt;
-      &lt;td style=&quot;text-align: left&quot;&gt;The low watermark for disk usage, defaults to &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;85%&lt;/code&gt;. Elasticsearch will not allocate shards to nodes that have more than 85% disk used.&lt;/td&gt;
-    &lt;/tr&gt;
-    &lt;tr&gt;
-      &lt;td style=&quot;text-align: left&quot;&gt;&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;cluster.routing.allocation.disk.watermark.high&lt;/code&gt;&lt;/td&gt;
-      &lt;td style=&quot;text-align: left&quot;&gt;The high watermark for disk usage, defaults to &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;90%&lt;/code&gt;. Elasticsearch will attempt to relocate shards away from a node whose disk usage is above 90%.&lt;/td&gt;
-    &lt;/tr&gt;
-    &lt;tr&gt;
-      &lt;td style=&quot;text-align: left&quot;&gt;&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;cluster.routing.allocation.disk.watermark.flood_stage&lt;/code&gt;&lt;/td&gt;
-      &lt;td style=&quot;text-align: left&quot;&gt;The flood-stage watermark for disk usage, defaults to &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;95%&lt;/code&gt;. Elasticsearch enforces a read-only index block (&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;index.blocks.read_only_allow_delete&lt;/code&gt;) on every index that has one or more shards allocated on the node, and that has at least one disk exceeding the flood stage.&lt;/td&gt;
-    &lt;/tr&gt;
-  &lt;/tbody&gt;
-&lt;/table&gt;
-
-&lt;p&gt;To retrieve the current value of different disk watermarks, you can send a GET request to the Cluster Settings API:&lt;/p&gt;
-
-&lt;div class=&quot;language-plaintext highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;GET /_cluster/settings?include_defaults
-&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
-
-&lt;p&gt;You may want to add query parameter &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;flat_settings&lt;/code&gt; so that you can filter the disk watermarks easily:&lt;/p&gt;
-
-&lt;div class=&quot;language-plaintext highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;GET /_cluster/settings?include_defaults&amp;amp;flat_settings
-&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
-
-&lt;p&gt;To update one or more settings of disk watermarks, specify them in the Cluster Update Settings API:&lt;/p&gt;
-
-&lt;div class=&quot;language-plaintext highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;PUT /_cluster/settings
-
-{
-  &quot;transient&quot;: { 
-    &quot;cluster.routing.allocation.disk.watermark.low&quot;: &quot;85%&quot;,
-    &quot;cluster.routing.allocation.disk.watermark.high&quot;: &quot;90%&quot;,
-    &quot;cluster.routing.allocation.disk.watermark.flood_stage&quot;: &quot;95%&quot;,
-  }
-}
-&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
-
-&lt;p&gt;Now we understand the basics of these settings and how to get and update them. Let’s go further
-into each of them to better understand their meaning.&lt;/p&gt;
-
-&lt;h2 id=&quot;low-disk-watermark&quot;&gt;Low Disk Watermark&lt;/h2&gt;
-
-&lt;p&gt;When a data node is getting more and more filled, its disk
-usage will first across the low disk watermark. The default value is 85%, meaning that Elasticsearch will not allocate shards to nodes that have more than 85% disk used. It can also be set to an absolute byte value (like &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;500mb&lt;/code&gt;) to prevent Elasticsearch from allocating shards if less than the specified amount of space is available. This setting does not affect the primary shards of newly-created indices but will prevent their replicas from being allocated.&lt;/p&gt;
-
-&lt;p&gt;&lt;img src=&quot;/assets/20210410-Elasticsearch-Disk-Warkermarks-Diagram.low-watermark.png&quot; alt=&quot;Diagram for low disk watermark&quot; /&gt;&lt;/p&gt;
-
-&lt;p&gt;More precisely, you may see the following shard allocation decisions made by the Disk Threshold Decider:&lt;/p&gt;
-
-&lt;table&gt;
-  &lt;thead&gt;
-    &lt;tr&gt;
-      &lt;th style=&quot;text-align: left&quot;&gt;Decision&lt;/th&gt;
-      &lt;th style=&quot;text-align: left&quot;&gt;Message&lt;/th&gt;
-    &lt;/tr&gt;
-  &lt;/thead&gt;
-  &lt;tbody&gt;
-    &lt;tr&gt;
-      &lt;td style=&quot;text-align: left&quot;&gt;NO&lt;/td&gt;
-      &lt;td style=&quot;text-align: left&quot;&gt;Shard cannot be allocated because: “the node is above the low watermark cluster setting [cluster.routing.allocation.disk.watermark.low=%s], having less than the minimum required [%s] free space, actual free: [%s]”&lt;/td&gt;
-    &lt;/tr&gt;
-    &lt;tr&gt;
-      &lt;td style=&quot;text-align: left&quot;&gt;NO&lt;/td&gt;
-      &lt;td style=&quot;text-align: left&quot;&gt;Shard cannot be allocated because: “the node is above the low watermark cluster setting [cluster.routing.allocation.disk.watermark.low=%s], using more disk space than the maximum allowed [%s%%], actual free: [%s%%]”&lt;/td&gt;
-    &lt;/tr&gt;
-    &lt;tr&gt;
-      &lt;td style=&quot;text-align: left&quot;&gt;YES&lt;/td&gt;
-      &lt;td style=&quot;text-align: left&quot;&gt;Shard can be allocated because: “the node is above the low watermark, but less than the high watermark, and this primary shard has never been allocated before”&lt;/td&gt;
-    &lt;/tr&gt;
-  &lt;/tbody&gt;
-&lt;/table&gt;
-
-&lt;p&gt;Since Elasticsearch cluster will stop allocating shards to this data node, it means that your cluster may become yellow.&lt;/p&gt;
-
-&lt;p&gt;There are multiple solutions to solve this:&lt;/p&gt;
-
-&lt;ol&gt;
-  &lt;li&gt;Add more data nodes to the cluster.&lt;/li&gt;
-  &lt;li&gt;Cleanup space by snapshotting old indices, restore them to another cluster if needed, and finally delete them from the current cluster.&lt;/li&gt;
-  &lt;li&gt;Add more disk on the node.&lt;/li&gt;
-&lt;/ol&gt;
-
-&lt;p&gt;If you have an auto-scaling mechanism, it means that that auto-scaler is not working properly.&lt;/p&gt;
-
-&lt;h2 id=&quot;high-disk-watermark&quot;&gt;High Disk Watermark&lt;/h2&gt;
-
-&lt;p&gt;When a data node is getting more and more filled and after reaching the low watermark, its disk
-usage will across the high disk watermark. The default value is 90%, meaning that Elasticsearch will attempt to relocate shards away from a node whose disk usage is above 90%. It can also be set to an absolute byte value (similarly to the low watermark) to relocate shards away from a node if it has less than the specified amount of free space. This setting affects the allocation of all shards, whether previously allocated or not.&lt;/p&gt;
-
-&lt;p&gt;&lt;img src=&quot;/assets/20210410-Elasticsearch-Disk-Warkermarks-Diagram.high-watermark.png&quot; alt=&quot;Diagram for high disk watermark&quot; /&gt;&lt;/p&gt;
-
-&lt;p&gt;More precisely, you may see the following shard allocation decisions made by the Disk Threshold Decider:&lt;/p&gt;
-
-&lt;table&gt;
-  &lt;thead&gt;
-    &lt;tr&gt;
-      &lt;th style=&quot;text-align: left&quot;&gt;Decision&lt;/th&gt;
-      &lt;th style=&quot;text-align: left&quot;&gt;Message&lt;/th&gt;
-    &lt;/tr&gt;
-  &lt;/thead&gt;
-  &lt;tbody&gt;
-    &lt;tr&gt;
-      &lt;td style=&quot;text-align: left&quot;&gt;NO&lt;/td&gt;
-      &lt;td style=&quot;text-align: left&quot;&gt;Shard cannot be allocated because: “the node is above the high watermark cluster setting [cluster.routing.allocation.disk.watermark.high=%s], having less than the minimum required [%s] free space, actual free: [%s]”&lt;/td&gt;
-    &lt;/tr&gt;
-    &lt;tr&gt;
-      &lt;td style=&quot;text-align: left&quot;&gt;NO&lt;/td&gt;
-      &lt;td style=&quot;text-align: left&quot;&gt;Shard cannot be allocated because: “the node is above the high watermark cluster setting [cluster.routing.allocation.disk.watermark.high=%s], using more disk space than the maximum allowed [%s%%], actual free: [%s%%]”&lt;/td&gt;
-    &lt;/tr&gt;
-    &lt;tr&gt;
-      &lt;td style=&quot;text-align: left&quot;&gt;NO&lt;/td&gt;
-      &lt;td style=&quot;text-align: left&quot;&gt;Shard cannot be allocated because: “allocating the shard to this node will bring the node above the high watermark cluster setting [cluster.routing.allocation.disk.watermark.high=%s] and cause it to have less than the minimum required [%s] of free space (free: [%s], estimated shard size: [%s])”&lt;/td&gt;
-    &lt;/tr&gt;
-    &lt;tr&gt;
-      &lt;td style=&quot;text-align: left&quot;&gt;NO&lt;/td&gt;
-      &lt;td style=&quot;text-align: left&quot;&gt;Shard cannot be allocated because: “allocating the shard to this node will bring the node above the high watermark cluster setting [cluster.routing.allocation.disk.watermark.high=%s] and cause it to use more disk space than the maximum allowed [%s%%] (free space after shard added: [%s%%])”&lt;/td&gt;
-    &lt;/tr&gt;
-    &lt;tr&gt;
-      &lt;td style=&quot;text-align: left&quot;&gt;NO&lt;/td&gt;
-      &lt;td style=&quot;text-align: left&quot;&gt;Shard cannot be allocated because: “the shard cannot remain on this node because it is above the high watermark cluster setting [cluster.routing.allocation.disk.watermark.high=%s] and there is less than the required [%s] free space on node, actual free: [%s]”&lt;/td&gt;
-    &lt;/tr&gt;
-    &lt;tr&gt;
-      &lt;td style=&quot;text-align: left&quot;&gt;NO&lt;/td&gt;
-      &lt;td style=&quot;text-align: left&quot;&gt;Shard cannot be allocated because: “the shard cannot remain on this node because it is above the high watermark cluster setting [cluster.routing.allocation.disk.watermark.high=%s] and there is less than the required [%s%%] free disk on node, actual free: [%s%%]”&lt;/td&gt;
-    &lt;/tr&gt;
-  &lt;/tbody&gt;
-&lt;/table&gt;
-
-&lt;p&gt;When a data node reached the high watermark, it is usually not alone. The entire cluster can be full. You
-have to deal with this seriously. In addition to the disk being full, Elasticsearch cluster may create a lot
-of relocations to relocate shards from one node to another — but it’s useless because all the nodes are getting
-full.&lt;/p&gt;
-
-&lt;p&gt;The solutions for solving this issue are the same as the solutions for the low disk watermark.&lt;/p&gt;
-
-&lt;h2 id=&quot;flood-stage-disk-watermark&quot;&gt;Flood-Stage Disk Watermark&lt;/h2&gt;
-
-&lt;p&gt;The next level is the flood stage. The default value is 95%. Elasticsearch enforces a read-only index block (&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;index.blocks.read_only_allow_delete&lt;/code&gt;) on every index that has one or more shards allocated on the node, and that has at least one disk exceeding the flood stage. This setting is the last resort to prevent nodes from running out of disk space. Depending on your Elasticsearch version, the release mechanism is different:&lt;/p&gt;
-
-&lt;ul&gt;
-  &lt;li&gt;Before Elasticsearch 7, the index block must be released &lt;mark&gt;manually&lt;/mark&gt; when the disk utilization falls below the high watermark.&lt;/li&gt;
-  &lt;li&gt;Since Elasticsearch 7, the index block is &lt;mark&gt;automatically&lt;/mark&gt; released when the disk utilization falls below the high watermark.&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;p&gt;&lt;img src=&quot;/assets/20210410-Elasticsearch-Disk-Warkermarks-Diagram.flood-stage-watermark.png&quot; alt=&quot;Diagram for flood-stage disk watermark&quot; /&gt;&lt;/p&gt;
-
-&lt;p&gt;In Elasticsearch 6, since the index block must be released manually, you can reset the index, e.g. &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;twitter&lt;/code&gt;, using the following API:&lt;/p&gt;
-
-&lt;div class=&quot;language-plaintext highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;PUT /twitter/_settings
-
-{
-  &quot;index.blocks.read_only_allow_delete&quot;: null
-}
-&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
-
-&lt;h2 id=&quot;how-to-avoid-disk-full-problem&quot;&gt;How to avoid disk full problem?&lt;/h2&gt;
-
-&lt;p&gt;Nobody wants to put their production at risk or work on this critical issue at 3:00 AM. This problem
-can be mitigated in several ways:&lt;/p&gt;
-
-&lt;ol&gt;
-  &lt;li&gt;Implement a disk-based auto-scaling mechanism so that new data nodes can be added automatically.&lt;/li&gt;
-  &lt;li&gt;Create a warning alert for high disk usage, e.g. 50% full. Therefore, developers or operations teams can handle this during business hours.&lt;/li&gt;
-  &lt;li&gt;Create a critical alert for high disk usage, e.g. 70% full. Therefore, the on-call team can handle this anytime when the situation becomes critical. However, the recovery may take a long time but monitoring this can be tiring as well. You may want to add another disk full alert, e.g. 85% full, to ensure that the situation is not worsened during recovery time.&lt;/li&gt;
-  &lt;li&gt;Use Elasticsearch Index Lifecycle Management (ILM) to regularly clean up old indices. Or implement a custom index lifecycle management mechanism to adapt your business requirements.&lt;/li&gt;
-  &lt;li&gt;Use Elasticsearch Snapshot and Restore module so that you can move data easily across clusters.&lt;/li&gt;
-&lt;/ol&gt;
-
-&lt;h2 id=&quot;going-further&quot;&gt;Going Further&lt;/h2&gt;
-
-&lt;p&gt;How to go further from here?&lt;/p&gt;
-
-&lt;ul&gt;
-  &lt;li&gt;To better understand low disk watermark, visit Opster’s page &lt;a href=&quot;https://opster.com/elasticsearch-glossary/elasticsearch-low-disk-watermark/&quot;&gt;“Elasticsearch Low Disk Watermark”&lt;/a&gt;.&lt;/li&gt;
-  &lt;li&gt;To better understand high disk watermark, visit Opster’s page &lt;a href=&quot;https://opster.com/elasticsearch-glossary/elasticsearch-high-disk-watermark/&quot;&gt;“Elasticsearch High Disk Watermark”&lt;/a&gt;&lt;/li&gt;
-  &lt;li&gt;To see how the decisions are made based on different thresholds, see the source code of &lt;a href=&quot;https://github.com/elastic/elasticsearch/blob/v7.12.0/server/src/main/java/org/elasticsearch/cluster/routing/allocation/decider/DiskThresholdDecider.java&quot;&gt;&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;DiskThresholdDecider&lt;/code&gt; (v7.12.0)&lt;/a&gt; on GitHub.&lt;/li&gt;
-  &lt;li&gt;For more information about disk-based shard allocation on Elasticsearch 6, visit official documentation:
-&lt;a href=&quot;https://www.elastic.co/guide/en/elasticsearch/reference/6.8/disk-allocator.html&quot;&gt;https://www.elastic.co/guide/en/elasticsearch/reference/6.8/disk-allocator.html&lt;/a&gt;&lt;/li&gt;
-  &lt;li&gt;For more information about disk-based shard allocation on Elasticsearch 7, visit official documentation:
-&lt;a href=&quot;https://www.elastic.co/guide/en/elasticsearch/reference/7.12/modules-cluster.html&quot;&gt;https://www.elastic.co/guide/en/elasticsearch/reference/7.12/modules-cluster.html&lt;/a&gt;&lt;/li&gt;
-  &lt;li&gt;To see more shard allocation decisions, visit another article on my blog: &lt;a href=&quot;/2020/09/27/shard-allocation/&quot;&gt;“18 Allocation Deciders in Elasticsearch”&lt;/a&gt;.&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;h2 id=&quot;conclusion&quot;&gt;Conclusion&lt;/h2&gt;
-
-&lt;p&gt;In this article, we saw how different disk watermarks in Elasticsearch: low (85%), high (90%), and
-flood-stage (95%). All of them are dynamic settings and can be updated without restarting the server.
-Elasticsearch will not allocate shards to nodes that have more than 85% disk used.
-Elasticsearch will attempt to relocate shards away from a node whose disk usage is above 90%.
-A read-only index block will be enforced when the flood stage exceeds.
-We also see different solutions to avoid disk full problems.
-Interested to know more? You can subscribe to &lt;a href=&quot;/feed.xml&quot;&gt;the feed of my blog&lt;/a&gt;, follow me
-on &lt;a href=&quot;https://twitter.com/mincong_h&quot;&gt;Twitter&lt;/a&gt; or
-&lt;a href=&quot;https://github.com/mincong-h/&quot;&gt;GitHub&lt;/a&gt;. Hope you enjoy this article, see you the next time!&lt;/p&gt;
-
-&lt;h2 id=&quot;references&quot;&gt;References&lt;/h2&gt;
-
-&lt;ul&gt;
-  &lt;li&gt;Elastic, “Cluster Get Settings API (7.x)”, &lt;em&gt;elastic.co&lt;/em&gt;, 2021.
-&lt;a href=&quot;https://www.elastic.co/guide/en/elasticsearch/reference/7.x/cluster-get-settings.html&quot;&gt;https://www.elastic.co/guide/en/elasticsearch/reference/7.x/cluster-get-settings.html&lt;/a&gt;&lt;/li&gt;
-  &lt;li&gt;Elastic, “Cluster-level shard allocation and routing settings”, &lt;em&gt;elastic.co&lt;/em&gt;, 2021.
-&lt;a href=&quot;https://www.elastic.co/guide/en/elasticsearch/reference/7.12/modules-cluster.html&quot;&gt;https://www.elastic.co/guide/en/elasticsearch/reference/7.12/modules-cluster.html&lt;/a&gt;&lt;/li&gt;
-&lt;/ul&gt;</content><author><name>Mincong Huang</name><email>mincong.h@gmail.com</email></author><category term="elasticsearch" /><category term="elasticsearch" /><summary type="html">Understanding different disk watermarks: low, high, and flood-stage in Elasticsearch. The symptom when the cluster reaches these values and how to mitigate or avoid the issues. Also, how to better operate your clusters using these watermarks.</summary><media:thumbnail xmlns:media="http://search.yahoo.com/mrss/" url="https://mincong.io/assets/bg-kelly-sikkema-_whs7FPfkwQ-unsplash.jpg" /><media:content medium="image" url="https://mincong.io/assets/bg-kelly-sikkema-_whs7FPfkwQ-unsplash.jpg" xmlns:media="http://search.yahoo.com/mrss/" /></entry></feed>
+&lt;/ul&gt;</content><author><name>Mincong Huang</name><email>mincong.h@gmail.com</email></author><category term="elasticsearch" /><category term="python" /><category term="elasticsearch" /><category term="python" /><category term="jinja" /><summary type="html">This article explains how to generate the configuration for Elasticsearch using Python templating engine Jinja 2 by going through a basic use-case. It also explains features about Jinja2, testing, and more.</summary><media:thumbnail xmlns:media="http://search.yahoo.com/mrss/" url="https://mincong.io/assets/bg-heiman-ip-iFk8n8ntVDU-unsplash.jpg" /><media:content medium="image" url="https://mincong.io/assets/bg-heiman-ip-iFk8n8ntVDU-unsplash.jpg" xmlns:media="http://search.yahoo.com/mrss/" /></entry></feed>
