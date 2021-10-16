@@ -410,7 +410,32 @@ or tooling of the Python ecosystem. Code written here is tested and hosted on
 <a href="https://github.com/mincong-h/learning-python">GitHub</a>. I hope that it will be
 useful for you as well. Enjoy!</p>
 
-<h2 id="iteration">Iteration</h2>
+<h2 id="data-container">Data Container</h2>
+
+<p>This section discusses about list, set, and dictionary.</p>
+
+<h3 id="container-creation">Container Creation</h3>
+
+<p>Create a dictionary, list, set:</p>
+
+<div class="language-py highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">import</span> <span class="nn">typing</span>
+
+<span class="c1"># dictionary
+</span><span class="n">my_dict1</span> <span class="o">=</span> <span class="p">{</span><span class="s">"k1"</span><span class="p">:</span> <span class="s">"v1"</span><span class="p">,</span> <span class="s">"k2"</span><span class="p">:</span> <span class="s">"v2"</span><span class="p">,</span> <span class="s">"k3"</span><span class="p">:</span> <span class="s">"v3"</span><span class="p">}</span>
+<span class="n">my_dict2</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
+<span class="n">my_dict3</span> <span class="o">=</span> <span class="n">typing</span><span class="p">.</span><span class="n">OrderedDict</span><span class="p">()</span>
+
+<span class="c1"># list
+</span><span class="n">my_list1</span> <span class="o">=</span> <span class="p">[</span><span class="s">"v1"</span><span class="p">,</span> <span class="s">"v2"</span><span class="p">,</span> <span class="s">"v3"</span><span class="p">]</span>
+<span class="n">my_list2</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
+<span class="n">my_list3</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="mi">4</span>  <span class="c1"># [0, 0, 0, 0]
+</span>
+<span class="c1"># set
+</span><span class="n">my_set1</span> <span class="o">=</span> <span class="p">{</span><span class="s">"k1"</span><span class="p">,</span> <span class="s">"k2"</span><span class="p">,</span> <span class="s">"k3"</span><span class="p">}</span>
+<span class="n">my_set2</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+</code></pre></div></div>
+
+<h3 id="container-iteration">Container Iteration</h3>
 
 <p>Iterate keys of a dictionary:</p>
 
@@ -430,7 +455,19 @@ useful for you as well. Enjoy!</p>
     <span class="k">print</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
 </code></pre></div></div>
 
-<h2 id="list-comprehension">List Comprehension</h2>
+<p>Iterate item in a list:</p>
+
+<div class="language-py highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">my_list</span><span class="p">:</span>
+    <span class="k">print</span><span class="p">(</span><span class="n">item</span><span class="p">)</span>
+</code></pre></div></div>
+
+<p>Iterate index and item in a list:</p>
+
+<div class="language-py highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">item</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">my_list</span><span class="p">):</span>
+    <span class="k">print</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">item</span><span class="p">)</span>
+</code></pre></div></div>
+
+<h3 id="list-comprehension">List Comprehension</h3>
 
 <p>List comprehensions are used for creating new lists from other iterables like tuples, strings, arrays, lists, etc. A list comprehension consists of brackets containing the expression, which is executed for each element along with the for loop to iterate over each element.</p>
 
@@ -454,25 +491,61 @@ useful for you as well. Enjoy!</p>
 <span class="p">[</span><span class="s">'k1:v1'</span><span class="p">,</span> <span class="s">'k2:v2'</span><span class="p">]</span>
 </code></pre></div></div>
 
-<h2 id="insertion">Insertion</h2>
+<h3 id="container-insertion">Container Insertion</h3>
 
 <p>Append an element into list:</p>
 
-<figure class="highlight"><pre><code class="language-python" data-lang="python"><span class="nb">list</span><span class="p">.</span><span class="n">append</span><span class="p">(</span><span class="n">e</span><span class="p">)</span></code></pre></figure>
-
-<figure class="highlight"><pre><code class="language-python" data-lang="python"><span class="o">&gt;&gt;&gt;</span> <span class="n">l</span> <span class="o">=</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">]</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">l</span><span class="p">.</span><span class="n">append</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">l</span>
-<span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">]</span></code></pre></figure>
+<div class="language-py highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">my_list</span><span class="p">.</span><span class="n">append</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
+</code></pre></div></div>
 
 <p>Add an element into set:</p>
 
-<figure class="highlight"><pre><code class="language-python" data-lang="python"><span class="n">s</span><span class="p">.</span><span class="n">add</span><span class="p">(</span><span class="n">e</span><span class="p">)</span></code></pre></figure>
+<div class="language-py highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">my_set</span><span class="p">.</span><span class="n">add</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
+</code></pre></div></div>
 
-<figure class="highlight"><pre><code class="language-python" data-lang="python"><span class="o">&gt;&gt;&gt;</span> <span class="n">s</span> <span class="o">=</span> <span class="p">{</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">}</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">s</span><span class="p">.</span><span class="n">add</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">s</span>
-<span class="p">{</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">}</span></code></pre></figure>
+<p>Add a new entry into dictionary:</p>
+
+<div class="language-py highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">my_dict</span><span class="p">[</span><span class="s">"my_key"</span><span class="p">]</span> <span class="o">=</span> <span class="s">"my_value"</span>
+</code></pre></div></div>
+
+<h3 id="container-functions">Container Functions</h3>
+
+<table>
+  <thead>
+    <tr>
+      <th style="text-align: left">Function</th>
+      <th style="text-align: left">Sample</th>
+      <th style="text-align: left">Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td style="text-align: left"><code class="language-plaintext highlighter-rouge">len</code></td>
+      <td style="text-align: left"><code class="language-plaintext highlighter-rouge">len(my_list)</code></td>
+      <td style="text-align: left">The length of the container.</td>
+    </tr>
+    <tr>
+      <td style="text-align: left"><code class="language-plaintext highlighter-rouge">enumerate</code></td>
+      <td style="text-align: left"><code class="language-plaintext highlighter-rouge">enumerate(my_list)</code></td>
+      <td style="text-align: left">Add counter to the iterable.</td>
+    </tr>
+    <tr>
+      <td style="text-align: left"><code class="language-plaintext highlighter-rouge">max</code></td>
+      <td style="text-align: left"><code class="language-plaintext highlighter-rouge">max(my_list)</code></td>
+      <td style="text-align: left">The maximal value among the given items.</td>
+    </tr>
+    <tr>
+      <td style="text-align: left"><code class="language-plaintext highlighter-rouge">min</code></td>
+      <td style="text-align: left"><code class="language-plaintext highlighter-rouge">min(my_list)</code></td>
+      <td style="text-align: left">The minimal value among the given items.</td>
+    </tr>
+    <tr>
+      <td style="text-align: left"><code class="language-plaintext highlighter-rouge">reversed</code></td>
+      <td style="text-align: left"><code class="language-plaintext highlighter-rouge">reversed(my_list)</code></td>
+      <td style="text-align: left">Create a reverse-iterator for a given list.</td>
+    </tr>
+  </tbody>
+</table>
 
 <h2 id="if-statement">If Statement</h2>
 
@@ -484,17 +557,47 @@ useful for you as well. Enjoy!</p>
 </pre>
 </figure>
 
-<figure class="highlight"><pre><code class="language-python" data-lang="python"><span class="o">&gt;&gt;&gt;</span> <span class="n">l</span> <span class="o">=</span> <span class="p">[]</span>
+<div class="language-py highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="o">&gt;&gt;&gt;</span> <span class="n">l</span> <span class="o">=</span> <span class="p">[]</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="s">'not empty'</span> <span class="k">if</span> <span class="n">l</span> <span class="k">else</span> <span class="s">'empty'</span>
-<span class="s">'empty'</span></code></pre></figure>
+<span class="s">'empty'</span>
+</code></pre></div></div>
+
+<h2 id="math">Math</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th style="text-align: left">Function</th>
+      <th style="text-align: left">Sample</th>
+      <th style="text-align: left">Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td style="text-align: left">Floor division, integer division (<code class="language-plaintext highlighter-rouge">//</code>)</td>
+      <td style="text-align: left"><code class="language-plaintext highlighter-rouge">7 // 2</code></td>
+      <td style="text-align: left">3</td>
+    </tr>
+    <tr>
+      <td style="text-align: left">Float division (<code class="language-plaintext highlighter-rouge">/</code>)</td>
+      <td style="text-align: left"><code class="language-plaintext highlighter-rouge">7 / 2</code></td>
+      <td style="text-align: left">3.5</td>
+    </tr>
+  </tbody>
+</table>
 
 <h2 id="references">References</h2>
 
 <ul>
-  <li>GeeksforGeeks, “Python – List Comprehension”, 2021. <a href="https://www.geeksforgeeks.org/python-list-comprehension/">https://www.geeksforgeeks.org/python-list-comprehension/</a></li>
+  <li>GeeksforGeeks, <a href="https://www.geeksforgeeks.org/python-list-comprehension/">“Python – List
+Comprehension”</a>,
+<em>GeeksforGeeks</em>, 2021.</li>
+  <li>Python, <a href="https://docs.python.org/3/library/collections.html">“collections - Container datatypes - Python
+3.10.0”</a>,
+<em>Python Documentation</em>, 2021.</li>
 </ul>
 </div><section class="article__sharing d-print-none"></section><div class="d-print-none"><footer class="article__footer"><span>Last updated
-      <time itemprop="dateModified" datetime="2021-10-07T08:28:29+02:00">Oct 07, 2021</time>
+      <time itemprop="dateModified" datetime="2021-10-16T18:50:20+02:00">Oct 16, 2021</time>
     </span><!-- start custom article footer snippet -->
 
 <!-- end custom article footer snippet -->
