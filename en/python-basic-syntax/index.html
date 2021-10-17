@@ -504,10 +504,11 @@ useful for you as well. Enjoy!</p>
 <div class="language-py highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">my_set</span><span class="p">.</span><span class="n">add</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
 </code></pre></div></div>
 
-<p>Add a new entry into dictionary:</p>
+<p>Add a new entry into dictionary or increment an existing value:</p>
 
-<div class="language-py highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">my_dict</span><span class="p">[</span><span class="s">"my_key"</span><span class="p">]</span> <span class="o">=</span> <span class="s">"my_value"</span>
-</code></pre></div></div>
+<div class="language-py highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">my_dict</span><span class="p">[</span><span class="s">"my_key"</span><span class="p">]</span> <span class="o">=</span> <span class="mi">2</span>
+<span class="n">my_dict</span><span class="p">[</span><span class="s">"my_key] += 1
+</span></code></pre></div></div>
 
 <h3 id="container-functions">Container Functions</h3>
 
@@ -596,6 +597,57 @@ useful for you as well. Enjoy!</p>
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
         <span class="bp">self</span><span class="p">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">name</span>    <span class="c1"># instance variable unique to each instance
 </span></code></pre></div></div>
+
+<h2 id="string-manipulations">String Manipulations</h2>
+
+<p><em>Hint: hit TAB in Python REPL to see auto-completion for the string functions.</em></p>
+
+<table>
+  <thead>
+    <tr>
+      <th style="text-align: left">Category</th>
+      <th style="text-align: left">Function</th>
+      <th style="text-align: left">Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td style="text-align: left">Whitespace</td>
+      <td style="text-align: left"><code class="language-plaintext highlighter-rouge">strip()</code></td>
+      <td style="text-align: left">Trim the string</td>
+    </tr>
+    <tr>
+      <td style="text-align: left">Whitespace</td>
+      <td style="text-align: left"><code class="language-plaintext highlighter-rouge">lstrip()</code></td>
+      <td style="text-align: left">Left trim</td>
+    </tr>
+    <tr>
+      <td style="text-align: left">Whitespace</td>
+      <td style="text-align: left"><code class="language-plaintext highlighter-rouge">rstrip()</code></td>
+      <td style="text-align: left">Right trim</td>
+    </tr>
+    <tr>
+      <td style="text-align: left">Case</td>
+      <td style="text-align: left"><code class="language-plaintext highlighter-rouge">lower()</code></td>
+      <td style="text-align: left">Lower case</td>
+    </tr>
+    <tr>
+      <td style="text-align: left">Case</td>
+      <td style="text-align: left"><code class="language-plaintext highlighter-rouge">upper()</code></td>
+      <td style="text-align: left">Uppder case</td>
+    </tr>
+    <tr>
+      <td style="text-align: left">Split</td>
+      <td style="text-align: left"><code class="language-plaintext highlighter-rouge">split()</code>, <code class="language-plaintext highlighter-rouge">split(sep)</code></td>
+      <td style="text-align: left">Split the string using whitespace or a seperator</td>
+    </tr>
+    <tr>
+      <td style="text-align: left">Cancatenation</td>
+      <td style="text-align: left"><code class="language-plaintext highlighter-rouge">join(words)</code></td>
+      <td style="text-align: left">Join words together using a given string</td>
+    </tr>
+  </tbody>
+</table>
 
 <h2 id="references">References</h2>
 
