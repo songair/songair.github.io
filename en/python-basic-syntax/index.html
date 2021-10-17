@@ -493,9 +493,10 @@ useful for you as well. Enjoy!</p>
 
 <h3 id="container-insertion">Container Insertion</h3>
 
-<p>Append an element into list:</p>
+<p>Append an element into list or replace an existing element:</p>
 
 <div class="language-py highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">my_list</span><span class="p">.</span><span class="n">append</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
+<span class="n">my_list</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">e</span>
 </code></pre></div></div>
 
 <p>Add an element into set:</p>
@@ -586,6 +587,16 @@ useful for you as well. Enjoy!</p>
   </tbody>
 </table>
 
+<h2 id="class">Class</h2>
+
+<div class="language-py highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">class</span> <span class="nc">Dog</span><span class="p">:</span>
+
+    <span class="n">kind</span> <span class="o">=</span> <span class="s">'canine'</span>         <span class="c1"># class variable shared by all instances
+</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
+        <span class="bp">self</span><span class="p">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">name</span>    <span class="c1"># instance variable unique to each instance
+</span></code></pre></div></div>
+
 <h2 id="references">References</h2>
 
 <ul>
@@ -595,9 +606,11 @@ Comprehension”</a>,
   <li>Python, <a href="https://docs.python.org/3/library/collections.html">“collections - Container datatypes - Python
 3.10.0”</a>,
 <em>Python Documentation</em>, 2021.</li>
+  <li>Python, <a href="https://docs.python.org/3/tutorial/classes.html">“Classes”</a>, <em>Python
+Documentation</em>, 2021.</li>
 </ul>
 </div><section class="article__sharing d-print-none"></section><div class="d-print-none"><footer class="article__footer"><span>Last updated
-      <time itemprop="dateModified" datetime="2021-10-16T18:50:20+02:00">Oct 16, 2021</time>
+      <time itemprop="dateModified" datetime="2021-10-17T14:52:09+02:00">Oct 17, 2021</time>
     </span><!-- start custom article footer snippet -->
 
 <!-- end custom article footer snippet -->
