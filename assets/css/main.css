@@ -1525,6 +1525,8 @@ a > .item__header.disabled, a > .item__header:disabled, a.item__header.disabled,
 
 .full-width .main { width: 100%; max-width: 100%; }
 
+.main__ads { text-align: center; padding: 1rem 0; }
+
 .header { background: #f2f2f2; }
 
 .header a { font-weight: 400; text-decoration: none !important; -webkit-transition: all 0.2s ease-in-out; transition: all 0.2s ease-in-out; }
@@ -1809,6 +1811,10 @@ a > .item__header.disabled, a > .item__header:disabled, a.item__header.disabled,
 .article__content table th, .article__content table td { padding: 0.5rem; border: 1px solid #e6e6e6; }
 
 .article__content table th { font-weight: 700; }
+
+.article__ads { padding: 1rem 0; text-align: center; }
+
+@media (min-width: 1024px) { .article__ads { padding: 0; position: fixed; bottom: 1rem; right: 2rem; } }
 
 .article__footer { margin: 1.5rem 0; font-size: 0.85rem; }
 
