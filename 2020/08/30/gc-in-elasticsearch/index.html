@@ -1342,7 +1342,18 @@ window.Lazyload.js([SOURCES.jquery, PAHTS.search_js], function() {
     window.pageAsideAffix = affix;
   });
 })();
-</script><script async src="https://media.ethicalads.io/media/client/ethicalads.min.js"></script>
+</script><script src="https://media.ethicalads.io/media/client/ethicalads.min.js"></script>
+<script>
+ethicalads.wait.then((placements) => {
+  if (!placements.length) {
+    console.debug('Loading backup content');
+    div = document.querySelector('[data-ea-publisher]')
+    div.innerHTML = '<p>Check out our first-party ad content.</p>'
+  } else {
+    console.debug('EthicalAds are loaded');
+  }
+});
+</script>
     </div>
     <script>(function () {
   var $root = document.getElementsByClassName('root')[0];
