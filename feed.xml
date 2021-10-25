@@ -1,5 +1,294 @@
-<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" xml:lang="en"><generator uri="https://jekyllrb.com/" version="4.2.0">Jekyll</generator><link href="https://mincong.io/feed.xml" rel="self" type="application/atom+xml" /><link href="https://mincong.io/" rel="alternate" type="text/html" hreflang="en" /><updated>2021-10-25T14:27:07+02:00</updated><id>https://mincong.io/feed.xml</id><title type="html">Mincong Huang</title><subtitle>Hi, welcome to my blog! I'm a software engineer at Datadog. I write blog posts in my free time. My blogs are bits and pieces of my tech journey. Most of them are related to Java. Hope you enjoy them! My opinions are my own, not Datadog's. This blog is powered by Jekyll, a simple, blog-aware, static sites solution.
-</subtitle><author><name>Mincong Huang</name><email>mincong.h@gmail.com</email></author><entry xml:lang="en"><title type="html">Error Retries in Temporal Workflow</title><link href="https://mincong.io/en/error-retries-in-temporal/" rel="alternate" type="text/html" title="Error Retries in Temporal Workflow" /><published>2021-10-09T22:08:20+02:00</published><updated>2021-10-09T22:08:20+02:00</updated><id>https://mincong.io/en/error-retries-in-temporal</id><content type="html" xml:base="https://mincong.io/en/error-retries-in-temporal/">&lt;h2 id=&quot;introduction&quot;&gt;Introduction&lt;/h2&gt;
+<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" xml:lang="en"><generator uri="https://jekyllrb.com/" version="4.2.0">Jekyll</generator><link href="https://mincong.io/feed.xml" rel="self" type="application/atom+xml" /><link href="https://mincong.io/" rel="alternate" type="text/html" hreflang="en" /><updated>2021-10-25T22:31:23+02:00</updated><id>https://mincong.io/feed.xml</id><title type="html">Mincong Huang</title><subtitle>Hi, welcome to my blog! I'm a software engineer at Datadog. I write blog posts in my free time. My blogs are bits and pieces of my tech journey. Most of them are related to Java. Hope you enjoy them! My opinions are my own, not Datadog's. This blog is powered by Jekyll, a simple, blog-aware, static sites solution.
+</subtitle><author><name>Mincong Huang</name><email>mincong.h@gmail.com</email></author><entry xml:lang="en"><title type="html">Elasticsearch Snapshot APIs</title><link href="https://mincong.io/en/elasticsearch-snapshot-apis/" rel="alternate" type="text/html" title="Elasticsearch Snapshot APIs" /><published>2021-10-25T16:34:05+02:00</published><updated>2021-10-25T16:34:05+02:00</updated><id>https://mincong.io/en/elasticsearch-snapshot-apis</id><content type="html" xml:base="https://mincong.io/en/elasticsearch-snapshot-apis/">&lt;h2 id=&quot;introduction&quot;&gt;Introduction&lt;/h2&gt;
+
+&lt;p&gt;When managing Elasticsearch clusters in production, you will probably need to
+backup and restore a cluster or specific indices since this is an efficient way
+to avoid data loss. This can be done using the feature “Snapshot And Restore” in
+Elasticsearch. However, it’s not easy to remember all the commands you need,
+such as creating a new snapshot, listing existing snapshots, monitoring the
+snapshot restore progress, canceling an ongoing snapshot, etc.
+During my work at Datadog, I had the chance to work with the “Snapshot And
+Restore” feature in AWS, GCP, and Azure. Therefore, I would like to share with
+you the commands I used as a cheatsheet.&lt;/p&gt;
+
+&lt;h2 id=&quot;summary&quot;&gt;Summary&lt;/h2&gt;
+
+&lt;p&gt;Before getting started, you may ask: there are so many APIs, how can I remember
+them?! Well, it’s not that
+complicated. All the APIs follow the hierarchy: snapshot plugin &amp;gt; snapshot
+repository &amp;gt; snapshots (or snapshot expression) &amp;gt; snapshot specific endpoint.
+And for restore operations, they are standard recovery operations, so you can
+from them from cat recovery or indexing recovery API. Based on the rules above,
+we can summarize them as the following list of APIs:&lt;/p&gt;
+
+&lt;div class=&quot;language-plaintext highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&amp;lt;METHOD&amp;gt; /_snapshot/&amp;lt;?repo&amp;gt;/&amp;lt;?snapshot&amp;gt;/&amp;lt;?_action&amp;gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;div class=&quot;language-plaintext highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;GET     /_snapshot
+GET     /_snapshot/_status
+
+GET     /_snapshot/&amp;lt;repo&amp;gt;
+PUT     /_snapshot/&amp;lt;repo&amp;gt;
+DELETE  /_snapshot/&amp;lt;repo&amp;gt;
+GET     /_snapshot/&amp;lt;repo&amp;gt;/_status
+POST    /_snapshot/&amp;lt;repo&amp;gt;/_cleanup
+POST    /_snapshot/&amp;lt;repo&amp;gt;/_verify
+GET     /_snapshot/&amp;lt;repo&amp;gt;/_current
+
+GET     /_snapshot/&amp;lt;repo&amp;gt;/&amp;lt;snapshot&amp;gt;
+PUT     /_snapshot/&amp;lt;repo&amp;gt;/&amp;lt;snapshot&amp;gt;
+POST    /_snapshot/&amp;lt;repo&amp;gt;/&amp;lt;snapshot&amp;gt;
+DELETE  /_snapshot/&amp;lt;repo&amp;gt;/&amp;lt;snapshot&amp;gt;
+GET     /_snapshot/&amp;lt;repo&amp;gt;/&amp;lt;snapshot&amp;gt;/_status
+GET     /_snapshot/&amp;lt;repo&amp;gt;/&amp;lt;snapshot&amp;gt;/_restore
+
+GET     /_cat/snapshots/{repo}
+GET     /_cat/recovery
+
+GET     /&amp;lt;index&amp;gt;/_recovery
+---
+
+snapshot_expression:
+  - &quot;snap_1&quot;        -- snapshot 1
+  - &quot;snap_1,snap_2&quot; -- snapshot 1 and 2, separated by comma ','
+  - &quot;snap_*&quot;        -- all snapshots starting with &quot;snap_&quot;
+  - &quot;_all&quot;          -- all snapshots
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;Now, let’s go through them one by one.&lt;/p&gt;
+
+&lt;h2 id=&quot;snapshot-apis&quot;&gt;Snapshot APIs&lt;/h2&gt;
+
+&lt;h3 id=&quot;create-snapshot&quot;&gt;Create Snapshot&lt;/h3&gt;
+
+&lt;p&gt;[&lt;a href=&quot;https://www.elastic.co/guide/en/elasticsearch/reference/current/create-snapshot-api.html&quot;&gt;documentation&lt;/a&gt;]
+Create a snapshot for the entire cluster or the target data streams and indices.&lt;/p&gt;
+
+&lt;div class=&quot;language-plaintext highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;PUT  /_snapshot/&amp;lt;repository&amp;gt;/&amp;lt;snapshot&amp;gt;
+POST /_snapshot/&amp;lt;repository&amp;gt;/&amp;lt;snapshot&amp;gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;div class=&quot;language-plaintext highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;PUT /_snapshot/my_repo/snapshot_2?wait_for_completion=true
+
+{
+  &quot;indices&quot;: &quot;index_a,index_b&quot;,
+  &quot;ignore_unavailable&quot;: true,
+  &quot;include_global_state&quot;: false,
+  &quot;metadata&quot;: {
+    &quot;taken_by&quot;: &quot;user123&quot;,
+    &quot;taken_because&quot;: &quot;backup before upgrading&quot;
+  }
+}
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;h3 id=&quot;clone-snapshot&quot;&gt;Clone Snapshot&lt;/h3&gt;
+
+&lt;p&gt;[&lt;a href=&quot;https://www.elastic.co/guide/en/elasticsearch/reference/current/clone-snapshot-api.html&quot;&gt;documentation&lt;/a&gt;]
+Clones part or all of a snapshot into a new snapshot within the same repository.&lt;/p&gt;
+
+&lt;div class=&quot;language-plaintext highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;PUT /_snapshot/&amp;lt;repository&amp;gt;/&amp;lt;source_snapshot&amp;gt;/_clone/&amp;lt;target_snapshot&amp;gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;div class=&quot;language-plaintext highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;PUT /_snapshot/my_repo/old_snapshot/_clone/new_partial_snapshot
+
+{
+  &quot;indices&quot;: &quot;index_a,index_b&quot;
+}
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;h3 id=&quot;get-snapshot-info&quot;&gt;Get Snapshot Info&lt;/h3&gt;
+
+&lt;p&gt;[&lt;a href=&quot;https://www.elastic.co/guide/en/elasticsearch/reference/current/get-snapshot-api.html&quot;&gt;documentation&lt;/a&gt;]
+Get information about one or more snapshots.&lt;/p&gt;
+
+&lt;div class=&quot;language-plaintext highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;GET /_snapshot/&amp;lt;repository&amp;gt;/&amp;lt;snapshot&amp;gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;h3 id=&quot;get-snapshot-status&quot;&gt;Get Snapshot Status&lt;/h3&gt;
+
+&lt;p&gt;[&lt;a href=&quot;https://www.elastic.co/guide/en/elasticsearch/reference/current/get-snapshot-status-api.html&quot;&gt;documentation&lt;/a&gt;]
+Get Snapshot Status API returns additional information beyond the Get Snapshot
+Info API, such as shard status and file statistics:&lt;/p&gt;
+
+&lt;div class=&quot;language-plaintext highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;GET /_snapshot/&amp;lt;repository&amp;gt;/&amp;lt;snapshot&amp;gt;/_status
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;h3 id=&quot;restore-snapshot&quot;&gt;Restore Snapshot&lt;/h3&gt;
+
+&lt;p&gt;[&lt;a href=&quot;https://www.elastic.co/guide/en/elasticsearch/reference/current/restore-snapshot-api.html&quot;&gt;documentation&lt;/a&gt;]
+Restore Snapshot API allows you to restore all indices (complete restore) of a
+given snapshot or only restore a subset of them (partial restore):&lt;/p&gt;
+
+&lt;div class=&quot;language-plaintext highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;POST /_snapshot/&amp;lt;repository&amp;gt;/&amp;lt;snapshot&amp;gt;/_restore
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;h3 id=&quot;delete-snapshot&quot;&gt;Delete Snapshot&lt;/h3&gt;
+
+&lt;p&gt;[&lt;a href=&quot;https://www.elastic.co/guide/en/elasticsearch/reference/current/delete-snapshot-api.html&quot;&gt;documentation&lt;/a&gt;]
+Delete a snapshot.&lt;/p&gt;
+
+&lt;div class=&quot;language-plaintext highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;DELETE /_snapshot/&amp;lt;repository&amp;gt;/&amp;lt;snapshot&amp;gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;h2 id=&quot;snapshot-repository-apis&quot;&gt;Snapshot Repository APIs&lt;/h2&gt;
+
+&lt;h3 id=&quot;list-repositories&quot;&gt;List Repositories&lt;/h3&gt;
+
+&lt;p&gt;[&lt;a href=&quot;https://www.elastic.co/guide/en/elasticsearch/reference/current/get-snapshot-repo-api.html&quot;&gt;Documentation&lt;/a&gt;]
+List all the snapshot repositories.&lt;/p&gt;
+
+&lt;div class=&quot;language-plaintext highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;GET /_snapshot/
+GET /_snapshot/_all
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;h3 id=&quot;get-repository&quot;&gt;Get Repository&lt;/h3&gt;
+
+&lt;p&gt;[&lt;a href=&quot;https://www.elastic.co/guide/en/elasticsearch/reference/current/get-snapshot-repo-api.html&quot;&gt;Documentation&lt;/a&gt;]
+Get information about one or more registered snapshot repositories.&lt;/p&gt;
+
+&lt;div class=&quot;language-plaintext highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;GET /_snapshot/&amp;lt;repository&amp;gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;h3 id=&quot;createupdate-repository&quot;&gt;Create/Update Repository&lt;/h3&gt;
+
+&lt;p&gt;[&lt;a href=&quot;https://www.elastic.co/guide/en/elasticsearch/reference/current/put-snapshot-repo-api.html&quot;&gt;Documentation&lt;/a&gt;] Registers or updates a snapshot repository.&lt;/p&gt;
+
+&lt;div class=&quot;language-plaintext highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;PUT /_snapshot/&amp;lt;repository&amp;gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;div class=&quot;language-plaintext highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;PUT /_snapshot/my_repository
+{
+  &quot;type&quot;: &quot;fs&quot;,
+  &quot;settings&quot;: {
+    &quot;location&quot;: &quot;my_backup_location&quot;
+  }
+}
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;h3 id=&quot;verify-repository&quot;&gt;Verify Repository&lt;/h3&gt;
+
+&lt;p&gt;[&lt;a href=&quot;https://www.elastic.co/guide/en/elasticsearch/reference/current/verify-snapshot-repo-api.html&quot;&gt;documentation&lt;/a&gt;]
+Verifies that a snapshot repository is functional.&lt;/p&gt;
+
+&lt;div class=&quot;language-plaintext highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;POST /_snapshot/&amp;lt;repository&amp;gt;/_verify
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;h3 id=&quot;delete-repository&quot;&gt;Delete Repository&lt;/h3&gt;
+
+&lt;p&gt;[&lt;a href=&quot;https://www.elastic.co/guide/en/elasticsearch/reference/current/delete-snapshot-repo-api.html&quot;&gt;documentation&lt;/a&gt;]
+Unregisters one or more snapshot repositories.&lt;/p&gt;
+
+&lt;p&gt;NOTE: When a repository is unregistered, Elasticsearch only removes the
+reference to the location where the repository is storing the snapshots. The
+snapshots themselves are left untouched and in place. To delete the actual
+snapshots, you should use the “Delete Snapshot API”. This API handles the
+snapshot repository.&lt;/p&gt;
+
+&lt;div class=&quot;language-plaintext highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;DELETE /_snapshot/&amp;lt;repository&amp;gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;h3 id=&quot;clean-up-repository&quot;&gt;Clean up Repository&lt;/h3&gt;
+
+&lt;p&gt;[&lt;a href=&quot;https://www.elastic.co/guide/en/elasticsearch/reference/current/clean-up-snapshot-repo-api.html&quot;&gt;documentation&lt;/a&gt;]
+Triggers the review of a snapshot repository’s contents and deletes any stale
+data that is not referenced by existing snapshots.&lt;/p&gt;
+
+&lt;div class=&quot;language-plaintext highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;POST /_snapshot/&amp;lt;repository&amp;gt;/_cleanup
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;h2 id=&quot;monitoring-apis&quot;&gt;Monitoring APIs&lt;/h2&gt;
+
+&lt;p&gt;Description extracted from official documentation &lt;a href=&quot;https://www.elastic.co/guide/en/elasticsearch/reference/current/snapshots-monitor-snapshot-restore.html&quot;&gt;Monitor snapshot and restore
+progress | Elasticsearch&lt;/a&gt;.&lt;/p&gt;
+
+&lt;h3 id=&quot;snapshot-in-progress&quot;&gt;Snapshot In Progress&lt;/h3&gt;
+
+&lt;p&gt;Use the &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;_current&lt;/code&gt; parameter to get all currently running snapshots in the
+cluster:&lt;/p&gt;
+
+&lt;div class=&quot;language-plaintext highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;GET /_snapshot/&amp;lt;repository&amp;gt;/_current
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;or a single one:&lt;/p&gt;
+
+&lt;div class=&quot;language-plaintext highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;GET /_snapshot/&amp;lt;repository&amp;gt;/snapshot_1
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;Retrieve all currently running snapshots with detailed status info:&lt;/p&gt;
+
+&lt;div class=&quot;language-plaintext highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;GET /_snapshot/_status
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;… limit the results to a target repository:&lt;/p&gt;
+
+&lt;div class=&quot;language-plaintext highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;GET /_snapshot/&amp;lt;repository&amp;gt;/_status
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;… limit the result to the given snapshot (even if it’s not currently running):&lt;/p&gt;
+
+&lt;div class=&quot;language-plaintext highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;GET /_snapshot/&amp;lt;repository&amp;gt;/&amp;lt;snapshot&amp;gt;/_status
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;h3 id=&quot;restore-in-progress&quot;&gt;Restore In Progress&lt;/h3&gt;
+
+&lt;p&gt;The restore process is a standard recovery mechanism of Elasticsearch. So you
+can use the cat recovery API to monitor the snapshot restore as other
+recoveries. Perhaps you want to &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;grep snapshot&lt;/code&gt; to filter snapshots.&lt;/p&gt;
+
+&lt;div class=&quot;language-plaintext highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;GET /_cat/recovery
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;or using the index recovery API to have a JSON result with more detailed
+information:&lt;/p&gt;
+
+&lt;div class=&quot;language-plaintext highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;GET /&amp;lt;index&amp;gt;/_recovery
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;h3 id=&quot;cancel-snapshot-creation&quot;&gt;Cancel Snapshot Creation&lt;/h3&gt;
+
+&lt;p&gt;You can do that using the delete snapshot API.&lt;/p&gt;
+
+&lt;div class=&quot;language-plaintext highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;DELETE /_snapshot/&amp;lt;repo&amp;gt;/&amp;lt;snapshot&amp;gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;h3 id=&quot;cancel-snapshot-restore&quot;&gt;Cancel Snapshot Restore&lt;/h3&gt;
+
+&lt;p&gt;You can do that by deleting data streams and indices that are being restored. Be
+careful! The data for all deleted data streams and indices will be removed from
+the cluster.&lt;/p&gt;
+
+&lt;h2 id=&quot;going-further&quot;&gt;Going Further&lt;/h2&gt;
+
+&lt;p&gt;How to go further from here?&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;To learn more about different APIs related to snapshot repository or snapshot
+themselves, visit the official documentation
+&lt;a href=&quot;https://www.elastic.co/guide/en/elasticsearch/reference/current/snapshot-restore-apis.html&quot;&gt;“Snapshot and restore APIs | Elasticsearch”&lt;/a&gt;.&lt;/li&gt;
+  &lt;li&gt;To monitor snapshot and restore progress, visit the official documentation
+&lt;a href=&quot;https://www.elastic.co/guide/en/elasticsearch/reference/current/snapshots-monitor-snapshot-restore.html&quot;&gt;“Monitor snapshot and restore progress |
+Elasticsearch”&lt;/a&gt;.&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h2 id=&quot;conclusion&quot;&gt;Conclusion&lt;/h2&gt;
+
+&lt;p&gt;In this article, we saw how to remember different APIs efficiently by
+using the resource hierarchy (&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;_snapshot/&amp;lt;repo&amp;gt;/&amp;lt;snapshot&amp;gt;/&amp;lt;action&amp;gt;&lt;/code&gt;) and the
+relationship between restore and recovery; we saw the list of APIs for snapshot
+operations and snapshot repository operations; we also saw how to monitor the
+snapshot or restore progress and cancel them; finally, I shared some resources to
+let you go further from this article.
+Interested to know more? You can subscribe to &lt;a href=&quot;/feed.xml&quot;&gt;the feed of my blog&lt;/a&gt;, follow me
+on &lt;a href=&quot;https://twitter.com/mincong_h&quot;&gt;Twitter&lt;/a&gt; or
+&lt;a href=&quot;https://github.com/mincong-h/&quot;&gt;GitHub&lt;/a&gt;. Hope you enjoy this article, see you the next time!&lt;/p&gt;
+
+&lt;h2 id=&quot;references&quot;&gt;References&lt;/h2&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;Elastic, &lt;a href=&quot;https://www.elastic.co/guide/en/elasticsearch/reference/current/snapshot-restore.html&quot;&gt;“Snapshot and
+restore”&lt;/a&gt;, &lt;em&gt;Elasticsearch Documentation&lt;/em&gt;, 2021.&lt;/li&gt;
+  &lt;li&gt;Opster Team, &lt;a href=&quot;https://opster.com/elasticsearch-glossary/elasticsearch-snapshot/&quot;&gt;“Elasticsearch Snapshot”&lt;/a&gt;, &lt;em&gt;Opster&lt;/em&gt;, 2021.&lt;/li&gt;
+&lt;/ul&gt;</content><author><name>Mincong Huang</name><email>mincong.h@gmail.com</email></author><category term="elasticsearch" /><category term="elasticsearch" /><category term="api" /><summary type="html">This article summarizes the list of APIs for &quot;Snapshot and Restore&quot; in Elasticsearch, which allows you to perform operations easily and navigate to official documentation if you need more detail.</summary><media:thumbnail xmlns:media="http://search.yahoo.com/mrss/" url="https://mincong.io/assets/bg-alfons-morales-YLSwjSy7stw-unsplash.jpg" /><media:content medium="image" url="https://mincong.io/assets/bg-alfons-morales-YLSwjSy7stw-unsplash.jpg" xmlns:media="http://search.yahoo.com/mrss/" /></entry><entry xml:lang="en"><title type="html">Error Retries in Temporal Workflow</title><link href="https://mincong.io/en/error-retries-in-temporal/" rel="alternate" type="text/html" title="Error Retries in Temporal Workflow" /><published>2021-10-09T22:08:20+02:00</published><updated>2021-10-09T22:08:20+02:00</updated><id>https://mincong.io/en/error-retries-in-temporal</id><content type="html" xml:base="https://mincong.io/en/error-retries-in-temporal/">&lt;h2 id=&quot;introduction&quot;&gt;Introduction&lt;/h2&gt;
 
 &lt;p&gt;When working with Temporal to build workflows, you will have to face to error
 handling at some point because workflow and activity can fail for different
@@ -3760,383 +4049,4 @@ on &lt;a href=&quot;https://twitter.com/mincong_h&quot;&gt;Twitter&lt;/a&gt; or
 &lt;a href=&quot;https://www.elastic.co/training/elastic-certified-engineer-exam&quot;&gt;https://www.elastic.co/training/elastic-certified-engineer-exam&lt;/a&gt;&lt;/li&gt;
   &lt;li&gt;Jingwen Zheng, “Second-hand apartments transactions in Paris (01/2014 -
 06/2020)”, &lt;em&gt;jingwen.github.io&lt;/em&gt;, 2021. &lt;a href=&quot;https://jingwen-z.github.io/second-hand-apartments-transactions-in-paris-1420/&quot;&gt;https://jingwen-z.github.io/second-hand-apartments-transactions-in-paris-1420/&lt;/a&gt;&lt;/li&gt;
-&lt;/ul&gt;</content><author><name>Mincong Huang</name><email>mincong.h@gmail.com</email></author><category term="elasticsearch" /><category term="elasticsearch" /><category term="java" /><summary type="html">How to write and execute metric and bucket aggregations in Elasticsearch for dataset: Demandes de valeurs foncières (DVF) for data analytics. Also, how to execute aggregations that contain sub-aggregations.</summary><media:thumbnail xmlns:media="http://search.yahoo.com/mrss/" url="https://mincong.io/assets/bg-henrique-ferreira-ZyYsY0ez2D4-unsplash.jpg" /><media:content medium="image" url="https://mincong.io/assets/bg-henrique-ferreira-ZyYsY0ez2D4-unsplash.jpg" xmlns:media="http://search.yahoo.com/mrss/" /></entry><entry xml:lang="en"><title type="html">Elasticsearch: Generate Configuration With Python Jinja 2</title><link href="https://mincong.io/2021/04/11/elasticsearch-generate-configuration-with-python-jinja2/" rel="alternate" type="text/html" title="Elasticsearch: Generate Configuration With Python Jinja 2" /><published>2021-04-11T02:31:10+02:00</published><updated>2021-04-11T02:31:10+02:00</updated><id>https://mincong.io/2021/04/11/elasticsearch-generate-configuration-with-python-jinja2</id><content type="html" xml:base="https://mincong.io/2021/04/11/elasticsearch-generate-configuration-with-python-jinja2/">&lt;h2 id=&quot;introduction&quot;&gt;Introduction&lt;/h2&gt;
-
-&lt;p&gt;When hosting multiple Elasticsearch clusters in production, you will
-probably face a problem about cluster provisioning: how can we generate the
-configuration for Elasticsearch in a consistent way? There are many factors to
-be taken into account: the cloud providers, the instance types, the network
-settings, the products or the customers for which the cluster is running, the
-version of Elasticsearch, the architecture of Elasticsearch (hot/warm/cold),
-etc. Therefore, it’s important to have a tool that helps you and avoid spending
-time doing this manually. It is not only about spending time, it is also
-about reducing human errors and being consistent for different settings.&lt;/p&gt;
-
-&lt;p&gt;Choosing a templating engine is a good solution. It allows you to have an
-automated solution at a reasonable cost. You can start small and add more
-complex logic in the future. In this article, we are going to explore one
-popular templating engine in Python: Jinja 2. We will see how easy it is to use
-and explore some more advanced use-cases. After reading this article, you will
-understand:&lt;/p&gt;
-
-&lt;ul&gt;
-  &lt;li&gt;What is Jinja?&lt;/li&gt;
-  &lt;li&gt;How to use it to generate configuration, such as for &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;elasticsearch.yml&lt;/code&gt;?&lt;/li&gt;
-  &lt;li&gt;How to use Python class for more complex logic?&lt;/li&gt;
-  &lt;li&gt;Going further into Jinja: understanding its core features&lt;/li&gt;
-  &lt;li&gt;Testing&lt;/li&gt;
-  &lt;li&gt;How to go further from here?&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;p&gt;Now, let’s get started!&lt;/p&gt;
-
-&lt;h2 id=&quot;what-is-jinja&quot;&gt;What is Jinja?&lt;/h2&gt;
-
-&lt;p&gt;Jinja is a modern and designer-friendly templating language for Python.
-Jinja is designed to be flexible, fast, and secure. To use Jinja, you can declare
-the following requirement in your &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;requirements.txt&lt;/code&gt; file:&lt;/p&gt;
-
-&lt;div class=&quot;language-plaintext highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;Jinja2 == 2.11.3
-&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
-
-&lt;p&gt;or declare the following requirement in your &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;Pipfile&lt;/code&gt;:&lt;/p&gt;
-
-&lt;div class=&quot;language-ini highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;nn&quot;&gt;[packages]&lt;/span&gt;
-&lt;span class=&quot;py&quot;&gt;Jinja2&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&quot;==2.11.3&quot;&lt;/span&gt;
-&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
-
-&lt;p&gt;I recommend using a fixed version to avoid potential issues with the
-requirements. But you can remove it if you don’t feel that it is necessary.&lt;/p&gt;
-
-&lt;h2 id=&quot;generating-configuration&quot;&gt;Generating Configuration&lt;/h2&gt;
-
-&lt;p&gt;In our case, if we want to generate the configuration for Elasticsearch, such as for
-&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;elasticsearch.yml&lt;/code&gt;, it can be as easy as:&lt;/p&gt;
-
-&lt;div class=&quot;language-yml highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;c1&quot;&gt;# template: elasticsearch.yml.j2&lt;/span&gt;
-&lt;span class=&quot;s&quot;&gt;cluster.name&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;pi&quot;&gt;{{&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;cluster_name&lt;/span&gt; &lt;span class=&quot;pi&quot;&gt;}}&lt;/span&gt;
-&lt;span class=&quot;s&quot;&gt;node.name&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;pi&quot;&gt;{{&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;node_name&lt;/span&gt; &lt;span class=&quot;pi&quot;&gt;}}&lt;/span&gt;
-&lt;span class=&quot;s&quot;&gt;network.host&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;0.0.0.0&lt;/span&gt;
-&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
-
-&lt;p&gt;… where we inject two variables &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;cluster_name&lt;/code&gt; and &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;node_name&lt;/code&gt; to the template
-&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;elasticsearch.yml.j2&lt;/code&gt;. But having a template is not enough, we also need the
-Python code which injects the variables into the template to render the actual
-result. In my demo, I am using the following structure, where the templates are
-stored in a separated directory called &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;templates&lt;/code&gt;:&lt;/p&gt;
-
-&lt;div class=&quot;language-plaintext highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;➜  jinja2 git:(jinja2 u=) tree .
-.
-├── es_config_generator.py
-└── templates
-    └── elasticsearch.yml.j2
-&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
-
-&lt;p&gt;On the generator side, the code is simple as well. It accepts the two
-variables: &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;cluster_name&lt;/code&gt; and &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;node_name&lt;/code&gt; as input. Then, it locates the
-template directory from relative path &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;./templates&lt;/code&gt; and creates a Jinja
-environment for it. Finally, it locates the template and renders it by
-passing all the variables as input parameters:&lt;/p&gt;
-
-&lt;div class=&quot;language-py highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;kn&quot;&gt;import&lt;/span&gt; &lt;span class=&quot;nn&quot;&gt;os&lt;/span&gt;
-
-&lt;span class=&quot;kn&quot;&gt;from&lt;/span&gt; &lt;span class=&quot;nn&quot;&gt;jinja2&lt;/span&gt; &lt;span class=&quot;kn&quot;&gt;import&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;FileSystemLoader&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Environment&lt;/span&gt;
-
-
-&lt;span class=&quot;k&quot;&gt;def&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;render_config&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;cluster_name&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;nb&quot;&gt;str&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;node_name&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;nb&quot;&gt;str&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;-&amp;gt;&lt;/span&gt; &lt;span class=&quot;nb&quot;&gt;str&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;
-    &lt;span class=&quot;n&quot;&gt;template_dir&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;os&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;path&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;join&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;os&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;path&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;dirname&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;__file__&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;),&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&quot;templates&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
-    &lt;span class=&quot;n&quot;&gt;env&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Environment&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;loader&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;FileSystemLoader&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;template_dir&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;))&lt;/span&gt;
-    &lt;span class=&quot;n&quot;&gt;template&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;env&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;get_template&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;elasticsearch.yml.j2&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
-    &lt;span class=&quot;k&quot;&gt;return&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;template&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;render&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;cluster_name&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;cluster_name&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;node_name&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;node_name&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
-&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
-
-&lt;p&gt;Thanks to this method, we can generate an Elasticsearch configuration file like
-this:&lt;/p&gt;
-
-&lt;div class=&quot;language-yml highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;s&quot;&gt;cluster.name&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;es-demo&lt;/span&gt;
-&lt;span class=&quot;s&quot;&gt;node.name&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;es-demo-data-1&lt;/span&gt;
-&lt;span class=&quot;s&quot;&gt;network.host&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;0.0.0.0&lt;/span&gt;
-&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
-
-&lt;p&gt;And starting an Elasticsearch node with this custom configuration will work (you
-can see the entry &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;name&lt;/code&gt; and &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;cluster_name&lt;/code&gt; in the HTTP response:&lt;/p&gt;
-
-&lt;div class=&quot;language-sh highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;docker run &lt;span class=&quot;se&quot;&gt;\&lt;/span&gt;
-  &lt;span class=&quot;nt&quot;&gt;--rm&lt;/span&gt; &lt;span class=&quot;se&quot;&gt;\&lt;/span&gt;
-  &lt;span class=&quot;nt&quot;&gt;-e&lt;/span&gt; discovery.type&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;single-node &lt;span class=&quot;se&quot;&gt;\&lt;/span&gt;
-  &lt;span class=&quot;nt&quot;&gt;-p&lt;/span&gt; 9200:9200 &lt;span class=&quot;se&quot;&gt;\&lt;/span&gt;
-  &lt;span class=&quot;nt&quot;&gt;-v&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;${&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;HOME&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;}&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;/custom.elasticsearch.yml:/usr/share/elasticsearch/config/elasticsearch.yml&quot;&lt;/span&gt; &lt;span class=&quot;se&quot;&gt;\&lt;/span&gt;
-  docker.elastic.co/elasticsearch/elasticsearch:7.12.0
-&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
-
-&lt;div class=&quot;language-plaintext highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;GET localhost:9200
-&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
-
-&lt;div class=&quot;language-json highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;
-  &lt;/span&gt;&lt;span class=&quot;nl&quot;&gt;&quot;name&quot;&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;es-demo-data-1&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;
-  &lt;/span&gt;&lt;span class=&quot;nl&quot;&gt;&quot;cluster_name&quot;&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;es-demo&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;
-  &lt;/span&gt;&lt;span class=&quot;nl&quot;&gt;&quot;cluster_uuid&quot;&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;2qiANXx0SIO4HTG9FD_QPg&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;
-  &lt;/span&gt;&lt;span class=&quot;nl&quot;&gt;&quot;version&quot;&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;
-    &lt;/span&gt;&lt;span class=&quot;nl&quot;&gt;&quot;number&quot;&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;7.12.0&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;
-    &lt;/span&gt;&lt;span class=&quot;nl&quot;&gt;&quot;build_flavor&quot;&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;default&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;
-    &lt;/span&gt;&lt;span class=&quot;nl&quot;&gt;&quot;build_type&quot;&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;docker&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;
-    &lt;/span&gt;&lt;span class=&quot;nl&quot;&gt;&quot;build_hash&quot;&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;78722783c38caa25a70982b5b042074cde5d3b3a&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;
-    &lt;/span&gt;&lt;span class=&quot;nl&quot;&gt;&quot;build_date&quot;&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;2021-03-18T06:17:15.410153305Z&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;
-    &lt;/span&gt;&lt;span class=&quot;nl&quot;&gt;&quot;build_snapshot&quot;&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;kc&quot;&gt;false&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;
-    &lt;/span&gt;&lt;span class=&quot;nl&quot;&gt;&quot;lucene_version&quot;&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;8.8.0&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;
-    &lt;/span&gt;&lt;span class=&quot;nl&quot;&gt;&quot;minimum_wire_compatibility_version&quot;&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;6.8.0&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;
-    &lt;/span&gt;&lt;span class=&quot;nl&quot;&gt;&quot;minimum_index_compatibility_version&quot;&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;6.0.0-beta1&quot;&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;
-  &lt;/span&gt;&lt;span class=&quot;p&quot;&gt;},&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;
-  &lt;/span&gt;&lt;span class=&quot;nl&quot;&gt;&quot;tagline&quot;&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;You Know, for Search&quot;&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;
-&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;
-&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
-
-&lt;p&gt;In the sample above, we saw how to handle the logic in a simple way. That is, to
-pass all the variables one after another into the template to render the result.
-It works well for small projects. But when the project grows and you need to
-accept more and more complex logic, you will need a better solution. In this
-case, it comes to two choices:&lt;/p&gt;
-
-&lt;ol&gt;
-  &lt;li&gt;Using more complex logic in the template: for-loops, if-statements, filters,
-etc.&lt;/li&gt;
-  &lt;li&gt;Using more complex logic in Python scripts and keep the templating part simple.&lt;/li&gt;
-&lt;/ol&gt;
-
-&lt;p&gt;I prefer the second choice because I do not like having complex logic in a
-template file. It makes things hard to read and hard to test. The structure of
-the file can become unclear when the logic grows. On the other side, using
-more complex logic in Python scripts is easy to test because we can extract a
-function, where the outputs are the template variables. It
-splits the processing and the rendering into two parts. In the following
-sections, I am going to explain how to use Python class to represent more
-complex logic. Then, I will also represent more features about Jinja 2, just in
-case you think choice 1 is better or you already have templates like
-this and have to deal with them.&lt;/p&gt;
-
-&lt;h2 id=&quot;using-python-class&quot;&gt;Using Python Class&lt;/h2&gt;
-
-&lt;p&gt;One effective way to manage the complexity is to group several variables
-together as a class. Or a class nested into another. Therefore, you need to pass
-one object (one instance of that class) rather than passing multiple variables
-for the template rendering. For example, we can modify the variable from
-&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;cluster_name&lt;/code&gt; to &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;cluster.name&lt;/code&gt; so that we only need to pass the object
-&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;cluster&lt;/code&gt;. And the same for &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;node&lt;/code&gt;. The new template can look like this:&lt;/p&gt;
-
-&lt;div class=&quot;language-yml highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;s&quot;&gt;cluster.name&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;pi&quot;&gt;{{&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;cluster.name&lt;/span&gt; &lt;span class=&quot;pi&quot;&gt;}}&lt;/span&gt;
-&lt;span class=&quot;s&quot;&gt;node.name&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;pi&quot;&gt;{{&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;node.name&lt;/span&gt; &lt;span class=&quot;pi&quot;&gt;}}&lt;/span&gt;
-&lt;span class=&quot;s&quot;&gt;network.host&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;0.0.0.0&lt;/span&gt;
-&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
-
-&lt;p&gt;And the associated data classes in Python:&lt;/p&gt;
-
-&lt;div class=&quot;language-py highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;kn&quot;&gt;from&lt;/span&gt; &lt;span class=&quot;nn&quot;&gt;dataclasses&lt;/span&gt; &lt;span class=&quot;kn&quot;&gt;import&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;dataclass&lt;/span&gt;
-
-
-&lt;span class=&quot;o&quot;&gt;@&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;dataclass&lt;/span&gt;
-&lt;span class=&quot;k&quot;&gt;class&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;ClusterConfig&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;
-    &lt;span class=&quot;n&quot;&gt;name&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;nb&quot;&gt;str&lt;/span&gt;
-
-
-&lt;span class=&quot;o&quot;&gt;@&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;dataclass&lt;/span&gt;
-&lt;span class=&quot;k&quot;&gt;class&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;NodeConfig&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;
-    &lt;span class=&quot;n&quot;&gt;name&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;nb&quot;&gt;str&lt;/span&gt;
-&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
-
-&lt;p&gt;Then, the generator is changed a bit. You can see that we create the named
-tuples &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;cluster&lt;/code&gt; and &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;node&lt;/code&gt; before passing them to the template rendering.&lt;/p&gt;
-
-&lt;div class=&quot;language-py highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;k&quot;&gt;def&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;render_config&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;cluster_name&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;nb&quot;&gt;str&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;node_id&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;nb&quot;&gt;int&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;-&amp;gt;&lt;/span&gt; &lt;span class=&quot;nb&quot;&gt;str&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;
-    &lt;span class=&quot;n&quot;&gt;template_dir&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;os&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;path&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;join&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;os&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;path&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;dirname&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;__file__&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;),&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&quot;templates&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
-    &lt;span class=&quot;n&quot;&gt;env&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Environment&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;loader&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;FileSystemLoader&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;template_dir&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;))&lt;/span&gt;
-    &lt;span class=&quot;n&quot;&gt;template&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;env&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;get_template&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;elasticsearch.yml.v2.j2&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
-
-    &lt;span class=&quot;c1&quot;&gt;# create data classes before rendering
-&lt;/span&gt;    &lt;span class=&quot;n&quot;&gt;cluster&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;ClusterConfig&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;name&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;cluster_name&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
-    &lt;span class=&quot;n&quot;&gt;node&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;NodeConfig&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;name&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;sa&quot;&gt;f&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;si&quot;&gt;{&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;cluster_name&lt;/span&gt;&lt;span class=&quot;si&quot;&gt;}&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;-data-&lt;/span&gt;&lt;span class=&quot;si&quot;&gt;{&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;node_id&lt;/span&gt;&lt;span class=&quot;si&quot;&gt;}&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
-
-    &lt;span class=&quot;k&quot;&gt;return&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;template&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;render&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;cluster&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;cluster&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;node&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;node&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
-&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
-
-&lt;p&gt;Here my example is almost useless. But imagine a situation where you need to add
-if-statements, compute multiple fields, add validation, etc. It will make more
-sense in those situations.&lt;/p&gt;
-
-&lt;p&gt;You may also ask: why do we use data class? Because it implements
-&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;__hash__()&lt;/code&gt;, &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;__eq__()&lt;/code&gt;, and &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;__repr__()&lt;/code&gt;. Also, you don’t need to create the
-&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;__init__()&lt;/code&gt; function anymore. So I believe it is much better than a regular
-class. You can see more information in &lt;a href=&quot;https://www.python.org/dev/peps/pep-0557/&quot;&gt;PEP 557 – Data Classes&lt;/a&gt;.&lt;/p&gt;
-
-&lt;h2 id=&quot;basic-features-of-jinja-2&quot;&gt;Basic Features of Jinja 2&lt;/h2&gt;
-
-&lt;p&gt;Here are some basic features of Jinja 2 that are useful for many templates. But
-of course, Jinja is much more powerful than that. I will explain that later on.&lt;/p&gt;
-
-&lt;p&gt;If statement:&lt;/p&gt;
-
-&lt;div class=&quot;language-yml highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;pi&quot;&gt;{&lt;/span&gt;&lt;span class=&quot;err&quot;&gt;%&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;if node_name %&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;}&lt;/span&gt;
-&lt;span class=&quot;s&quot;&gt;node.name&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;pi&quot;&gt;{{&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;node_name&lt;/span&gt; &lt;span class=&quot;pi&quot;&gt;}}&lt;/span&gt;
-&lt;span class=&quot;pi&quot;&gt;{&lt;/span&gt;&lt;span class=&quot;err&quot;&gt;%&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;endif %&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;}&lt;/span&gt;
-&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
-
-&lt;p&gt;For loop:&lt;/p&gt;
-
-&lt;div class=&quot;language-yml highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;s&quot;&gt;discovery.seed_hosts&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt;
-&lt;span class=&quot;pi&quot;&gt;{&lt;/span&gt;&lt;span class=&quot;err&quot;&gt;%&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;for seed_host in seed_hosts %&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;}&lt;/span&gt;
-&lt;span class=&quot;pi&quot;&gt;-&lt;/span&gt; &lt;span class=&quot;pi&quot;&gt;{{&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;seed_host&lt;/span&gt; &lt;span class=&quot;pi&quot;&gt;}}&lt;/span&gt;
-&lt;span class=&quot;pi&quot;&gt;{&lt;/span&gt;&lt;span class=&quot;err&quot;&gt;%&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;endfor %&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;}&lt;/span&gt;
-&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
-
-&lt;p&gt;Comment:&lt;/p&gt;
-
-&lt;div class=&quot;language-plaintext highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;{# Comment goes here #}
-&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
-
-&lt;p&gt;Comparison:&lt;/p&gt;
-
-&lt;table&gt;
-  &lt;thead&gt;
-    &lt;tr&gt;
-      &lt;th style=&quot;text-align: center&quot;&gt;Operator&lt;/th&gt;
-      &lt;th style=&quot;text-align: left&quot;&gt;Description&lt;/th&gt;
-    &lt;/tr&gt;
-  &lt;/thead&gt;
-  &lt;tbody&gt;
-    &lt;tr&gt;
-      &lt;td style=&quot;text-align: center&quot;&gt;&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;==&lt;/code&gt;&lt;/td&gt;
-      &lt;td style=&quot;text-align: left&quot;&gt;Compares two objects for equality.&lt;/td&gt;
-    &lt;/tr&gt;
-    &lt;tr&gt;
-      &lt;td style=&quot;text-align: center&quot;&gt;&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;!=&lt;/code&gt;&lt;/td&gt;
-      &lt;td style=&quot;text-align: left&quot;&gt;Compares two objects for inequality.&lt;/td&gt;
-    &lt;/tr&gt;
-    &lt;tr&gt;
-      &lt;td style=&quot;text-align: center&quot;&gt;&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;&amp;gt;&lt;/code&gt;&lt;/td&gt;
-      &lt;td style=&quot;text-align: left&quot;&gt;true if the left hand side is greater than the right hand side.&lt;/td&gt;
-    &lt;/tr&gt;
-    &lt;tr&gt;
-      &lt;td style=&quot;text-align: center&quot;&gt;&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;&amp;gt;=&lt;/code&gt;&lt;/td&gt;
-      &lt;td style=&quot;text-align: left&quot;&gt;true if the left hand side is greater or equal to the right hand side.&lt;/td&gt;
-    &lt;/tr&gt;
-    &lt;tr&gt;
-      &lt;td style=&quot;text-align: center&quot;&gt;&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;&amp;lt;&lt;/code&gt;&lt;/td&gt;
-      &lt;td style=&quot;text-align: left&quot;&gt;true if the left hand side is lower than the right hand side.&lt;/td&gt;
-    &lt;/tr&gt;
-    &lt;tr&gt;
-      &lt;td style=&quot;text-align: center&quot;&gt;&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;&amp;lt;=&lt;/code&gt;&lt;/td&gt;
-      &lt;td style=&quot;text-align: left&quot;&gt;true if the left hand side is lower or equal to the right hand side.&lt;/td&gt;
-    &lt;/tr&gt;
-  &lt;/tbody&gt;
-&lt;/table&gt;
-
-&lt;p&gt;Logic:&lt;/p&gt;
-
-&lt;table&gt;
-  &lt;thead&gt;
-    &lt;tr&gt;
-      &lt;th style=&quot;text-align: center&quot;&gt;Operator&lt;/th&gt;
-      &lt;th style=&quot;text-align: left&quot;&gt;Description&lt;/th&gt;
-    &lt;/tr&gt;
-  &lt;/thead&gt;
-  &lt;tbody&gt;
-    &lt;tr&gt;
-      &lt;td style=&quot;text-align: center&quot;&gt;&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;and&lt;/code&gt;&lt;/td&gt;
-      &lt;td style=&quot;text-align: left&quot;&gt;Return true if the left and the right operand are true.&lt;/td&gt;
-    &lt;/tr&gt;
-    &lt;tr&gt;
-      &lt;td style=&quot;text-align: center&quot;&gt;&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;or&lt;/code&gt;&lt;/td&gt;
-      &lt;td style=&quot;text-align: left&quot;&gt;Return true if the left or the right operand are true.&lt;/td&gt;
-    &lt;/tr&gt;
-    &lt;tr&gt;
-      &lt;td style=&quot;text-align: center&quot;&gt;&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;not&lt;/code&gt;&lt;/td&gt;
-      &lt;td style=&quot;text-align: left&quot;&gt;negate a statement.&lt;/td&gt;
-    &lt;/tr&gt;
-  &lt;/tbody&gt;
-&lt;/table&gt;
-
-&lt;p&gt;If you want to know more about Jinja 2, I suggest you visit to following
-documents:&lt;/p&gt;
-
-&lt;ol&gt;
-  &lt;li&gt;&lt;a href=&quot;https://jinja.palletsprojects.com/en/2.11.x/templates/&quot;&gt;Jinja - Template Designer Documentation
-(v2.11)&lt;/a&gt;. Not only you can
-find all the expressions listed above, but much more than that, such as
-variables, white space control, template inheritance, HTML escaping, filters.&lt;/li&gt;
-  &lt;li&gt;&lt;a href=&quot;https://jinja.palletsprojects.com/en/2.11.x/api/&quot;&gt;Jinja - API (v2.11)&lt;/a&gt;.
-Here you will find different APIs in Python. You will need them to integrate
-Jinja into your Python scripts.&lt;/li&gt;
-&lt;/ol&gt;
-
-&lt;h2 id=&quot;testing&quot;&gt;Testing&lt;/h2&gt;
-
-&lt;p&gt;I believe testing is an important part of the generation. It is an effective way
-to ensure the correctness of the results. There are two ways to test:&lt;/p&gt;
-
-&lt;ul&gt;
-  &lt;li&gt;Testing the data classes&lt;/li&gt;
-  &lt;li&gt;Testing the final rendered result&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;p&gt;The first way, testing the data class, is useful when the data models are
-present in the Python scripts and when you have complex processing logic there:
-validation, computed fields, etc. But testing it does not verify the actual
-rendering in the templates.&lt;/p&gt;
-
-&lt;p&gt;The second way, testing the final rendered result, is an end-to-end approach. It
-is useful for any scenario. It asserts the correctness of the final result, such
-as string or file. Going this way at the beginning is good, but may become
-harder to maintain when the template rendering becomes more complex.
-Here is a simple demo of the assertions:&lt;/p&gt;
-
-&lt;div class=&quot;language-py highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;k&quot;&gt;def&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;test_render_app&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;():&lt;/span&gt;
-    &lt;span class=&quot;n&quot;&gt;yml&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;generator&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;render_config&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;cluster_name&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;es-demo&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;node_id&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;1&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
-    &lt;span class=&quot;k&quot;&gt;assert&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;yml&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;==&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&quot;&quot;&quot;&lt;/span&gt;&lt;span class=&quot;se&quot;&gt;\
-&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;cluster.name: es-demo
-node.name: es-demo-data-1
-network.host: 0.0.0.0&quot;&quot;&quot;&lt;/span&gt;
-&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
-
-&lt;p&gt;I believe there are no perfect solutions for testing. Ultimately, testing is
-to provide safety to your product and avoid unexpected results later on. As far
-as you feel safe for the generated configuration, maybe that’s the most
-important.&lt;/p&gt;
-
-&lt;h2 id=&quot;going-further&quot;&gt;Going Further&lt;/h2&gt;
-
-&lt;p&gt;How to go further from here?&lt;/p&gt;
-
-&lt;ul&gt;
-  &lt;li&gt;To know more about how to configure Elasticsearch, visit official
-documentation &lt;a href=&quot;https://www.elastic.co/guide/en/elasticsearch/reference/7.x/settings.html&quot;&gt;“Configuring
-Elasticsearch”&lt;/a&gt;.&lt;/li&gt;
-  &lt;li&gt;To see the initial template of &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;elasticsearch.yml&lt;/code&gt;, visit the source code on
-GitHub (here the link is for Elastcsearch v7.12.0):
-&lt;a href=&quot;https://github.com/elastic/elasticsearch/blob/v7.12.0/distribution/src/config/elasticsearch.yml&quot;&gt;https://github.com/elastic/elasticsearch/blob/v7.12.0/distribution/src/config/elasticsearch.yml&lt;/a&gt;&lt;/li&gt;
-  &lt;li&gt;To learn more about templating engine Jinja, visit the official website
-&lt;a href=&quot;https://jinja.palletsprojects.com/&quot;&gt;https://jinja.palletsprojects.com/&lt;/a&gt;.&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;p&gt;You can also see the source code of this article on GitHub under repository
-&lt;a href=&quot;https://github.com/mincong-h/learning-python/tree/blog/elasticsearch-jinja2/src/jinja2&quot;&gt;mincong-h/learning-python&lt;/a&gt;.&lt;/p&gt;
-
-&lt;h2 id=&quot;conclusion&quot;&gt;Conclusion&lt;/h2&gt;
-
-&lt;p&gt;In this article, we saw what is templating engine Jinja 2, how to use it to
-generate the configuration for Elasticsearch clusters, such as &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;elasticsearch.yml&lt;/code&gt;,
-how to use Python data classes to represent more complex logic, the basic
-features of Jinja 2, how to test the generation, and finally how to go further
-from here.
-Interested to know more? You can subscribe to &lt;a href=&quot;/feed.xml&quot;&gt;the feed of my blog&lt;/a&gt;, follow me
-on &lt;a href=&quot;https://twitter.com/mincong_h&quot;&gt;Twitter&lt;/a&gt; or
-&lt;a href=&quot;https://github.com/mincong-h/&quot;&gt;GitHub&lt;/a&gt;. Hope you enjoy this article, see you the next time!&lt;/p&gt;
-
-&lt;h2 id=&quot;references&quot;&gt;References&lt;/h2&gt;
-
-&lt;ul&gt;
-  &lt;li&gt;Eric V. Smith, “PEP 557 – Data Classes”, &lt;em&gt;python.org&lt;/em&gt;, 2017.
-&lt;a href=&quot;https://www.python.org/dev/peps/pep-0557/&quot;&gt;https://www.python.org/dev/peps/pep-0557/&lt;/a&gt;&lt;/li&gt;
-  &lt;li&gt;Miguel Brito, “Everything You Need to Know About Python’s Namedtuples”,
-&lt;em&gt;dev.to&lt;/em&gt;, 2020. &lt;a href=&quot;https://dev.to/miguendes/everything-you-need-to-know-about-python-s-namedtuples-1l12&quot;&gt;https://dev.to/miguendes/everything-you-need-to-know-about-python-s-namedtuples-1l12&lt;/a&gt;&lt;/li&gt;
-  &lt;li&gt;卡拉先生, “Elasticsearch配置yaml中文教程”, &lt;em&gt;kalasearch.cn&lt;/em&gt;, 2020.
-&lt;a href=&quot;https://kalasearch.cn/community/tutorials/how-to-configure-yaml-file-for-elastic-search/&quot;&gt;https://kalasearch.cn/community/tutorials/how-to-configure-yaml-file-for-elastic-search/&lt;/a&gt;&lt;/li&gt;
-&lt;/ul&gt;</content><author><name>Mincong Huang</name><email>mincong.h@gmail.com</email></author><category term="elasticsearch" /><category term="python" /><category term="elasticsearch" /><category term="python" /><category term="jinja" /><summary type="html">This article explains how to generate the configuration for Elasticsearch using Python templating engine Jinja 2 by going through a basic use-case. It also explains features about Jinja2, testing, and more.</summary><media:thumbnail xmlns:media="http://search.yahoo.com/mrss/" url="https://mincong.io/assets/bg-heiman-ip-iFk8n8ntVDU-unsplash.jpg" /><media:content medium="image" url="https://mincong.io/assets/bg-heiman-ip-iFk8n8ntVDU-unsplash.jpg" xmlns:media="http://search.yahoo.com/mrss/" /></entry></feed>
+&lt;/ul&gt;</content><author><name>Mincong Huang</name><email>mincong.h@gmail.com</email></author><category term="elasticsearch" /><category term="elasticsearch" /><category term="java" /><summary type="html">How to write and execute metric and bucket aggregations in Elasticsearch for dataset: Demandes de valeurs foncières (DVF) for data analytics. Also, how to execute aggregations that contain sub-aggregations.</summary><media:thumbnail xmlns:media="http://search.yahoo.com/mrss/" url="https://mincong.io/assets/bg-henrique-ferreira-ZyYsY0ez2D4-unsplash.jpg" /><media:content medium="image" url="https://mincong.io/assets/bg-henrique-ferreira-ZyYsY0ez2D4-unsplash.jpg" xmlns:media="http://search.yahoo.com/mrss/" /></entry></feed>
