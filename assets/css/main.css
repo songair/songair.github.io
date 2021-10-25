@@ -1814,7 +1814,7 @@ a > .item__header.disabled, a > .item__header:disabled, a.item__header.disabled,
 
 .article__ads { padding: 1rem 0; text-align: center; }
 
-@media (min-width: 1024px) { .article__ads { padding: 0; position: fixed; bottom: 1rem; right: 2rem; } }
+@media only screen and (min-width: 1600px) { .article__ads { padding: 0; position: fixed; bottom: 1rem; right: 2rem; } }
 
 .article__footer { margin: 1.5rem 0; font-size: 0.85rem; }
 
