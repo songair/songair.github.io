@@ -1816,6 +1816,8 @@ a > .item__header.disabled, a > .item__header:disabled, a.item__header.disabled,
 
 @media only screen and (min-width: 1600px) { .article__ads { padding: 0; position: fixed; bottom: 1rem; right: 2rem; } }
 
+div.ea-content { background-color: rgba(239, 239, 239, 0.95) !important; }
+
 .article__footer { margin: 1.5rem 0; font-size: 0.85rem; }
 
 .article__license a, .article__subscribe a { -webkit-transition: all 0.2s ease-in-out; transition: all 0.2s ease-in-out; }
