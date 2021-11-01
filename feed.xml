@@ -1,5 +1,310 @@
-<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" xml:lang="en"><generator uri="https://jekyllrb.com/" version="4.2.0">Jekyll</generator><link href="https://mincong.io/feed.xml" rel="self" type="application/atom+xml" /><link href="https://mincong.io/" rel="alternate" type="text/html" hreflang="en" /><updated>2021-11-01T14:27:54+01:00</updated><id>https://mincong.io/feed.xml</id><title type="html">Mincong Huang</title><subtitle>Hi, welcome to my blog! I'm a software engineer at Datadog. I write blog posts in my free time. My blogs are bits and pieces of my tech journey. Most of them are related to Java. Hope you enjoy them! My opinions are my own, not Datadog's. This blog is powered by Jekyll, a simple, blog-aware, static sites solution.
-</subtitle><author><name>Mincong Huang</name><email>mincong.h@gmail.com</email></author><entry xml:lang="en"><title type="html">Elasticsearch Snapshot APIs</title><link href="https://mincong.io/en/elasticsearch-snapshot-apis/" rel="alternate" type="text/html" title="Elasticsearch Snapshot APIs" /><published>2021-10-25T16:34:05+02:00</published><updated>2021-10-25T16:34:05+02:00</updated><id>https://mincong.io/en/elasticsearch-snapshot-apis</id><content type="html" xml:base="https://mincong.io/en/elasticsearch-snapshot-apis/">&lt;h2 id=&quot;introduction&quot;&gt;Introduction&lt;/h2&gt;
+<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" xml:lang="en"><generator uri="https://jekyllrb.com/" version="4.2.0">Jekyll</generator><link href="https://mincong.io/feed.xml" rel="self" type="application/atom+xml" /><link href="https://mincong.io/" rel="alternate" type="text/html" hreflang="en" /><updated>2021-11-01T16:58:59+01:00</updated><id>https://mincong.io/feed.xml</id><title type="html">Mincong Huang</title><subtitle>Hi, welcome to my blog! I'm a software engineer at Datadog. I write blog posts in my free time. My blogs are bits and pieces of my tech journey. Most of them are related to Java. Hope you enjoy them! My opinions are my own, not Datadog's. This blog is powered by Jekyll, a simple, blog-aware, static sites solution.
+</subtitle><author><name>Mincong Huang</name><email>mincong.h@gmail.com</email></author><entry xml:lang="en"><title type="html">Elasticsearch Snapshot Plugins</title><link href="https://mincong.io/en/elasticsearch-snapshot-plugins/" rel="alternate" type="text/html" title="Elasticsearch Snapshot Plugins" /><published>2021-11-01T10:00:00+01:00</published><updated>2021-11-01T10:00:00+01:00</updated><id>https://mincong.io/en/elasticsearch-snapshot-plugins</id><content type="html" xml:base="https://mincong.io/en/elasticsearch-snapshot-plugins/">&lt;h2 id=&quot;introduction&quot;&gt;Introduction&lt;/h2&gt;
+
+&lt;p&gt;The “Snapshot and Restore” feature is an important part of an Elasticsearch cluster.
+Its existence provides a strong guarantee for data reliability. That’s why we
+are interested in learning more about it. In this article, let’s take a look at
+different official snapshot repository plugins in Elasticsearch.&lt;/p&gt;
+
+&lt;p&gt;Before getting into details, let’s first understand what is a snapshot
+repository. There are two types of snapshot repositories: local repository and
+remote repository. The local repository is mainly used for testing (for unit
+testing or when trying out Elasticsearch in localhost), and it does not make
+much sense to use it on production. In production, we mainly use a remote
+snapshot repository because it can store cluster data outside the cluster as
+data backup. There are four official plugins: AWS, GCS, Azure, and HDFS. Among
+them, AWS, GCS, and Azure are the three plugins that I had used in the past two
+years, and they are also the main subject of discussion today.&lt;/p&gt;
+
+&lt;p&gt;After reading this article, you will understand:&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;The plugin installation&lt;/li&gt;
+  &lt;li&gt;The similarities and differences of snapshot operations across different
+plugins&lt;/li&gt;
+  &lt;li&gt;The dependency between the Elasticsearch plugin and the cloud provider&lt;/li&gt;
+  &lt;li&gt;The source code analysis of several representative classes&lt;/li&gt;
+  &lt;li&gt;How to go further from this article&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;Now, let’s get started!&lt;/p&gt;
+
+&lt;h2 id=&quot;plugin-installation&quot;&gt;Plugin Installation&lt;/h2&gt;
+
+&lt;p&gt;Plugins can be installed via the command line elasticsearch-plugin (&lt;a href=&quot;https://www.elastic.co/guide/en/elasticsearch/plugins/7.x/installation.html&quot; title=&quot;Install Plugins&quot;&gt;Official Document&lt;/a&gt;):&lt;/p&gt;
+
+&lt;div class=&quot;language-sh highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;nb&quot;&gt;sudo &lt;/span&gt;bin/elasticsearch-plugin &lt;span class=&quot;nb&quot;&gt;install&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;$plugin_name&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;div class=&quot;language-sh highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;nb&quot;&gt;sudo &lt;/span&gt;bin/elasticsearch-plugin &lt;span class=&quot;nb&quot;&gt;install &lt;/span&gt;repository-s3
+&lt;span class=&quot;nb&quot;&gt;sudo &lt;/span&gt;bin/elasticsearch-plugin &lt;span class=&quot;nb&quot;&gt;install &lt;/span&gt;repository-gcs
+&lt;span class=&quot;nb&quot;&gt;sudo &lt;/span&gt;bin/elasticsearch-plugin &lt;span class=&quot;nb&quot;&gt;install &lt;/span&gt;repository-azure
+&lt;span class=&quot;nb&quot;&gt;sudo &lt;/span&gt;bin/elasticsearch-plugin &lt;span class=&quot;nb&quot;&gt;install &lt;/span&gt;repository-hdfs
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;For the plugin to be used normally, the plugin must be installed on
+each node of the cluster. The four plugins mentioned above are all official
+plugins of Elasticsearch. You don’t need to download them, just install them
+directly. After a successful installation, the node needs to be restarted for
+the plugin to take effect.&lt;/p&gt;
+
+&lt;p&gt;Once installed, you may want to get information about the plugin. There are at
+least two ways to query the plugin. One is to query through the command line
+after logging in to the node. The second is to query directly through the
+RESTful API.&lt;/p&gt;
+
+&lt;p&gt;Log in to the node and list the installed plugins using the following command:&lt;/p&gt;
+
+&lt;div class=&quot;language-sh highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;nb&quot;&gt;sudo &lt;/span&gt;bin/elasticsearch-plugin list
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;Query the plugins directly through &lt;a href=&quot;https://www.elastic.co/guide/en/elasticsearch/reference/7.x/cluster-nodes-info.html&quot; title=&quot;Node API&quot;&gt;Node API&lt;/a&gt;:&lt;/p&gt;
+
+&lt;div class=&quot;language-plaintext highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;GET /_nodes/plugins
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;h2 id=&quot;snapshot-apis&quot;&gt;Snapshot APIs&lt;/h2&gt;
+
+&lt;p&gt;Elasticsearch’s snapshot APIs include two parts: Snapshot repository management
+API (Snapshot repository management API) and Snapshot management API (Snapshot
+management API). Most of the APIs are common to different plugins. The only
+exception is the API for creating a snapshot repository. The type of repository
+needs to be provided when creating it. The parameters for the creation request
+of different repositories are also slightly different. Here are a few simple
+examples. If you were interested in any specific parameters, please refer to the
+&lt;a href=&quot;https://www.elastic.co/guide/en/elasticsearch/reference/master/put-snapshot-repo-api.html&quot;&gt;official documentation&lt;/a&gt;.&lt;/p&gt;
+
+&lt;p&gt;Create an AWS S3 repository:&lt;/p&gt;
+
+&lt;div class=&quot;language-http highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;err&quot;&gt;PUT _snapshot/my_s3_repository
+
+{
+   &quot;type&quot;: &quot;s3&quot;,
+   &quot;settings&quot;: {
+     &quot;bucket&quot;: &quot;my-bucket&quot;
+   }
+}
+&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;Create a Google Cloud Storage (GCS) repository:&lt;/p&gt;
+
+&lt;div class=&quot;language-http highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;err&quot;&gt;PUT _snapshot/my_gcs_repository
+
+{
+   &quot;type&quot;: &quot;gcs&quot;,
+   &quot;settings&quot;: {
+     &quot;bucket&quot;: &quot;my_bucket&quot;,
+     &quot;client&quot;: &quot;my_alternate_client&quot;
+   }
+}
+&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;Create an Azure repository:&lt;/p&gt;
+
+&lt;div class=&quot;language-http highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;err&quot;&gt;PUT _snapshot/my_backup
+
+{
+   &quot;type&quot;: &quot;azure&quot;,
+   &quot;settings&quot;: {
+     &quot;client&quot;: &quot;secondary&quot;
+   }
+}
+&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;h2 id=&quot;dependencies-with-cloud-provider&quot;&gt;Dependencies With Cloud Provider&lt;/h2&gt;
+
+&lt;p&gt;Using remote ES snapshot repository plugins means that you have to face the
+issue of dependencies on your cloud provider. The dependency challenge here is
+mainly reflected in two parts: the SDK of the cloud provider and the storage
+system of the cloud provider.&lt;/p&gt;
+
+&lt;p&gt;Regarding the cloud provider’s SDK, since Elasticsearch needs to use the SDK
+client provided by the cloud provider to manipulate data (upload, list,
+download, delete, etc.), there must be compatibility issues here between the SDK
+version and your ES cluster. When the SDK version of the cloud provider is
+constantly updated, if your Elasticsearch cluster version remains the same,
+the SDK version will likely be too old to be used after a certain point
+in time. It may make the cluster vulnerable to unsuccessful back-up, downgraded
+performance, etc. Therefore, it is important to upgrade the Elasticsearch
+cluster version in time.&lt;/p&gt;
+
+&lt;p&gt;In the storage method, using the storage system of a specific cloud service
+means that you need to configure and manage the corresponding storage, such as
+creating and setting service accounts.&lt;/p&gt;
+
+&lt;h2 id=&quot;source-code-samples&quot;&gt;Source Code Samples&lt;/h2&gt;
+
+&lt;p&gt;Above we mainly looked at general information about snapshot repository plugins
+in Elasticsearch. In the following paragraphs, I want to take you into the
+code and read together a few representative classes.&lt;/p&gt;
+
+&lt;h3 id=&quot;blob-store-repository&quot;&gt;Blob Store Repository&lt;/h3&gt;
+
+&lt;p&gt;The abstract class &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;BlobStoreRepository&lt;/code&gt; is the base implementation of a
+snapshot repository, with works with any blob store implementation.
+This class has only two abstract methods: &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;createBlobStore()&lt;/code&gt;
+and &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;basePath()&lt;/code&gt;. The method &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;createBlobStore()&lt;/code&gt; can be used to create a blob
+store, and it is recommended to implement with lazy initialization. Blob store is
+responsible for creating, reading, updating, and deleting data (CRUD) towards to cloud provider
+in Elasticsearch. We will analyze it further later. Another method is
+&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;basePath()&lt;/code&gt;, which obtains the relative storage path of the Elasticsearch
+snapshot repository in the storage bucket of the cloud provider. If one bucket
+is used for one single repository, then the base path should be &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;/&lt;/code&gt;. If one
+bucket is used for multiple repositories, or being used for other data-stores
+(not only for Elasticsearch), then you need to fill in the relative path where
+your Elasticsearch snapshot repo is located.&lt;/p&gt;
+
+&lt;div class=&quot;language-java highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;kd&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;kd&quot;&gt;abstract&lt;/span&gt; &lt;span class=&quot;kd&quot;&gt;class&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;BlobStoreRepository&lt;/span&gt; &lt;span class=&quot;kd&quot;&gt;extends&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;AbstractLifecycleComponent&lt;/span&gt; &lt;span class=&quot;kd&quot;&gt;implements&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;Repository&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;o&quot;&gt;...&lt;/span&gt;
+
+    &lt;span class=&quot;cm&quot;&gt;/**
+     * Creates new BlobStore to read and write data.
+     */&lt;/span&gt;
+    &lt;span class=&quot;kd&quot;&gt;protected&lt;/span&gt; &lt;span class=&quot;kd&quot;&gt;abstract&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;BlobStore&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;createBlobStore&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;()&lt;/span&gt; &lt;span class=&quot;kd&quot;&gt;throws&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;Exception&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;;&lt;/span&gt;
+
+    &lt;span class=&quot;cm&quot;&gt;/**
+     * Returns base path of the repository
+     */&lt;/span&gt;
+    &lt;span class=&quot;kd&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;kd&quot;&gt;abstract&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;BlobPath&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;basePath&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;();&lt;/span&gt;
+
+&lt;span class=&quot;o&quot;&gt;}&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;BlobStoreRepository&lt;/code&gt; contains the business logic related to snapshots. It implements functions such as snapshot, restore, get info, delete, cleanup, verify, extract statistics, and update cluster state.&lt;/p&gt;
+
+&lt;p&gt;Regardless of the cloud providers, all repositories inherit this abstract class and
+use the cloud provider’s SDK to implement the blob reading and writing. From the
+command line below, we can see that whether it is a read-only URL Repository,
+Mock Repository for testing, File System Repository for local warehouses, or
+remote warehouses Azure, S3, GCS, HDFS, their implementations all inherit this
+class:&lt;/p&gt;
+
+&lt;div class=&quot;language-sh highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;➜ elasticsearch git:&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;7.9 &lt;span class=&quot;nv&quot;&gt;u&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=)&lt;/span&gt; rg &lt;span class=&quot;s2&quot;&gt;&quot;extends BlobStoreRepository&quot;&lt;/span&gt;
+modules/repository-url/src/main/java/org/elasticsearch/repositories/url/URLRepository.java
+56:public class URLRepository extends BlobStoreRepository &lt;span class=&quot;o&quot;&gt;{&lt;/span&gt;
+
+server/src/test/java/org/elasticsearch/snapshots/mockstore/MockEventuallyConsistentRepository.java
+68: public class MockEventuallyConsistentRepository extends BlobStoreRepository &lt;span class=&quot;o&quot;&gt;{&lt;/span&gt;
+
+server/src/main/java/org/elasticsearch/repositories/fs/FsRepository.java
+53:public class FsRepository extends BlobStoreRepository &lt;span class=&quot;o&quot;&gt;{&lt;/span&gt;
+
+plugins/repository-azure/src/main/java/org/elasticsearch/repositories/azure/AzureRepository.java
+55:public class AzureRepository extends BlobStoreRepository &lt;span class=&quot;o&quot;&gt;{&lt;/span&gt;
+
+plugins/repository-s3/src/main/java/org/elasticsearch/repositories/s3/S3Repository.java
+72:class S3Repository extends BlobStoreRepository &lt;span class=&quot;o&quot;&gt;{&lt;/span&gt;
+
+plugins/repository-gcs/src/main/java/org/elasticsearch/repositories/gcs/GoogleCloudStorageRepository.java
+43:class GoogleCloudStorageRepository extends BlobStoreRepository &lt;span class=&quot;o&quot;&gt;{&lt;/span&gt;
+
+plugins/repository-hdfs/src/main/java/org/elasticsearch/repositories/hdfs/HdfsRepository.java
+54:public final class HdfsRepository extends BlobStoreRepository &lt;span class=&quot;o&quot;&gt;{&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;h3 id=&quot;blob-store&quot;&gt;Blob Store&lt;/h3&gt;
+
+&lt;p&gt;Blob store mainly provides two functions related to blobs: obtaining the blob
+container of a given path and obtaining statistics on the count of operations
+that have been performed on this blob store.
+For some plugins, the logic of adding, deleting, modifying, and checking blobs
+is also written in the implementation of blob stores, such as the blob stores
+Azure and GCS.&lt;/p&gt;
+
+&lt;div class=&quot;language-java highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;cm&quot;&gt;/**
+ * An interface for storing blobs.
+ */&lt;/span&gt;
+&lt;span class=&quot;kd&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;kd&quot;&gt;interface&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;BlobStore&lt;/span&gt; &lt;span class=&quot;kd&quot;&gt;extends&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;Closeable&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;{&lt;/span&gt;
+
+    &lt;span class=&quot;cm&quot;&gt;/**
+     * Get a blob container instance for storing blobs at the given {@link BlobPath}.
+     */&lt;/span&gt;
+    &lt;span class=&quot;nc&quot;&gt;BlobContainer&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;blobContainer&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nc&quot;&gt;BlobPath&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;path&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;);&lt;/span&gt;
+
+    &lt;span class=&quot;cm&quot;&gt;/**
+     * Returns statistics on the count of operations that have been performed on this blob store
+     */&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;default&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;Map&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;nc&quot;&gt;String&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;Long&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;&amp;gt;&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;stats&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;()&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;{&lt;/span&gt;
+        &lt;span class=&quot;k&quot;&gt;return&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;Collections&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;emptyMap&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;();&lt;/span&gt;
+    &lt;span class=&quot;o&quot;&gt;}&lt;/span&gt;
+&lt;span class=&quot;o&quot;&gt;}&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;h3 id=&quot;blob-container&quot;&gt;Blob Container&lt;/h3&gt;
+
+&lt;p&gt;A blob container refers to the container that contains all blobs under a certain
+path. It does not contain logic related to snapshots, but it is more inclined to
+the bottom layer of the cloud provider. It is mainly responsible for adding,
+deleting, modifying and checking blobs under a given path, represented as
+&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;BlobPath&lt;/code&gt;. Here are some of its methods:&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/assets/20210918-BlobContainer.png&quot; alt=&quot;BlobContainer&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;As mentioned in the previous paragraph, for some providers, the logic of adding,
+deleting, modifying, and checking blobs are not directly done in this class, but
+are delegated to the blob store, like the implementations of Azure and GCS.
+However, the CRUD operations of S3 are implemented in the class
+&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;S3BlobContainer&lt;/code&gt;. So I feel that the boundary between blob store and blob
+container is not clear. But one thing is for sure: there is only one blob store in
+a repository and a repository may have many blob containers.&lt;/p&gt;
+
+&lt;h3 id=&quot;snapshot-creation&quot;&gt;Snapshot Creation&lt;/h3&gt;
+
+&lt;p&gt;Now we understand different classes, let’s take a look at how the snapshot is
+created inside a snapshot repository, starting from the class
+&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;BlobStoreRepository&lt;/code&gt;. The diagram below is generated by the third-party plugin
+“Sequence Diagram” in IntelliJ IDEA. To simplify the description, some steps are omitted.&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/assets/20210918-BlobStoreRepository_snapshotFile.png&quot; alt=&quot;Sequence diagram&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;In this figure, we can see that the method &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;snapshotFile&lt;/code&gt; of
+&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;BlobStoreRepository&lt;/code&gt; first finds the file name (1.1) of the file to
+snapshot, then verifies the correctness of the file (1.2), and then for each
+part of the file (1.3), it performs un upload. When uploading, Elasticsearch uses a
+custom input stream wrapper to achieve potential rate-limiting. The latter part
+of the Sequence Diagram plugin seems to be incorrect, it writes the wrong serial
+number. But the flaws are not concealed, the next step is to write the blob,
+which is the blue part in the figure (1.4.1.1.4). Write the blob and forward it
+to the &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;BlobContainer&lt;/code&gt; implementation. &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;BlobContainer&lt;/code&gt; is an interface that has
+different implementations depending on the cloud provider. After the
+implementation is completed, &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;BlobStoreRepository&lt;/code&gt; checks the correctness of the
+written data. Finally, the repository adds the successfully created snapshot to the status
+&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;IndexShardSnapshotStatus&lt;/code&gt; to track the progress of the snapshot creation.&lt;/p&gt;
+
+&lt;p&gt;Due to time constraints, we have to stop here for the source code analysis.&lt;/p&gt;
+
+&lt;h2 id=&quot;going-further&quot;&gt;Going Further&lt;/h2&gt;
+
+&lt;p&gt;How to go further from this article?&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;If you are interested in understanding the internal structure of the snapshot
+repository, you can read another article of mine &lt;a href=&quot;/en/elasticsearch-snapshot-repository-structure/&quot;&gt;The internal structure of
+the Elasticsearch snapshot repository&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;If you are interested in learning how to prevent data loss in Elasticsearch,
+you can read my other article &lt;a href=&quot;/en/prevent-data-loss-in-elasticsearch/&quot;&gt;How to prevent data loss in Elasticsearch? &lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;If you want to know more about plugins, please refer to the official
+documentation &lt;a href=&quot;https://www.elastic.co/guide/en/elasticsearch/plugins/7.x/index.html&quot;&gt;Elasticsearch Plugins and Integrations&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;If you want to know more about the blob store, you can visit
+&lt;a href=&quot;https://github.com/elastic/elasticsearch/blob/7.x/server/src/main/java/org/elasticsearch/repositories/blobstore/package-info.java&quot; title=&quot;org.elasticsearch.repositories.blobstore&quot;&gt;GitHub&lt;/a&gt; to read the documentation and source code of this package.&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h2 id=&quot;conclusion&quot;&gt;Conclusion&lt;/h2&gt;
+
+&lt;p&gt;In this article, we saw how to install plugins for different cloud providers
+through &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;elasticsearch-plugin&lt;/code&gt;; the impact of different plugins on the snapshot
+operations; after using the snapshot plugin, the dependency between the
+Elasticsearch cluster and the cloud provider; next, we walked into the source
+code, briefly analyzed the logic of three classes: Blob Store Repository, Blob
+Store, and Blob Container. We also snapshot creation as an example to
+understand how Blob Store Repository communicates with Blob Container. Finally,
+I also shared some resources to allow you to go further from this article.
+I hope this article can give you some thoughts and give you a better understanding of
+the “snapshot and restore” feature in Elasticsearch. If you are interested in knowing more
+information, you can subscribe to the &lt;a href=&quot;/feed.xml&quot;&gt;feed of my blog&lt;/a&gt;, follow me on
+&lt;a href=&quot;https://twitter.com/mincong_h&quot;&gt;Twitter&lt;/a&gt; or
+&lt;a href=&quot;https://github.com/mincong-h/&quot;&gt;GitHub&lt;/a&gt;. Hope you enjoy this article, see you
+the next time!&lt;/p&gt;</content><author><name>Mincong Huang</name><email>mincong.h@gmail.com</email></author><category term="elasticsearch" /><category term="elasticsearch" /><category term="java" /><summary type="html">Elasticsearch snapshot repository plugins for AWS, GCP, and Azure</summary><media:thumbnail xmlns:media="http://search.yahoo.com/mrss/" url="https://mincong.io/assets/bg-aaron-burden-GFpxQ2ZyNc0-unsplash.jpg" /><media:content medium="image" url="https://mincong.io/assets/bg-aaron-burden-GFpxQ2ZyNc0-unsplash.jpg" xmlns:media="http://search.yahoo.com/mrss/" /></entry><entry xml:lang="en"><title type="html">Elasticsearch Snapshot APIs</title><link href="https://mincong.io/en/elasticsearch-snapshot-apis/" rel="alternate" type="text/html" title="Elasticsearch Snapshot APIs" /><published>2021-10-25T16:34:05+02:00</published><updated>2021-10-25T16:34:05+02:00</updated><id>https://mincong.io/en/elasticsearch-snapshot-apis</id><content type="html" xml:base="https://mincong.io/en/elasticsearch-snapshot-apis/">&lt;h2 id=&quot;introduction&quot;&gt;Introduction&lt;/h2&gt;
 
 &lt;p&gt;When managing Elasticsearch clusters in production, you will probably need to
 backup and restore a cluster or specific indices since this is an efficient way
@@ -2807,1246 +3112,4 @@ l’immobilier”, &lt;em&gt;notaires.fr&lt;/em&gt;, 2021. &lt;a href=&quot;http
   &lt;li&gt;Jingwen Zheng, “Second-hand apartments transactions in Île-de-France (01/2014 - 06/2020)”,
 &lt;em&gt;jingwen-z.github.io&lt;/em&gt;, 2021.
 &lt;a href=&quot;https://jingwen-z.github.io/second-hand-apartments-transactions-in-idf-1420/&quot;&gt;https://jingwen-z.github.io/second-hand-apartments-transactions-in-idf-1420/&lt;/a&gt;&lt;/li&gt;
-&lt;/ul&gt;</content><author><name>Mincong Huang</name><email>mincong.h@gmail.com</email></author><category term="elasticsearch" /><category term="elasticsearch" /><category term="kibana" /><category term="open-data" /><summary type="html">This article studies the real estate market of Île-de-France in 2020 by exploring and visualizing the dataset DVF using Kibana. We will discuss the global landscape, the impact of COVID-19, the situation in different departments, and more.</summary><media:thumbnail xmlns:media="http://search.yahoo.com/mrss/" url="https://mincong.io/assets/bg-alexander-kagan-t9Td0zfDTwI-unsplash.jpg" /><media:content medium="image" url="https://mincong.io/assets/bg-alexander-kagan-t9Td0zfDTwI-unsplash.jpg" xmlns:media="http://search.yahoo.com/mrss/" /></entry><entry xml:lang="en"><title type="html">DVF: Aggregations</title><link href="https://mincong.io/2021/04/12/dvf-aggregations/" rel="alternate" type="text/html" title="DVF: Aggregations" /><published>2021-04-12T01:34:30+02:00</published><updated>2021-04-12T01:34:30+02:00</updated><id>https://mincong.io/2021/04/12/dvf-aggregations</id><content type="html" xml:base="https://mincong.io/2021/04/12/dvf-aggregations/">&lt;h2 id=&quot;introduction&quot;&gt;Introduction&lt;/h2&gt;
-
-&lt;p&gt;Open data “Demande de valeurs foncières (DVF)” is an open dataset provided by
-the French government which collects all the real-estate transactions since
-January 2014, in mainland France and the overseas departments and territories.
-In the previous DVF articles, we talked about the write path: how to index new
-documents, how to optimize storage, and how to perform snapshots and restores.
-Starting from this article, we are going to focus on the read path: how to
-perform different search actions on this dataset.&lt;/p&gt;
-
-&lt;p&gt;This article will focus on aggregations. Aggregations are important for your
-application because it provides an overview to your users without showing any
-documents in detail. It also provides information about the selection range, such
-as the min/max value of a given field. This topic is also part of the &lt;a href=&quot;https://www.elastic.co/training/elastic-certified-engineer-exam&quot;&gt;Elastic
-Certified Engineer
-Exam&lt;/a&gt;. After
-reading this article, you will understand:&lt;/p&gt;
-
-&lt;ul&gt;
-  &lt;li&gt;How to write and execute metric aggregation?&lt;/li&gt;
-  &lt;li&gt;How to write and execute bucket aggregation?&lt;/li&gt;
-  &lt;li&gt;How to write and execute aggregations that contain sub-aggregations?&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;p&gt;To better demonstrate the importance of aggregations in real-world scenarios, I am going to use
-different examples from the DVF dataset.
-This article is written in Elasticsearch 7.12 and Java 11, but most of the
-concepts should be appliable to any Elasticsearch 7.x cluster. Most of the
-examples are written in two formats: HTTP requests with JSON content and Java. The goal is
-to let you better understand how it works even if you are not familiar with
-Java.&lt;/p&gt;
-
-&lt;h2 id=&quot;prerequisite&quot;&gt;Prerequisite&lt;/h2&gt;
-
-&lt;p&gt;Before writing any aggregation, we need to index the dataset into Elasticsearch.
-This has been done in the previous articles so I am not going to go into detail
-about it in this article. If you were interested in how to do it, you can
-find the previous articles under the category “Elasticsearch” of my blog, they
-are prefixed by “DVF”. Once the index is ready, you can find it in the
-Elasticsearch cluster via the &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;_cat&lt;/code&gt; indices API as “transactions”:&lt;/p&gt;
-
-&lt;div class=&quot;language-plaintext highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;$ curl localhost:9200/_cat/indices
-yellow open transactions xMLeTfvwTYW1mdz5P85JsA 1 1 827105 0 207.3mb 207.3mb
-&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
-
-&lt;h2 id=&quot;metric-aggregation&quot;&gt;Metric Aggregation&lt;/h2&gt;
-
-&lt;p&gt;According to Elasticsearch documentation &lt;a href=&quot;https://www.elastic.co/guide/en/elasticsearch/reference/7.x/search-aggregations-metrics.html&quot;&gt;Metrics Aggregation
-(7.x)&lt;/a&gt;,
-the aggregations in this family compute metrics based on values extracted in one
-way or another from the documents that are being aggregated. The values are
-typically extracted from the fields of the document (using the field data), but
-can also be generated using scripts.&lt;/p&gt;
-
-&lt;p&gt;Here I am going to take a simple one: the metric &lt;a href=&quot;https://www.elastic.co/guide/en/elasticsearch/reference/7.x/search-aggregations-metrics-valuecount-aggregation.html&quot;&gt;value
-count&lt;/a&gt;. As the name indicated,
-metric &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;value_count&lt;/code&gt; shows how many documents are extracted from the aggregated
-documents. To do that via REST API, we can use the &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;_search&lt;/code&gt; endpoint as
-follows:&lt;/p&gt;
-
-&lt;div class=&quot;language-plaintext highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;GET /transactions/_search
-&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
-
-&lt;div class=&quot;language-js highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-  &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;query&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-    &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;match_all&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{}&lt;/span&gt;  &lt;span class=&quot;c1&quot;&gt;// 1&lt;/span&gt;
-  &lt;span class=&quot;p&quot;&gt;},&lt;/span&gt;
-  &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;size&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;  &lt;span class=&quot;c1&quot;&gt;// 2&lt;/span&gt;
-  &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;aggs&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-    &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;mutation_id/value_count&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;  &lt;span class=&quot;c1&quot;&gt;// 3&lt;/span&gt;
-      &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;value_count&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;  &lt;span class=&quot;c1&quot;&gt;// 4&lt;/span&gt;
-        &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;field&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;mutation_id&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;  &lt;span class=&quot;c1&quot;&gt;// 5&lt;/span&gt;
-      &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
-    &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
-  &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
-&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
-&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
-
-&lt;p&gt;If we take a quick look into the HTTP request, you will see that:&lt;/p&gt;
-
-&lt;ol&gt;
-  &lt;li&gt;We use a &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;match_all&lt;/code&gt; query, which matches all the documents of the index
-“transactions” without filtering.&lt;/li&gt;
-  &lt;li&gt;The number of search hits to return is set to 0. The default value is 10.
-Since we don’t care about those documents, setting it to 0 simplifies the
-HTTP response.&lt;/li&gt;
-  &lt;li&gt;
-    &lt;p&gt;We use one single-value metric aggregation and name it as
-&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;mutation_id/value_count&lt;/code&gt;. I name it using the naming convention:&lt;/p&gt;
-
-    &lt;div class=&quot;language-plaintext highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;${field_name}/${metric_type}
-&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;    &lt;/div&gt;
-
-    &lt;p&gt;so that I can understand the target field name to be aggregated and the type
-of metric. But this is just a personal preference. You are free to choose the name you
-want.&lt;/p&gt;
-  &lt;/li&gt;
-  &lt;li&gt;The type of metric is &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;value_count&lt;/code&gt;.&lt;/li&gt;
-  &lt;li&gt;The metric applies to field &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;mutation_id&lt;/code&gt;. I use this field because it is the
-key of the mutation (transaction), so it is always non-null.&lt;/li&gt;
-&lt;/ol&gt;
-
-&lt;p&gt;Sending the request above will return:&lt;/p&gt;
-
-&lt;div class=&quot;language-js highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-  &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;took&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;100&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
-  &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;timed_out&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;kc&quot;&gt;false&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
-  &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;_shards&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-    &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;total&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;1&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
-    &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;successful&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;1&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
-    &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;skipped&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
-    &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;failed&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;
-  &lt;span class=&quot;p&quot;&gt;},&lt;/span&gt;
-  &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;hits&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-    &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;total&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-      &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;value&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;10000&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
-      &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;relation&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;gte&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;
-    &lt;span class=&quot;p&quot;&gt;},&lt;/span&gt;
-    &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;max_score&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;kc&quot;&gt;null&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
-    &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;hits&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;[]&lt;/span&gt;
-  &lt;span class=&quot;p&quot;&gt;},&lt;/span&gt;
-  &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;aggregations&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-    &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;mutation_id/count&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-      &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;value&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;827105&lt;/span&gt;
-    &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
-  &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
-&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
-&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
-
-&lt;p&gt;It means that there were 827105 transactions in 2020 according to
-the dataset. It matches the number of lines in the CSV file.
-There is a difference of 1 line because the CSV file includes the header.&lt;/p&gt;
-
-&lt;div class=&quot;language-plaintext highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;➜  dvf git:(master u=) wc -l downloads/full.2020.csv
-  827106 downloads/full.2020.csv
-&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
-
-&lt;p&gt;Now, let’s see how to do the same thing in Java:&lt;/p&gt;
-
-&lt;div class=&quot;language-java highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;kt&quot;&gt;var&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;sourceBuilder&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;
-    &lt;span class=&quot;k&quot;&gt;new&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;SearchSourceBuilder&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;()&lt;/span&gt;
-        &lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;size&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt;  &lt;span class=&quot;c1&quot;&gt;// 1&lt;/span&gt;
-        &lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;aggregation&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nc&quot;&gt;AggregationBuilders&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;count&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;mutation_id/value_count&quot;&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;).&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;field&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;mutation_id&quot;&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;))&lt;/span&gt;  &lt;span class=&quot;c1&quot;&gt;// 2&lt;/span&gt;
-        &lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;query&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nc&quot;&gt;QueryBuilders&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;matchAllQuery&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;());&lt;/span&gt;  &lt;span class=&quot;c1&quot;&gt;// 3&lt;/span&gt;
-
-&lt;span class=&quot;kt&quot;&gt;var&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;request&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;new&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;SearchRequest&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;()&lt;/span&gt;  &lt;span class=&quot;c1&quot;&gt;// 4&lt;/span&gt;
-    &lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;indices&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;transactions&quot;&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt;
-    &lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;source&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;sourceBuilder&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;);&lt;/span&gt;
-
-&lt;span class=&quot;kt&quot;&gt;var&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;response&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;restClient&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;search&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;request&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;RequestOptions&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;DEFAULT&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;);&lt;/span&gt;  &lt;span class=&quot;c1&quot;&gt;// 5&lt;/span&gt;
-&lt;span class=&quot;kt&quot;&gt;var&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;valueCount&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nc&quot;&gt;ValueCount&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;response&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;getAggregations&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;().&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;get&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;mutation_id/value_count&quot;&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;);&lt;/span&gt;  &lt;span class=&quot;c1&quot;&gt;// 6&lt;/span&gt;
-&lt;span class=&quot;o&quot;&gt;...&lt;/span&gt;
-&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
-
-&lt;p&gt;It is almost the same thing as the HTTP request. Here we:&lt;/p&gt;
-
-&lt;ol&gt;
-  &lt;li&gt;Create an HTTP request with a search source. The hit size is set to 0 to avoid
-returning hits.&lt;/li&gt;
-  &lt;li&gt;The aggregation used is the value count (&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;value_count&lt;/code&gt;), named as &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;mutation_id/value_count&lt;/code&gt;,
-targeting field &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;mutation_id&lt;/code&gt;.&lt;/li&gt;
-  &lt;li&gt;On the query side, it matches all documents without filtering.&lt;/li&gt;
-  &lt;li&gt;Combining the index name and the search source, we create a search request.&lt;/li&gt;
-  &lt;li&gt;We use the Java REST High Level Client to send the search request and get the
-search response.&lt;/li&gt;
-  &lt;li&gt;We can retrieve the aggregation from the response using the name of the
-aggregation, i.e. using “mutation_id/value_count”.&lt;/li&gt;
-&lt;/ol&gt;
-
-&lt;p&gt;In this section, we discussed how metric aggregation works: we need to provide
-the index names to be searched, the query to filter the document, and the
-metrics aggregations to be performed. Now, let’s go to the next part: bucket
-aggregations.&lt;/p&gt;
-
-&lt;h2 id=&quot;bucket-aggregation&quot;&gt;Bucket Aggregation&lt;/h2&gt;
-
-&lt;p&gt;Bucket aggregations that group documents into buckets, also called bins, based
-on field values, ranges, or other criteria. In this section, we are going to use
-postal code as an example: let’s see which postal code in France contains the
-highest number of transactions?&lt;/p&gt;
-
-&lt;p&gt;To answer this question, we need to prepare an HTTP request for bucket
-aggregation:&lt;/p&gt;
-
-&lt;div class=&quot;language-js highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-  &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;query&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-    &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;match_all&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{}&lt;/span&gt;  &lt;span class=&quot;c1&quot;&gt;// 1&lt;/span&gt;
-  &lt;span class=&quot;p&quot;&gt;},&lt;/span&gt;
-  &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;size&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;  &lt;span class=&quot;c1&quot;&gt;// 2&lt;/span&gt;
-  &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;aggs&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-    &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;postal_code/terms&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-      &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;terms&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;  &lt;span class=&quot;c1&quot;&gt;// 3&lt;/span&gt;
-        &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;field&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;postal_code&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
-        &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;size&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;3&lt;/span&gt;  &lt;span class=&quot;c1&quot;&gt;// 4&lt;/span&gt;
-      &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
-    &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
-  &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
-&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
-&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
-
-&lt;p&gt;If we take a quick look into the HTTP request, you will see the same concept as
-above for the metric aggregation. This time, the bucket aggregation &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;term&lt;/code&gt; does
-the following things:&lt;/p&gt;
-
-&lt;ol&gt;
-  &lt;li&gt;It queries all the documents in the target index.&lt;/li&gt;
-  &lt;li&gt;It sets the size to 0 to avoid returning documents (hits) because we don’t need them.&lt;/li&gt;
-  &lt;li&gt;This is the key of the request. It specifies the type of aggregation to
-&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;terms&lt;/code&gt; on field &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;postal_code&lt;/code&gt;. Therefore, we can obtain a result grouped by
-postal code.&lt;/li&gt;
-  &lt;li&gt;It only takes the top 3 results. More precisely, there are two notions: size
-and order. Here we specified the size, which means the aggregation will return 3
-results. As for the order, terms aggregation returns results in descending
-order by default. So the terms having the most occurrences will be returned (defaults to 10).
-Therefore, combined together (size and order), this setting returns the top 3 results.&lt;/li&gt;
-&lt;/ol&gt;
-
-&lt;p&gt;Sending the request above will return:&lt;/p&gt;
-
-&lt;div class=&quot;language-js highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-  &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;took&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;97&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
-  &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;timed_out&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;kc&quot;&gt;false&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
-  &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;_shards&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-    &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;total&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;1&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
-    &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;successful&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;1&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
-    &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;skipped&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
-    &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;failed&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;
-  &lt;span class=&quot;p&quot;&gt;},&lt;/span&gt;
-  &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;hits&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-    &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;total&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-      &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;value&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;10000&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
-      &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;relation&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;gte&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;
-    &lt;span class=&quot;p&quot;&gt;},&lt;/span&gt;
-    &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;max_score&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;kc&quot;&gt;null&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
-    &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;hits&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;[]&lt;/span&gt;
-  &lt;span class=&quot;p&quot;&gt;},&lt;/span&gt;
-  &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;aggregations&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-    &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;postal_code/terms&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-      &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;doc_count_error_upper_bound&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
-      &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;sum_other_doc_count&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;812333&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
-      &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;buckets&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;[&lt;/span&gt;
-        &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-          &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;key&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;dl&quot;&gt;&quot;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
-          &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;doc_count&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;9392&lt;/span&gt;
-        &lt;span class=&quot;p&quot;&gt;},&lt;/span&gt;
-        &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-          &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;key&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;51100&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
-          &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;doc_count&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;2859&lt;/span&gt;
-        &lt;span class=&quot;p&quot;&gt;},&lt;/span&gt;
-        &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-          &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;key&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;75016&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
-          &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;doc_count&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;2521&lt;/span&gt;
-        &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
-      &lt;span class=&quot;p&quot;&gt;]&lt;/span&gt;
-    &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
-  &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
-&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
-&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
-
-&lt;p&gt;So the top 1 result is… missing value. Oh my god 😅 But this is the forever
-pain for data scientists or whoever doing data analytics, isn’t it? If
-we filter out that result, then the top 1 goes to Reims (51100) and the top 2
-goes to Paris 16e district (75016).&lt;/p&gt;
-
-&lt;p&gt;And here is the implementation in Java. I am not going to explain this code
-block because it’s pretty straightforward:&lt;/p&gt;
-
-&lt;div class=&quot;language-java highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;kt&quot;&gt;var&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;sourceBuilder&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;
-    &lt;span class=&quot;k&quot;&gt;new&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;SearchSourceBuilder&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;()&lt;/span&gt;
-        &lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;size&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt;
-        &lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;aggregation&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nc&quot;&gt;AggregationBuilders&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;terms&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;postal_code/terms&quot;&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;).&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;field&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;postal_code&quot;&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;).&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;size&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;3&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;))&lt;/span&gt;
-        &lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;query&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nc&quot;&gt;QueryBuilders&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;matchAllQuery&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;());&lt;/span&gt;
-
-&lt;span class=&quot;kt&quot;&gt;var&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;request&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;new&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;SearchRequest&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;().&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;indices&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;transactions&quot;&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;).&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;source&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;sourceBuilder&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;);&lt;/span&gt;
-
-&lt;span class=&quot;kt&quot;&gt;var&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;response&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;restClient&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;search&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;request&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;RequestOptions&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;DEFAULT&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;);&lt;/span&gt;
-&lt;span class=&quot;kt&quot;&gt;var&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;terms&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nc&quot;&gt;ParsedStringTerms&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;response&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;getAggregations&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;().&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;get&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;postal_code/terms&quot;&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;);&lt;/span&gt;
-&lt;span class=&quot;kt&quot;&gt;var&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;countPerPostalCode&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;terms&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;getBuckets&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;().&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;stream&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;()&lt;/span&gt;
-    &lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;map&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;b&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;-&amp;gt;&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nc&quot;&gt;ParsedBucket&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;b&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt;
-    &lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;collect&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;
-        &lt;span class=&quot;nc&quot;&gt;Collectors&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;toMap&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;
-            &lt;span class=&quot;nl&quot;&gt;ParsedBucket:&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;:&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;getKeyAsString&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;,&lt;/span&gt;
-            &lt;span class=&quot;nl&quot;&gt;ParsedBucket:&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;:&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;getDocCount&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;));&lt;/span&gt;
-&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
-
-&lt;p&gt;In this section, we saw how to create a bucket aggregation using terms
-aggregations and field &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;postal_code&lt;/code&gt;. But all we saw are very primitive examples and they
-didn’t provide much added value for data analytics. In the following sections, I
-want to share something more interesting with you, such as: &lt;mark&gt;what is the average
-price of a second-hand apartment in Paris?&lt;/mark&gt; Before answering this question, we will
-need to compute the price per square meter (€/m2). I will show you how to do
-that in the next section. And then, we will do the analysis for Paris.&lt;/p&gt;
-
-&lt;h2 id=&quot;scripted-metric-aggregation&quot;&gt;Scripted Metric Aggregation&lt;/h2&gt;
-
-&lt;p&gt;&lt;em&gt;How to compute the price per square meter (€/m2)?&lt;/em&gt;&lt;/p&gt;
-
-&lt;p&gt;Our current goal is to compute the price per square meter for each apartment sold.
-We can do that by doing simple math:&lt;/p&gt;
-
-&lt;div class=&quot;language-plaintext highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;price_m2 = total_price / built-up area
-&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
-
-&lt;p&gt;There are mainly 3 choices to compute this field:&lt;/p&gt;
-
-&lt;ol&gt;
-  &lt;li&gt;Do it at index-time: when we create the new document in Elasticsearch, we can
-compute a field in our value class in Java. This is useful when we know
-exactly what we need in advance.&lt;/li&gt;
-  &lt;li&gt;Do it at runtime: update the index mapping to include a new scripted field.
-This will apply to all the documents. This is useful when we don’t know what
-additional fields we need when indexing documents. It provides flexibility to modify documents
-at runtime. Especially useful for end-users.&lt;/li&gt;
-  &lt;li&gt;Do it at query-time: create the field when running the query. This is probably
-the most expensive one but it fits the on-demand requirement. Sometimes we
-don’t want to keep one additional field forever because it’s only useful for
-some queries.&lt;/li&gt;
-&lt;/ol&gt;
-
-&lt;p&gt;For now, I am going to use choice 3 because it fits the current article
-which is about search. To prepare the scripted metric aggregation, we need to
-provide a runtime mapping &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;price_m2&lt;/code&gt;, which is computed by two existing fields:
-&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;property_value&lt;/code&gt; and the &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;real_built_un_area&lt;/code&gt;. It looks like this:&lt;/p&gt;
-
-&lt;div class=&quot;language-plaintext highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;GET /transactions/_search
-&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
-
-&lt;div class=&quot;language-js highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-  &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;runtime_mappings&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-    &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;price_m2&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-      &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;type&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;double&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
-      &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;script&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;emit(doc['property_value'].value / doc['real_built_up_area'].value)&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;
-    &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
-  &lt;span class=&quot;p&quot;&gt;},&lt;/span&gt;
-  &lt;span class=&quot;p&quot;&gt;...&lt;/span&gt;
-&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
-&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
-
-&lt;p&gt;The script is written in “Painless Script”. Be careful about the logic that you
-are going to add to this script because it is easy to change from painless to
-painful 🙂. If you want to know more about Painless, visit Elasticsearch
-documentation: &lt;a href=&quot;https://www.elastic.co/guide/en/elasticsearch/painless/master/painless-lang-spec.html&quot;&gt;Painless Language
-Specification&lt;/a&gt;.&lt;/p&gt;
-
-&lt;p&gt;Now, going back to our scripted metric, we will need to handle some corner cases
-because the property value or real built-up area may be missing or equal to 0. I
-filtered them out in the “query” section of the aggregation. Also, we need to
-filter the nature of the transaction (mutation) to select only the sales. Other
-types like expropriation, exchange, judgement are not what we want. To simplify a
-bit, I also excluded the category “sales under construction”. The final HTTP
-request looks like this:&lt;/p&gt;
-
-&lt;div class=&quot;language-js highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-  &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;query&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;  &lt;span class=&quot;c1&quot;&gt;// 1&lt;/span&gt;
-    &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;bool&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-      &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;filter&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;[&lt;/span&gt;
-        &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt; &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;match&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt; &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;mutation_nature&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt; &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;query&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;Vente&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;},&lt;/span&gt;
-        &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt; &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;match&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt; &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;local_type&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt; &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;query&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;Appartement&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;},&lt;/span&gt;
-        &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt; &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;range&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt; &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;property_value&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt; &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;gt&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;},&lt;/span&gt;
-        &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt; &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;range&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt; &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;real_built_up_area&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt; &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;gt&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
-      &lt;span class=&quot;p&quot;&gt;]&lt;/span&gt;
-    &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
-  &lt;span class=&quot;p&quot;&gt;},&lt;/span&gt;
-  &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;runtime_mappings&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;  &lt;span class=&quot;c1&quot;&gt;// 2&lt;/span&gt;
-    &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;price_m2&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-      &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;type&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;double&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
-      &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;script&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;emit(doc['property_value'].value / doc['real_built_up_area'].value)&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;
-    &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
-  &lt;span class=&quot;p&quot;&gt;},&lt;/span&gt;
-  &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;size&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;  &lt;span class=&quot;c1&quot;&gt;// 3&lt;/span&gt;
-  &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;aggs&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;   &lt;span class=&quot;c1&quot;&gt;// 4&lt;/span&gt;
-    &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;price_m2/stats&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-      &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;stats&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-        &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;field&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;price_m2&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;
-      &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
-    &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
-  &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
-&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
-&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
-
-&lt;p&gt;If we take a quick look into the HTTP request, you will see the same concept
-again, as above for the metric aggregation and bucket aggregation. This time,
-the metric aggregation term does the following things:&lt;/p&gt;
-
-&lt;ol&gt;
-  &lt;li&gt;It does not query all the documents anymore. It contains multiple filters,
-encapsulated in a boolean query.&lt;/li&gt;
-  &lt;li&gt;It defines a runtime mapping for field &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;price_m2&lt;/code&gt;, computed from property
-value and real built-up area.&lt;/li&gt;
-  &lt;li&gt;It sets the size to 0 to avoid returning documents (hits) because we don’t need them.&lt;/li&gt;
-  &lt;li&gt;This is the key of the request. It specifies the type of aggregation. We use
-multi-valued metric aggregation &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;stats&lt;/code&gt;, which returns the min, max, average,
-sum, and count of the field &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;price_m2&lt;/code&gt; in the selected documents.&lt;/li&gt;
-&lt;/ol&gt;
-
-&lt;p&gt;Sending the request above will return:&lt;/p&gt;
-
-&lt;div class=&quot;language-js highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-  &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;took&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;14&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
-  &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;timed_out&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;kc&quot;&gt;false&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
-  &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;_shards&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-    &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;total&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;1&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
-    &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;successful&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;1&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
-    &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;skipped&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
-    &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;failed&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;
-  &lt;span class=&quot;p&quot;&gt;},&lt;/span&gt;
-  &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;hits&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-    &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;total&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-      &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;value&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;10000&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
-      &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;relation&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;gte&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;
-    &lt;span class=&quot;p&quot;&gt;},&lt;/span&gt;
-    &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;max_score&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;kc&quot;&gt;null&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
-    &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;hits&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;[]&lt;/span&gt;
-  &lt;span class=&quot;p&quot;&gt;},&lt;/span&gt;
-  &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;aggregations&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-    &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;price_m2/stats&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-      &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;count&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;147763&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
-      &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;min&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;mf&quot;&gt;0.003750000149011612&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
-      &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;max&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;mf&quot;&gt;8166666.666666667&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
-      &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;avg&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;mf&quot;&gt;26941.800127837614&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
-      &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;sum&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;mf&quot;&gt;3981001212.2896695&lt;/span&gt;
-    &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
-  &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
-&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
-&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
-
-&lt;h2 id=&quot;transactions-in-paris&quot;&gt;Transactions In Paris&lt;/h2&gt;
-
-&lt;p&gt;Now we have all the elements that we need, it’s time to do something fun! We
-know how to execute a multi-valued metric aggregation, e.g. stats. We know how
-to execute a bucket aggregation, e.g. per postal code. We know how to compute a
-scripted metric for the price per meter square (m2). Now, let’s
-use them to do a quick case study for Paris. This section aims to answer two questions:&lt;/p&gt;
-
-&lt;ol&gt;
-  &lt;li&gt;What is the price for second-hand apartments in Paris per district
-(arrondissement)?&lt;/li&gt;
-  &lt;li&gt;What is the price for second-hand apartments in Paris per type of apartment (T1,
-T2, T3, …)?&lt;/li&gt;
-&lt;/ol&gt;
-
-&lt;p&gt;To answer the first question, we need to use sub-aggregations with 2 levels. The first
-level is a terms aggregation per postal code and the second level is a list of
-multi-valued metric aggregations: &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;percentiles&lt;/code&gt; and &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;stats&lt;/code&gt;. &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;percentiles&lt;/code&gt; for
-price per square meter and
-&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;stats&lt;/code&gt; for the total property value.&lt;/p&gt;
-
-&lt;div class=&quot;language-js highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-  &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;query&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-    &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;bool&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-      &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;must&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;[&lt;/span&gt;
-        &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt; &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;wildcard&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt; &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;postal_code&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt; &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;value&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;75*&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
-      &lt;span class=&quot;p&quot;&gt;],&lt;/span&gt;
-      &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;filter&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;[&lt;/span&gt;
-        &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt; &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;match&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt; &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;mutation_nature&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt; &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;query&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;Vente&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;},&lt;/span&gt;
-        &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt; &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;match&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt; &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;local_type&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt; &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;query&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;Appartement&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;},&lt;/span&gt;
-        &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt; &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;range&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt; &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;property_value&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt; &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;gt&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;},&lt;/span&gt;
-        &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt; &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;range&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt; &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;real_built_up_area&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt; &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;gt&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
-      &lt;span class=&quot;p&quot;&gt;]&lt;/span&gt;
-    &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
-  &lt;span class=&quot;p&quot;&gt;},&lt;/span&gt;
-  &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;runtime_mappings&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-    &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;price_m2&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-      &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;type&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;double&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
-      &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;script&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;emit(doc['property_value'].value / doc['real_built_up_area'].value)&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;
-    &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
-  &lt;span class=&quot;p&quot;&gt;},&lt;/span&gt;
-  &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;size&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
-  &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;aggs&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-    &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;postal-code-aggregation&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-      &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;terms&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-        &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;field&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;postal_code&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
-        &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;size&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;20&lt;/span&gt;
-      &lt;span class=&quot;p&quot;&gt;},&lt;/span&gt;
-      &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;aggs&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-        &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;price_m2/percentiles&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-          &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;percentiles&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-            &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;field&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;price_m2&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;
-          &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
-        &lt;span class=&quot;p&quot;&gt;},&lt;/span&gt;
-        &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;property_value/percentiles&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-          &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;stats&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-            &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;field&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;property_value&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;
-          &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
-        &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
-      &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
-    &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
-  &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
-&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
-&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
-
-&lt;p&gt;Sending the request above will return:&lt;/p&gt;
-
-&lt;div class=&quot;language-js highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-  &lt;span class=&quot;p&quot;&gt;...&lt;/span&gt;
-  &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;aggregations&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-    &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;postal-code-aggregation&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-      &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;doc_count_error_upper_bound&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
-      &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;sum_other_doc_count&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
-      &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;buckets&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;[&lt;/span&gt;
-        &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-          &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;key&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;75018&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
-          &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;doc_count&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;1740&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
-          &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;property_value/stats&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-            &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;count&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;1740&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
-            &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;min&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;mf&quot;&gt;0.15000000596046448&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
-            &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;max&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;9278000&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
-            &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;avg&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;mf&quot;&gt;685657.4655678796&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
-            &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;sum&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;mf&quot;&gt;1193043990.0881104&lt;/span&gt;
-          &lt;span class=&quot;p&quot;&gt;},&lt;/span&gt;
-          &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;price_m2/percentiles&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-            &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;values&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-              &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;1.0&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;mf&quot;&gt;38.31908831908832&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
-              &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;5.0&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;mf&quot;&gt;4263.305322128852&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
-              &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;25.0&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;mf&quot;&gt;8581.576948155804&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
-              &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;50.0&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;mf&quot;&gt;10221.628370766353&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
-              &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;75.0&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;mf&quot;&gt;12191.63493555511&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
-              &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;95.0&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;mf&quot;&gt;62619.36339522546&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
-              &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;99.0&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;mf&quot;&gt;205629.62962962964&lt;/span&gt;
-            &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
-          &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
-        &lt;span class=&quot;p&quot;&gt;},&lt;/span&gt;
-        &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-          &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;key&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;75017&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
-          &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;doc_count&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;1411&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
-          &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;property_value/stats&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;...&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;},&lt;/span&gt;
-          &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;price_m2/percentiles&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;...&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
-        &lt;span class=&quot;p&quot;&gt;},&lt;/span&gt;
-        &lt;span class=&quot;p&quot;&gt;...&lt;/span&gt;
-      &lt;span class=&quot;p&quot;&gt;]&lt;/span&gt;
-    &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
-  &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
-&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
-&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
-
-&lt;p&gt;If we transform the response a bit, we can obtain the following tables.&lt;/p&gt;
-
-&lt;h3 id=&quot;total-price-per-district&quot;&gt;Total Price Per District&lt;/h3&gt;
-
-&lt;p&gt;Here is the total price per district in Paris in percentiles: p5, p25, p50, p75,
-p95. You can see that the 8th district (&lt;mark&gt;75008&lt;/mark&gt;) is the most
-expensive for most of the percentiles. 50% of the apartments are more expensive
-than 1.3M€ 🤯.&lt;/p&gt;
-
-&lt;table&gt;
-  &lt;thead&gt;
-    &lt;tr&gt;
-      &lt;th style=&quot;text-align: center&quot;&gt;Postal Code&lt;/th&gt;
-      &lt;th style=&quot;text-align: right&quot;&gt;p5 (€)&lt;/th&gt;
-      &lt;th style=&quot;text-align: right&quot;&gt;p25 (€)&lt;/th&gt;
-      &lt;th style=&quot;text-align: right&quot;&gt;p50 (€)&lt;/th&gt;
-      &lt;th style=&quot;text-align: right&quot;&gt;p75 (€)&lt;/th&gt;
-      &lt;th style=&quot;text-align: right&quot;&gt;p95 (€)&lt;/th&gt;
-    &lt;/tr&gt;
-  &lt;/thead&gt;
-  &lt;tbody&gt;
-    &lt;tr&gt;
-      &lt;td style=&quot;text-align: center&quot;&gt;75001&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;41,000&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;404,794&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;691,666&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;1,740,000&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;7,005,000&lt;/td&gt;
-    &lt;/tr&gt;
-    &lt;tr&gt;
-      &lt;td style=&quot;text-align: center&quot;&gt;75002&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;45,000&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;278,350&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;496,075&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;970,392&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;18,500,000&lt;/td&gt;
-    &lt;/tr&gt;
-    &lt;tr&gt;
-      &lt;td style=&quot;text-align: center&quot;&gt;75003&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;610&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;319,583&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;541,163&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;1,095,193&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;12,550,000&lt;/td&gt;
-    &lt;/tr&gt;
-    &lt;tr&gt;
-      &lt;td style=&quot;text-align: center&quot;&gt;75004&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;16,100&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;350,000&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;595,000&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;1,030,000&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;2,171,100&lt;/td&gt;
-    &lt;/tr&gt;
-    &lt;tr&gt;
-      &lt;td style=&quot;text-align: center&quot;&gt;75005&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;86,722&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;303,805&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;500,000&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;852,500&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;1,746,600&lt;/td&gt;
-    &lt;/tr&gt;
-    &lt;tr&gt;
-      &lt;td style=&quot;text-align: center&quot;&gt;75006&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;103,500&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;389,867&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;729,260&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;1,504,999&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;3,408,400&lt;/td&gt;
-    &lt;/tr&gt;
-    &lt;tr&gt;
-      &lt;td style=&quot;text-align: center&quot;&gt;75007&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;146,600&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;452,985&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;845,000&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;1,854,400&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;6,000,000&lt;/td&gt;
-    &lt;/tr&gt;
-    &lt;tr&gt;
-      &lt;td style=&quot;text-align: center&quot;&gt;&lt;mark&gt;75008&lt;/mark&gt;&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;19,310&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;433,250&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;&lt;mark&gt;1,299,950&lt;/mark&gt;&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;3,323,542&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;33,100,000&lt;/td&gt;
-    &lt;/tr&gt;
-    &lt;tr&gt;
-      &lt;td style=&quot;text-align: center&quot;&gt;75009&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;80,000&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;301,325&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;551,894&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;1,148,000&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;6,300,000&lt;/td&gt;
-    &lt;/tr&gt;
-    &lt;tr&gt;
-      &lt;td style=&quot;text-align: center&quot;&gt;75010&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;106,499&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;295,000&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;486,668&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;837,383&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;3,716,667&lt;/td&gt;
-    &lt;/tr&gt;
-    &lt;tr&gt;
-      &lt;td style=&quot;text-align: center&quot;&gt;75011&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;122,505&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;272,264&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;436,082&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;719,349&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;9,320,000&lt;/td&gt;
-    &lt;/tr&gt;
-    &lt;tr&gt;
-      &lt;td style=&quot;text-align: center&quot;&gt;75012&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;124,172&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;290,000&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;432,585&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;680,481&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;3,150,000&lt;/td&gt;
-    &lt;/tr&gt;
-    &lt;tr&gt;
-      &lt;td style=&quot;text-align: center&quot;&gt;75013&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;148,800&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;280,867&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;424,521&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;609,400&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;1,378,005&lt;/td&gt;
-    &lt;/tr&gt;
-    &lt;tr&gt;
-      &lt;td style=&quot;text-align: center&quot;&gt;75014&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;149,250&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;310,500&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;494,981&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;770,160&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;12,104,743&lt;/td&gt;
-    &lt;/tr&gt;
-    &lt;tr&gt;
-      &lt;td style=&quot;text-align: center&quot;&gt;75015&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;154,400&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;316,764&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;471,024&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;699,333&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;1,280,571&lt;/td&gt;
-    &lt;/tr&gt;
-    &lt;tr&gt;
-      &lt;td style=&quot;text-align: center&quot;&gt;75016&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;118,915&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;395,990&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;781,012&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;1,400,268&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;3,500,000&lt;/td&gt;
-    &lt;/tr&gt;
-    &lt;tr&gt;
-      &lt;td style=&quot;text-align: center&quot;&gt;75017&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;97,013&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;312,448&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;562,425&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;1,199,034&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;13,230,000&lt;/td&gt;
-    &lt;/tr&gt;
-    &lt;tr&gt;
-      &lt;td style=&quot;text-align: center&quot;&gt;75018&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;87,000&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;237,636&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;371,317&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;586,359&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;2,800,000&lt;/td&gt;
-    &lt;/tr&gt;
-    &lt;tr&gt;
-      &lt;td style=&quot;text-align: center&quot;&gt;75019&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;117,750&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;262,500&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;353,613&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;540,250&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;1,018,594&lt;/td&gt;
-    &lt;/tr&gt;
-    &lt;tr&gt;
-      &lt;td style=&quot;text-align: center&quot;&gt;75020&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;134,060&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;248,990&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;407,585&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;636,100&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;8,500,000&lt;/td&gt;
-    &lt;/tr&gt;
-  &lt;/tbody&gt;
-&lt;/table&gt;
-
-&lt;h3 id=&quot;price-per-m2-per-district&quot;&gt;Price Per M2 Per District&lt;/h3&gt;
-
-&lt;p&gt;But using the total price of the apartment is not objective for judging whether
-the appartment is expensive because they don’t have the same real built-in area
-(m2). So we should normalize it. We can normalize it by calculating the price per meter square (€/m2). It
-gives another table:&lt;/p&gt;
-
-&lt;table&gt;
-  &lt;thead&gt;
-    &lt;tr&gt;
-      &lt;th style=&quot;text-align: center&quot;&gt;Postal Code&lt;/th&gt;
-      &lt;th style=&quot;text-align: right&quot;&gt;p5 (€/m2)&lt;/th&gt;
-      &lt;th style=&quot;text-align: right&quot;&gt;p25 (€/m2)&lt;/th&gt;
-      &lt;th style=&quot;text-align: right&quot;&gt;p50 (€/m2)&lt;/th&gt;
-      &lt;th style=&quot;text-align: right&quot;&gt;p75 (€/m2)&lt;/th&gt;
-      &lt;th style=&quot;text-align: right&quot;&gt;p95 (€/m2)&lt;/th&gt;
-    &lt;/tr&gt;
-  &lt;/thead&gt;
-  &lt;tbody&gt;
-    &lt;tr&gt;
-      &lt;td style=&quot;text-align: center&quot;&gt;75001&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;729&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;11,591&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;14,208&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;26,602&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;231,818&lt;/td&gt;
-    &lt;/tr&gt;
-    &lt;tr&gt;
-      &lt;td style=&quot;text-align: center&quot;&gt;75002&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;3,492&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;10,853&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;12,505&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;15,586&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;391,045&lt;/td&gt;
-    &lt;/tr&gt;
-    &lt;tr&gt;
-      &lt;td style=&quot;text-align: center&quot;&gt;75003&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;14&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;11,144&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;13,308&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;17,131&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;167,899&lt;/td&gt;
-    &lt;/tr&gt;
-    &lt;tr&gt;
-      &lt;td style=&quot;text-align: center&quot;&gt;75004&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;343&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;11,405&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;13,077&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;15,448&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;32,767&lt;/td&gt;
-    &lt;/tr&gt;
-    &lt;tr&gt;
-      &lt;td style=&quot;text-align: center&quot;&gt;75005&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;2,616&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;11,004&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;12,679&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;15,000&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;30,905&lt;/td&gt;
-    &lt;/tr&gt;
-    &lt;tr&gt;
-      &lt;td style=&quot;text-align: center&quot;&gt;&lt;mark&gt;75006&lt;/mark&gt;&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;3,348&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;12,679&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;&lt;mark&gt;15,492&lt;/mark&gt;&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;19,666&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;49,035&lt;/td&gt;
-    &lt;/tr&gt;
-    &lt;tr&gt;
-      &lt;td style=&quot;text-align: center&quot;&gt;&lt;mark&gt;75007&lt;/mark&gt;&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;7,114&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;12,857&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;&lt;mark&gt;15,236&lt;/mark&gt;&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;20,179&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;130,105&lt;/td&gt;
-    &lt;/tr&gt;
-    &lt;tr&gt;
-      &lt;td style=&quot;text-align: center&quot;&gt;75008&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;260&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;10,715&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;13,301&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;39,951&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;919,444&lt;/td&gt;
-    &lt;/tr&gt;
-    &lt;tr&gt;
-      &lt;td style=&quot;text-align: center&quot;&gt;75009&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;2,925&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;10,208&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;12,207&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;14,734&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;342,463&lt;/td&gt;
-    &lt;/tr&gt;
-    &lt;tr&gt;
-      &lt;td style=&quot;text-align: center&quot;&gt;75010&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;5,331&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;9,570&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;11,174&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;13,747&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;128,161&lt;/td&gt;
-    &lt;/tr&gt;
-    &lt;tr&gt;
-      &lt;td style=&quot;text-align: center&quot;&gt;75011&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;6,140&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;9,787&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;11,167&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;13,078&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;198,674&lt;/td&gt;
-    &lt;/tr&gt;
-    &lt;tr&gt;
-      &lt;td style=&quot;text-align: center&quot;&gt;75012&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;5,222&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;9,015&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;10,264&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;11,669&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;84,290&lt;/td&gt;
-    &lt;/tr&gt;
-    &lt;tr&gt;
-      &lt;td style=&quot;text-align: center&quot;&gt;75013&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;5,010&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;8,345&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;9,769&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;11,386&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;56,522&lt;/td&gt;
-    &lt;/tr&gt;
-    &lt;tr&gt;
-      &lt;td style=&quot;text-align: center&quot;&gt;75014&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;6,389&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;9,378&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;10,805&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;12,948&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;318,546&lt;/td&gt;
-    &lt;/tr&gt;
-    &lt;tr&gt;
-      &lt;td style=&quot;text-align: center&quot;&gt;75015&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;6,994&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;9,546&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;10,762&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;12,066&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;17,901&lt;/td&gt;
-    &lt;/tr&gt;
-    &lt;tr&gt;
-      &lt;td style=&quot;text-align: center&quot;&gt;75016&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;4,000&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;9,910&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;11,504&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;13,810&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;28,489&lt;/td&gt;
-    &lt;/tr&gt;
-    &lt;tr&gt;
-      &lt;td style=&quot;text-align: center&quot;&gt;75017&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;4,152&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;9,967&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;11,700&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;14,165&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;181,150&lt;/td&gt;
-    &lt;/tr&gt;
-    &lt;tr&gt;
-      &lt;td style=&quot;text-align: center&quot;&gt;75018&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;4,263&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;8,582&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;10,222&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;12,192&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;62,619&lt;/td&gt;
-    &lt;/tr&gt;
-    &lt;tr&gt;
-      &lt;td style=&quot;text-align: center&quot;&gt;75019&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;5,204&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;7,294&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;9,060&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;10,579&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;30,095&lt;/td&gt;
-    &lt;/tr&gt;
-    &lt;tr&gt;
-      &lt;td style=&quot;text-align: center&quot;&gt;75020&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;5,390&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;8,347&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;9,664&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;11,538&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;234,160&lt;/td&gt;
-    &lt;/tr&gt;
-  &lt;/tbody&gt;
-&lt;/table&gt;
-
-&lt;p&gt;You can see that not only the 8th district (75008), but all the districts from
-1th to 8th are very expensive. In particular, the median (percentile 50) of 6th
-district (&lt;mark&gt;75006&lt;/mark&gt;) and 7th district (&lt;mark&gt;75007&lt;/mark&gt;) are higher
-than 15k€/m2.&lt;/p&gt;
-
-&lt;h3 id=&quot;prices-per-lot-type&quot;&gt;Prices Per Lot Type&lt;/h3&gt;
-
-&lt;p&gt;In the previous tables, we use bucket aggregation on postal code. But we can
-also analyze from another angle: the lot type (T1, T2, T3, T4, …). T1 means
-there is only 1 piece in the apartment, T2 means there are 2 pieces, etc.
-This type of analysis is useful because different people have different needs in
-their lives. Young people probably want
-to save some money and buy a small apartment, but a family probably wants a better
-one (T3+) because they need more room for the babies, etc. Using the runtime
-mappings (painless script) we saw before, we can compute the lot type as part
-of the search aggregation request
-and obtain the following tables.&lt;/p&gt;
-
-&lt;div class=&quot;language-js highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-  &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;runtime_mappings&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-    &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;price_m2&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-      &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;type&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;double&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
-      &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;script&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;emit(doc['property_value'].value / doc['real_built_up_area'].value)&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;
-    &lt;span class=&quot;p&quot;&gt;},&lt;/span&gt;
-    &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;lot_type&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-      &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;type&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;keyword&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
-      &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;script&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;if (0 &amp;lt; doc['lots_count'].value &amp;amp;&amp;amp; doc['lots_count'].value &amp;lt; 6) { emit('T' + doc['lots_count'].value) } else { emit('Others') }&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;
-    &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
-  &lt;span class=&quot;p&quot;&gt;},&lt;/span&gt;
-  &lt;span class=&quot;p&quot;&gt;...&lt;/span&gt;
-&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
-&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
-
-&lt;p&gt;The prices per lot type in Paris in percentiles:&lt;/p&gt;
-
-&lt;table&gt;
-  &lt;thead&gt;
-    &lt;tr&gt;
-      &lt;th style=&quot;text-align: center&quot;&gt;Lot Type&lt;/th&gt;
-      &lt;th style=&quot;text-align: right&quot;&gt;p5 (€)&lt;/th&gt;
-      &lt;th style=&quot;text-align: right&quot;&gt;p25 (€)&lt;/th&gt;
-      &lt;th style=&quot;text-align: right&quot;&gt;p50 (€)&lt;/th&gt;
-      &lt;th style=&quot;text-align: right&quot;&gt;p75 (€)&lt;/th&gt;
-      &lt;th style=&quot;text-align: right&quot;&gt;p95 (€)&lt;/th&gt;
-    &lt;/tr&gt;
-  &lt;/thead&gt;
-  &lt;tbody&gt;
-    &lt;tr&gt;
-      &lt;td style=&quot;text-align: center&quot;&gt;T1&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;31,264&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;210,041&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;358,500&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;600,600&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;1,565,087&lt;/td&gt;
-    &lt;/tr&gt;
-    &lt;tr&gt;
-      &lt;td style=&quot;text-align: center&quot;&gt;T2&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;179,993&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;338,870&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;&lt;mark&gt;517,788&lt;/mark&gt;&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;792,894&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;1,702,597&lt;/td&gt;
-    &lt;/tr&gt;
-    &lt;tr&gt;
-      &lt;td style=&quot;text-align: center&quot;&gt;T3&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;162,000&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;372,188&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;618,806&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;1,232,125&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;2,740,950&lt;/td&gt;
-    &lt;/tr&gt;
-    &lt;tr&gt;
-      &lt;td style=&quot;text-align: center&quot;&gt;T4&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;147,470&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;&lt;mark&gt;414,250&lt;/mark&gt;&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;699,413&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;1,222,750&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;3,173,845&lt;/td&gt;
-    &lt;/tr&gt;
-    &lt;tr&gt;
-      &lt;td style=&quot;text-align: center&quot;&gt;T5&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;331,108&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;530,791&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;809,000&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;1,275,048&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;3,220,000&lt;/td&gt;
-    &lt;/tr&gt;
-    &lt;tr&gt;
-      &lt;td style=&quot;text-align: center&quot;&gt;Others&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;262,500&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;2,880,000&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;5,712,857&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;12,572,222&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;33,100,000&lt;/td&gt;
-    &lt;/tr&gt;
-  &lt;/tbody&gt;
-&lt;/table&gt;
-
-&lt;p&gt;From the table above, we can see that it will be very hard to find an apartment if
-your budget is below &lt;mark&gt;400,000€&lt;/mark&gt;. It means that either you have a wonderful job or
-you will have to the house with your partner. Or maybe with some luck you won the
-loto 😉. Anyway it’s very expensive.&lt;/p&gt;
-
-&lt;p&gt;We can also normalize the price as we did before. Here is the price per meter square (€/m2) in Paris per lot type in percentiles:&lt;/p&gt;
-
-&lt;table&gt;
-  &lt;thead&gt;
-    &lt;tr&gt;
-      &lt;th style=&quot;text-align: center&quot;&gt;Lot Type&lt;/th&gt;
-      &lt;th style=&quot;text-align: right&quot;&gt;p5 (€/m2)&lt;/th&gt;
-      &lt;th style=&quot;text-align: right&quot;&gt;p25 (€/m2)&lt;/th&gt;
-      &lt;th style=&quot;text-align: right&quot;&gt;p50 (€/m2)&lt;/th&gt;
-      &lt;th style=&quot;text-align: right&quot;&gt;p75 (€/m2)&lt;/th&gt;
-      &lt;th style=&quot;text-align: right&quot;&gt;p95 (€/m2)&lt;/th&gt;
-    &lt;/tr&gt;
-  &lt;/thead&gt;
-  &lt;tbody&gt;
-    &lt;tr&gt;
-      &lt;td style=&quot;text-align: center&quot;&gt;T1&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;840&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;8,936&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;10,857&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;13,118&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;31,321&lt;/td&gt;
-    &lt;/tr&gt;
-    &lt;tr&gt;
-      &lt;td style=&quot;text-align: center&quot;&gt;T2&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;6,235&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;9,246&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;10,742&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;12,545&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;19,277&lt;/td&gt;
-    &lt;/tr&gt;
-    &lt;tr&gt;
-      &lt;td style=&quot;text-align: center&quot;&gt;T3&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;5,763&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;9,679&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;11,488&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;13,572&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;23,407&lt;/td&gt;
-    &lt;/tr&gt;
-    &lt;tr&gt;
-      &lt;td style=&quot;text-align: center&quot;&gt;T4&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;3,047&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;9,251&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;11,021&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;13,586&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;22,644&lt;/td&gt;
-    &lt;/tr&gt;
-    &lt;tr&gt;
-      &lt;td style=&quot;text-align: center&quot;&gt;T5&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;8,169&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;10,498&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;12,649&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;15,878&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;37,168&lt;/td&gt;
-    &lt;/tr&gt;
-    &lt;tr&gt;
-      &lt;td style=&quot;text-align: center&quot;&gt;Others&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;6,250&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;63,372&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;147,957&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;300,013&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;916,866&lt;/td&gt;
-    &lt;/tr&gt;
-  &lt;/tbody&gt;
-&lt;/table&gt;
-
-&lt;p&gt;From this table, we can see that regardless the number of pieces you want (the
-lot type), the price per meter square (m2) does not change much. The lot type is
-not an important factor for the price. The district is probably more important
-as we saw in the previous sections.&lt;/p&gt;
-
-&lt;p&gt;Alright, we go far enough into the Paris real-estate market. It’s
-crazy and it’s not for us right now. Let’s come back to the aggregations
-of Elasticsearch and we are reaching the end of this article.&lt;/p&gt;
-
-&lt;h2 id=&quot;recapitulation&quot;&gt;Recapitulation&lt;/h2&gt;
-
-&lt;p&gt;We saw several metric and bucket aggregations in this article, but we didn’t
-see all of them. There are so many metrics in Elasticsearch that we cannot
-remember everything. For me, the takeover is the syntax of the aggregation API.
-Once you remember this, it’s easy to search on the internet and complete the rest:&lt;/p&gt;
-
-&lt;div class=&quot;language-plaintext highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;GET /{index_name_expression}/_search
-&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
-
-&lt;div class=&quot;language-js highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-  &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;query&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-    &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;{query_type}&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;...&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
-  &lt;span class=&quot;p&quot;&gt;},&lt;/span&gt;
-  &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;size&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
-  &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;runtime_mappings&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-    &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;{mapping_name}&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;...&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
-  &lt;span class=&quot;p&quot;&gt;},&lt;/span&gt;
-  &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;aggs&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-    &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;{aggregation_name}&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-      &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;{aggregation_type}&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-        &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;field&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;{field_name}&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;
-        &lt;span class=&quot;p&quot;&gt;...&lt;/span&gt;
-      &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
-    &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
-  &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
-&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
-&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
-
-&lt;p&gt;The API path contains the name of the index to be searched. It can also be multiple
-indices separated by comma (&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;,&lt;/code&gt;) or &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;_all&lt;/code&gt; indices. As for the API request body,
-it consists of multiple parts: the query part where you can specify the criteria
-of the selection; the size part where you can specify the number of search hits
-returned (actual documents found in Elasticsearch); the runtime mappings part
-to define one or multiple computed fields at query time; and finally the
-aggregations part where you can define your metric or bucket aggregation. You
-can also provide sub-aggregations under a given aggregation.&lt;/p&gt;
-
-&lt;p&gt;As for the response:&lt;/p&gt;
-
-&lt;div class=&quot;language-js highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-  &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;took&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;14&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
-  &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;timed_out&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;kc&quot;&gt;false&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
-  &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;_shards&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;...&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;},&lt;/span&gt;
-  &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;hits&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;...&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;},&lt;/span&gt;
-  &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;aggregations&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-    &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;price_m2/stats&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-      &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;count&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;147763&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
-      &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;min&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;mf&quot;&gt;0.003750000149011612&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
-      &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;max&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;mf&quot;&gt;8166666.666666667&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
-      &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;avg&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;mf&quot;&gt;26941.800127837614&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
-      &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;sum&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;mf&quot;&gt;3981001212.2896695&lt;/span&gt;
-    &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
-  &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
-&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
-&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
-
-&lt;p&gt;It contains some metadata about the search settings and performance, such as the
-execution time, the timeout, the number of shards reached. Then, it contains the
-number of hits and the actual documents. And finally the aggregations, each
-aggregation is a key-value pair in the JSON response, where the key is the name
-of the aggregation we specified and the value is the actual result of the
-aggregation. As for the structure of the aggregation result:&lt;/p&gt;
-
-&lt;ul&gt;
-  &lt;li&gt;For metric aggregation, the actual result is the metric. There is one metric
-if this is a single-valued metric; there are multiple metrics if this is a
-multi-valued metric.&lt;/li&gt;
-  &lt;li&gt;For bucket aggregation, the actual results are shown under entry &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;buckets&lt;/code&gt;.
-Each bucket contains the key, the number of documents found, and the actual
-metric(s) requested.&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;p&gt;We can also see it from another angle by comparing the syntax of Elasticsearch
-Aggregations API to SQL. They are
-not exactly equivalent, but I believe this comparison is helpful for
-understanding:&lt;/p&gt;
-
-&lt;table&gt;
-  &lt;thead&gt;
-    &lt;tr&gt;
-      &lt;th style=&quot;text-align: left&quot;&gt;Item&lt;/th&gt;
-      &lt;th style=&quot;text-align: left&quot;&gt;SQL&lt;/th&gt;
-      &lt;th style=&quot;text-align: left&quot;&gt;Elasticsearch&lt;/th&gt;
-      &lt;th style=&quot;text-align: left&quot;&gt;Comment&lt;/th&gt;
-    &lt;/tr&gt;
-  &lt;/thead&gt;
-  &lt;tbody&gt;
-    &lt;tr&gt;
-      &lt;td style=&quot;text-align: left&quot;&gt;Source&lt;/td&gt;
-      &lt;td style=&quot;text-align: left&quot;&gt;&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;FROM {source_table}&lt;/code&gt;&lt;/td&gt;
-      &lt;td style=&quot;text-align: left&quot;&gt;Index name&lt;/td&gt;
-      &lt;td style=&quot;text-align: left&quot;&gt;You can select multiple indices in Elasticsearch but you cannot do that in SQL without JOIN.&lt;/td&gt;
-    &lt;/tr&gt;
-    &lt;tr&gt;
-      &lt;td style=&quot;text-align: left&quot;&gt;Metric&lt;/td&gt;
-      &lt;td style=&quot;text-align: left&quot;&gt;&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;SELECT my_func(my_field)&lt;/code&gt;&lt;/td&gt;
-      &lt;td style=&quot;text-align: left&quot;&gt;Name of the aggregation&lt;/td&gt;
-      &lt;td style=&quot;text-align: left&quot;&gt; &lt;/td&gt;
-    &lt;/tr&gt;
-    &lt;tr&gt;
-      &lt;td style=&quot;text-align: left&quot;&gt;Aggregation&lt;/td&gt;
-      &lt;td style=&quot;text-align: left&quot;&gt;&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;GROUP BY my_field&lt;/code&gt;&lt;/td&gt;
-      &lt;td style=&quot;text-align: left&quot;&gt;&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;&quot;field&quot;: {my_field}&lt;/code&gt;&lt;/td&gt;
-      &lt;td style=&quot;text-align: left&quot;&gt; &lt;/td&gt;
-    &lt;/tr&gt;
-    &lt;tr&gt;
-      &lt;td style=&quot;text-align: left&quot;&gt;Query&lt;/td&gt;
-      &lt;td style=&quot;text-align: left&quot;&gt;&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;WHERE {clause}&lt;/code&gt;&lt;/td&gt;
-      &lt;td style=&quot;text-align: left&quot;&gt;&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;&quot;query&quot;: {clause}&lt;/code&gt;&lt;/td&gt;
-      &lt;td style=&quot;text-align: left&quot;&gt; &lt;/td&gt;
-    &lt;/tr&gt;
-    &lt;tr&gt;
-      &lt;td style=&quot;text-align: left&quot;&gt;Size&lt;/td&gt;
-      &lt;td style=&quot;text-align: left&quot;&gt;-&lt;/td&gt;
-      &lt;td style=&quot;text-align: left&quot;&gt;&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;&quot;size&quot;: {size}&lt;/code&gt;&lt;/td&gt;
-      &lt;td style=&quot;text-align: left&quot;&gt;There are no equivalent. In SQL, you cannot GROUP BY and select all the fields of some documents at the same time.&lt;/td&gt;
-    &lt;/tr&gt;
-  &lt;/tbody&gt;
-&lt;/table&gt;
-
-&lt;h2 id=&quot;going-further&quot;&gt;Going Further&lt;/h2&gt;
-
-&lt;p&gt;How to go further from here?&lt;/p&gt;
-
-&lt;ul&gt;
-  &lt;li&gt;To learn more about aggregations for Elasticsearch 7, visit official
-documentation &lt;a href=&quot;https://www.elastic.co/guide/en/elasticsearch/reference/7.x/search-aggregations.html&quot;&gt;“Aggregations
-(7.x)”&lt;/a&gt;&lt;/li&gt;
-  &lt;li&gt;To learn more about boolean query for Elasticsearch 7, visit official
-documentation &lt;a href=&quot;https://www.elastic.co/guide/en/elasticsearch/reference/7.x/query-dsl-bool-query.html&quot;&gt;“Boolean query (7.x)”&lt;/a&gt;&lt;/li&gt;
-  &lt;li&gt;To learn more about dataset “Demandes de valeurs foncières géolocalisées”,
-visit the website of the French government
-&lt;a href=&quot;https://www.data.gouv.fr/fr/datasets/demandes-de-valeurs-foncieres-geolocalisees/&quot;&gt;etalab&lt;/a&gt;.&lt;/li&gt;
-  &lt;li&gt;To learn how to earn 1M€ and buy an apartment in Paris? Well, I want to know
-as well. Please let me know if you have an answer by leaving a comment below. 😬&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;p&gt;If you are interested to see the source code, you can also find it on my GitHub
-under project
-&lt;a href=&quot;https://github.com/mincong-h/learning-elasticsearch/tree/blog-dvf-aggregations/demo-dvf&quot;&gt;mincong-h/learning-elasticsearch&lt;/a&gt;.&lt;/p&gt;
-
-&lt;h2 id=&quot;conclusion&quot;&gt;Conclusion&lt;/h2&gt;
-
-&lt;p&gt;In this article, we saw how to use metric aggregation using an example of
-value-count aggregation, how to use bucket aggregation for postal code via
-terms aggregation, and how to use
-scripted aggregation by computing the metric of price per square meter (m2). We
-also saw how to perform an aggregation that contains sub-aggregations (stats and
-percentiles) using Paris real-estate market as a demo. Finally, we saw how to
-remember the syntax efficiently and how to go further from here.
-Interested to know more? You can subscribe to &lt;a href=&quot;/feed.xml&quot;&gt;the feed of my blog&lt;/a&gt;, follow me
-on &lt;a href=&quot;https://twitter.com/mincong_h&quot;&gt;Twitter&lt;/a&gt; or
-&lt;a href=&quot;https://github.com/mincong-h/&quot;&gt;GitHub&lt;/a&gt;. Hope you enjoy this article, see you the next time!&lt;/p&gt;
-
-&lt;h2 id=&quot;references&quot;&gt;References&lt;/h2&gt;
-
-&lt;ul&gt;
-  &lt;li&gt;Elasticsearch, “Value count aggregation”, &lt;em&gt;elastic.co&lt;/em&gt;, 2021.
-&lt;a href=&quot;https://www.elastic.co/guide/en/elasticsearch/reference/7.x/search-aggregations-metrics-valuecount-aggregation.html&quot;&gt;https://www.elastic.co/guide/en/elasticsearch/reference/7.x/search-aggregations-metrics-valuecount-aggregation.html&lt;/a&gt;&lt;/li&gt;
-  &lt;li&gt;Elasticsearch, “Elastic Certified Engineer Exam”, &lt;em&gt;elastic.co&lt;/em&gt;, 2021.
-&lt;a href=&quot;https://www.elastic.co/training/elastic-certified-engineer-exam&quot;&gt;https://www.elastic.co/training/elastic-certified-engineer-exam&lt;/a&gt;&lt;/li&gt;
-  &lt;li&gt;Jingwen Zheng, “Second-hand apartments transactions in Paris (01/2014 -
-06/2020)”, &lt;em&gt;jingwen.github.io&lt;/em&gt;, 2021. &lt;a href=&quot;https://jingwen-z.github.io/second-hand-apartments-transactions-in-paris-1420/&quot;&gt;https://jingwen-z.github.io/second-hand-apartments-transactions-in-paris-1420/&lt;/a&gt;&lt;/li&gt;
-&lt;/ul&gt;</content><author><name>Mincong Huang</name><email>mincong.h@gmail.com</email></author><category term="elasticsearch" /><category term="elasticsearch" /><category term="java" /><summary type="html">How to write and execute metric and bucket aggregations in Elasticsearch for dataset: Demandes de valeurs foncières (DVF) for data analytics. Also, how to execute aggregations that contain sub-aggregations.</summary><media:thumbnail xmlns:media="http://search.yahoo.com/mrss/" url="https://mincong.io/assets/bg-henrique-ferreira-ZyYsY0ez2D4-unsplash.jpg" /><media:content medium="image" url="https://mincong.io/assets/bg-henrique-ferreira-ZyYsY0ez2D4-unsplash.jpg" xmlns:media="http://search.yahoo.com/mrss/" /></entry></feed>
+&lt;/ul&gt;</content><author><name>Mincong Huang</name><email>mincong.h@gmail.com</email></author><category term="elasticsearch" /><category term="elasticsearch" /><category term="kibana" /><category term="open-data" /><summary type="html">This article studies the real estate market of Île-de-France in 2020 by exploring and visualizing the dataset DVF using Kibana. We will discuss the global landscape, the impact of COVID-19, the situation in different departments, and more.</summary><media:thumbnail xmlns:media="http://search.yahoo.com/mrss/" url="https://mincong.io/assets/bg-alexander-kagan-t9Td0zfDTwI-unsplash.jpg" /><media:content medium="image" url="https://mincong.io/assets/bg-alexander-kagan-t9Td0zfDTwI-unsplash.jpg" xmlns:media="http://search.yahoo.com/mrss/" /></entry></feed>
