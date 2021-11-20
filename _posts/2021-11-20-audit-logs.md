@@ -65,8 +65,8 @@ Generally speaking, there are some information that we care about:
   operation. The user information may contain: the first name, last name, email,
   department, organization unit, employee ID, etc.
 
-We can eventually go further by adding more metadata to faciliate the search.
-Making the description more human readable etc. But I believe that these are not
+We can eventually go further by adding more metadata to faciliate the search,
+making the description more human readable, etc. But I believe that these are not
 requirements, but enhancements to make the feature more usable.
 
 Then on the business side, there are other also some requirements:
