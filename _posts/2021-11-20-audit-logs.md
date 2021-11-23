@@ -7,7 +7,7 @@ subtitle:            >
 lang:                en
 date:                2021-11-20 08:40:44 +0100
 categories:          [java-core]
-tags:                [java]
+tags:                [java, jetty, jersey, api, jax-rs]
 ads_tags:            []
 comments:            true
 excerpt:             >
@@ -112,6 +112,80 @@ multiple events together.
 
 ## Java Solutions
 
+In this section, I would like to go further into Java to discuss how to
+implement a simple audit logging solution for Java RESTful APIs. Here I am going
+to list 3 solutions based on Java Servlet, Jetty, and JAX-RS (Jersey).
+
+### Java Servlet
+
+For those who don't know Java Servlet, here is a quick introduction. Java
+Servlet or nowadays Jakarta Servlet, is a Java software component that extends
+the capabilities of a server. It's commonly used for implementing web containers
+for hosting web applications, similar to PHP and ASP.NET. The evolution of Java
+Servlet is part of the Java Specification Requests
+([JSRs](https://jcp.org/en/jsr/all)). The latest one is Java Servlet 4.0
+(JSR-369) started on 2017.
+
+In our case, we can implement a simple Servlet filter to intercept the HTTP
+request or response using the `doFilter()` method. Inside the method, you
+must call the filter chain to pass the request and response to the next
+filter so that they are handled. Otherwise, the request will be dropped
+(filtered), which is not desired. Then, you can implement the actual auditing
+logic before or after the chain. I perfer after the chain because in this case,
+we will have the information of both the HTTP request and the HTTP response,
+which makes the auditing logging more complet.
+
+```java
+import javax.servlet.*;
+import java.io.IOException;
+
+public class SimpleServletFilter implements Filter {
+
+    public void init(FilterConfig config) throws ServletException {}
+
+    public void doFilter(ServletRequest request, ServletResponse response,
+            FilterChain chain) throws IOException, ServletException {
+        // before the request being handled
+        chain.doFilter(request, response);
+        // after the response being created
+    }
+
+    public void destroy() {}
+}
+```
+
+### Jetty Server
+
+If you are using Jetty as the solution for your Java server, you can extend
+`AbstractNCSARequestLog` to provide a custom access log solution in the
+pseudo-standard NCSA commong log format. To do that, you can create a request
+log handler which handles the request log, and then use the handler in your
+Jetty server:
+
+```java
+var logHandler = new RequestLogHandler();
+logHandler.setRequestLog(new MyRequestLog());
+server.setHandler(logHandler);
+```
+
+where the implementation of `MyRequestLog` looks like this:
+
+```java
+public class MyRequestLog extends AbstractNCSARequestLog {
+    public MyRequestLog() {
+        // configure options here: timezone, locale, extended, IP address, ...
+    }
+
+    @Override
+    public void write(String entry) throws IOException {
+        logger.info(entry);
+    }
+}
+```
+
+The problem of this approach is that the final result must be a string and it
+must looks like an access log. So if you need a more custom solution, then you
+will need to find another way to handle it.
 
 ## Going Further
 
@@ -135,3 +209,4 @@ on [Twitter](https://twitter.com/mincong_h) or
 - ["Chapter 10. Filters and
   Interceptors - Jersey"](https://eclipse-ee4j.github.io/jersey.github.io/documentation/latest/filters-and-interceptors.html),
 _Eclipse EE4J_, 2021.
+- ["Filter (Java(TM) EE 7 Specification APIs)"](https://docs.oracle.com/javaee/7/api/javax/servlet/Filter.html), 2015.
