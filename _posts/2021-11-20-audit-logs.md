@@ -91,17 +91,27 @@ will try to explain why.
 **Hooking into the lifecycle.** When implementing audit logging, we need to
 decide where should we put the code. I believe that the best option is to hook
 your logic into the lifecycle of the framework that you use. Then, you will be
-able to log events before, or after an event. For example, if you use Java
+able to log before or after an event. For example, if you use Java
 Persistence API (JPA), you can implement your logic using `@PrePersist`,
-`@PreUpdate`, `@PreRemove` callbacks. Or if you are using Java RESTful API
+`@PreUpdate`, `@PreRemove` callbacks. Or if you use Java RESTful API
 (JAX-RS), you can implement interfaces `ContainerRequestFilter` or
 `ContainerResponseFilter` to handle the audit logging, respectively before the
 request being handled or after the response being created. By hooking into the
 lifecycle, we ensure that the audit logging is decoupled from the actual
 business logic. We avoid spamming the codebase by avoiding adding the audit logs
-every methods. It also makes it clear that when the audit actually happens.
+into every method. It also makes it clear about when does the audit actually happen.
 
-## Section 3
+**Avoid blocking the actual event.** When adding audit logs, we should also
+avoid blocking actual events so that user's action won't be blocked or delayed.
+This is because sometime the audit logging requires API calls, which means that
+they may be slow or suffer from network issues. So my suggestion is to use
+asynchronous implementation so that the actual event will be handled correctly.
+As for network issue or other types of error, we can make it fault-tolerent by
+adding a retry mechanism. We can also consider using batch API call to group
+multiple events together.
+
+## Java Solutions
+
 
 ## Going Further
 
