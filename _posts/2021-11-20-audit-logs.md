@@ -83,7 +83,23 @@ Then on the business side, there are other also some requirements:
 I probably didn't cover everything in the section. If you have other ideas,
 please let me know what you think in the comment section below.
 
-## Section 2
+## Principles When Implementing Audit Logs
+
+When implementing audit logs, I believe here are the principles to follow and I
+will try to explain why.
+
+**Hooking into the lifecycle.** When implementing audit logging, we need to
+decide where should we put the code. I believe that the best option is to hook
+your logic into the lifecycle of the framework that you use. Then, you will be
+able to log events before, or after an event. For example, if you use Java
+Persistence API (JPA), you can implement your logic using `@PrePersist`,
+`@PreUpdate`, `@PreRemove` callbacks. Or if you are using Java RESTful API
+(JAX-RS), you can implement interfaces `ContainerRequestFilter` or
+`ContainerResponseFilter` to handle the audit logging, respectively before the
+request being handled or after the response being created. By hooking into the
+lifecycle, we ensure that the audit logging is decoupled from the actual
+business logic. We avoid spamming the codebase by avoiding adding the audit logs
+every methods. It also makes it clear that when the audit actually happens.
 
 ## Section 3
 
@@ -104,3 +120,5 @@ on [Twitter](https://twitter.com/mincong_h) or
 - ["Representational state
   transfer"](https://en.wikipedia.org/wiki/Representational_state_transfer),
   _Wikipedia_, 2021.
+- ["Auditing with JPA, Hibernate and Spring Data
+  JPA"](https://www.baeldung.com/database-auditing-jpa), _Baeldung_, 2020.
