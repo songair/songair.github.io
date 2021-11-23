@@ -122,3 +122,6 @@ on [Twitter](https://twitter.com/mincong_h) or
   _Wikipedia_, 2021.
 - ["Auditing with JPA, Hibernate and Spring Data
   JPA"](https://www.baeldung.com/database-auditing-jpa), _Baeldung_, 2020.
+- ["Chapter 10. Filters and
+  Interceptors - Jersey"](https://eclipse-ee4j.github.io/jersey.github.io/documentation/latest/filters-and-interceptors.html),
+_Eclipse EE4J_, 2021.
