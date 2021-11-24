@@ -237,6 +237,7 @@ public class MyFilter implements ContainerResponseFilter {
 
 I didn't have chance to test this solution, but I saw it on [Stack
 Overflow](https://stackoverflow.com/questions/13198550/context-returns-proxy-instead-of-httpservletrequest-no-thread-local-value-in-s).
+Hopefully it will work for you.
 
 ## Going Further
 
