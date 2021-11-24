@@ -1,5 +1,266 @@
-<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" xml:lang="en"><generator uri="https://jekyllrb.com/" version="4.2.0">Jekyll</generator><link href="https://mincong.io/feed.xml" rel="self" type="application/atom+xml" /><link href="https://mincong.io/" rel="alternate" type="text/html" hreflang="en" /><updated>2021-11-14T15:43:45+01:00</updated><id>https://mincong.io/feed.xml</id><title type="html">Mincong Huang</title><subtitle>Hi, welcome to my blog! I'm a software engineer at Datadog. I write blog posts in my free time. My blogs are bits and pieces of my tech journey. Most of them are related to Java. Hope you enjoy them! My opinions are my own, not Datadog's. This blog is powered by Jekyll, a simple, blog-aware, static sites solution.
-</subtitle><author><name>Mincong Huang</name><email>mincong.h@gmail.com</email></author><entry xml:lang="en"><title type="html">Elasticsearch Snapshot Plugins</title><link href="https://mincong.io/en/elasticsearch-snapshot-plugins/" rel="alternate" type="text/html" title="Elasticsearch Snapshot Plugins" /><published>2021-11-01T10:00:00+01:00</published><updated>2021-11-01T10:00:00+01:00</updated><id>https://mincong.io/en/elasticsearch-snapshot-plugins</id><content type="html" xml:base="https://mincong.io/en/elasticsearch-snapshot-plugins/">&lt;h2 id=&quot;introduction&quot;&gt;Introduction&lt;/h2&gt;
+<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" xml:lang="en"><generator uri="https://jekyllrb.com/" version="4.2.0">Jekyll</generator><link href="https://mincong.io/feed.xml" rel="self" type="application/atom+xml" /><link href="https://mincong.io/" rel="alternate" type="text/html" hreflang="en" /><updated>2021-11-24T23:03:10+01:00</updated><id>https://mincong.io/feed.xml</id><title type="html">Mincong Huang</title><subtitle>Hi, welcome to my blog! I'm a software engineer at Datadog. I write blog posts in my free time. My blogs are bits and pieces of my tech journey. Most of them are related to Java. Hope you enjoy them! My opinions are my own, not Datadog's. This blog is powered by Jekyll, a simple, blog-aware, static sites solution.
+</subtitle><author><name>Mincong Huang</name><email>mincong.h@gmail.com</email></author><entry xml:lang="en"><title type="html">Audit Logs</title><link href="https://mincong.io/en/audit-logs/" rel="alternate" type="text/html" title="Audit Logs" /><published>2021-11-20T08:40:44+01:00</published><updated>2021-11-20T08:40:44+01:00</updated><id>https://mincong.io/en/audit-logs</id><content type="html" xml:base="https://mincong.io/en/audit-logs/">&lt;h2 id=&quot;introduction&quot;&gt;Introduction&lt;/h2&gt;
+
+&lt;p&gt;Today I would like to discuss audit logs with you. Audit logs are logs for
+auditing. They are events that keep track of creation, modification, deletion,
+or any other operation that mutates the state of a given resource. This resource
+can be a database, a pipeline, or anything valuable for the company. You may
+want to keep track of these events since they can be useful for security
+analysis, troubleshooting, compliance, auditing, keeping track of the lifecycle
+of a data store, etc, depending on your role. During
+my work at Datadog, I had the chance to implement a simple audit solution for an
+internal tool. That’s why I want to write down some thoughts and hopefully, they
+will be useful for you as well.&lt;/p&gt;
+
+&lt;p&gt;After reading this article, you will understand:&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;Requirements for audit logs&lt;/li&gt;
+  &lt;li&gt;Principles when implementing audit logs&lt;/li&gt;
+  &lt;li&gt;Focus deeper on Java solution using JAX-RS&lt;/li&gt;
+  &lt;li&gt;How to go further from this article&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;Now, let’s get started!&lt;/p&gt;
+
+&lt;h2 id=&quot;requirements-for-audit-logs&quot;&gt;Requirements For Audit Logs&lt;/h2&gt;
+
+&lt;p&gt;Generally speaking, there is some information that we care about:&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;&lt;strong&gt;Resource.&lt;/strong&gt; We want to know what is being accessed or modified. Therefore,
+we may want to record the resource ID, resource name, resource type, resource
+group, or any other information related to this resource. Regarding RESTful
+API, the resource ID can be the path, which is usually the representation of
+the resource.&lt;/li&gt;
+  &lt;li&gt;&lt;strong&gt;Time.&lt;/strong&gt; We want to know when does this happen precisely. This is important
+to construct a timeline for a bigger event, like an incident, an attack, or
+the lifecycle of a resource.&lt;/li&gt;
+  &lt;li&gt;&lt;strong&gt;Action.&lt;/strong&gt; We want to know what is being done on that resource. It provides
+an accurate description of the type of operation. Some typical examples are
+“create”, “read”, “delete”, “update”, etc.&lt;/li&gt;
+  &lt;li&gt;&lt;strong&gt;User.&lt;/strong&gt; We want to know “who did that?” so that we can find out more
+information based on that user or better understand the motivation of this
+operation. The user information may contain the first name, last name, email,
+department, organization unit, employee ID, etc.&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;We can eventually go further by adding more metadata to facilitate the search,
+making the description more human-readable, etc. But I believe that these are not
+requirements, but enhancements to make the feature more usable.&lt;/p&gt;
+
+&lt;p&gt;Then on the business side, there are other also some requirements:&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;&lt;strong&gt;Retention.&lt;/strong&gt; The retention of the audit logs. We want them to store longer
+than normal logs because they are specific logs for investigation. These are
+precious events helping us to redraw the big picture.&lt;/li&gt;
+  &lt;li&gt;&lt;strong&gt;Access&lt;/strong&gt;. Perhaps not everyone should be accessed to audit logs. Taking
+Datadog’s product &lt;a href=&quot;https://docs.datadoghq.com/fr/account_management/audit_logs/&quot;&gt;“Audit
+Logs”&lt;/a&gt; as an
+example, only administrator or security team members can access Audit Logs. As
+an individual, you can only see a stream of your own actions.&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;I probably didn’t cover everything in the section. If you have other ideas,
+please let me know what you think in the comment section below.&lt;/p&gt;
+
+&lt;h2 id=&quot;principles-when-implementing-audit-logs&quot;&gt;Principles When Implementing Audit Logs&lt;/h2&gt;
+
+&lt;p&gt;When implementing audit logs, I believe here are the principles to follow and I
+will try to explain why.&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;Hooking into the lifecycle.&lt;/strong&gt; When implementing audit logging, we need to
+decide where should we put the code. I believe that the best option is to hook
+your logic into the lifecycle of the framework that you use. Then, you will be
+able to log before or after an event. For example, if you use Java
+Persistence API (JPA), you can implement your logic using &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;@PrePersist&lt;/code&gt;,
+&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;@PreUpdate&lt;/code&gt;, &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;@PreRemove&lt;/code&gt; callbacks. Or if you use Java RESTful API
+(JAX-RS), you can implement interfaces &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;ContainerRequestFilter&lt;/code&gt; or
+&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;ContainerResponseFilter&lt;/code&gt; to handle the audit logging, respectively before the
+request is handled or after the response is created. By hooking into the
+lifecycle, we ensure that the audit logging is decoupled from the actual
+business logic. We avoid spamming the codebase by avoiding adding the audit logs
+into every method. It also makes it clear when does the audit actually happen.&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;Avoid blocking the actual event.&lt;/strong&gt; When adding audit logs, we should also
+avoid blocking actual events so that the user’s action won’t be blocked or delayed.
+This is because sometimes the audit logging requires API calls, which means that
+they may be slow or suffer from network issues. So my suggestion is to use
+asynchronous implementation so that the actual event will be handled correctly.
+As for network issues or other types of error, we can make it fault-tolerant by
+adding a retry mechanism. We can also consider using a batch API call to group
+multiple events.&lt;/p&gt;
+
+&lt;h2 id=&quot;java-solutions&quot;&gt;Java Solutions&lt;/h2&gt;
+
+&lt;p&gt;In this section, I would like to go further into Java to discuss how to
+implement a simple audit logging solution for Java RESTful APIs. Here I am going
+to list 3 solutions based on Java Servlet, Jetty, and JAX-RS (Jersey).&lt;/p&gt;
+
+&lt;h3 id=&quot;java-servlet&quot;&gt;Java Servlet&lt;/h3&gt;
+
+&lt;p&gt;For those who don’t know Java Servlet, here is a quick introduction. Java
+Servlet or nowadays Jakarta Servlet, is a Java software component that extends
+the capabilities of a server. It’s commonly used for implementing web containers
+for hosting web applications, similar to PHP and ASP.NET. The evolution of Java
+Servlet is part of the Java Specification Requests
+(&lt;a href=&quot;https://jcp.org/en/jsr/all&quot;&gt;JSRs&lt;/a&gt;). The latest one is Java Servlet 4.0
+(JSR-369) started in 2017.&lt;/p&gt;
+
+&lt;p&gt;In our case, we can implement a simple Servlet filter to intercept the HTTP
+request or response using the &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;doFilter()&lt;/code&gt; method. Inside the method, you
+must call the filter chain to pass the request and response to the next
+filter so that they are handled. Otherwise, the request will be dropped
+(filtered), which is not desired. Then, you can implement the actual auditing
+logic before or after the chain. I prefer after the chain because in this case,
+we will have the information of both the HTTP request and the HTTP response,
+which makes the auditing logging more complete.&lt;/p&gt;
+
+&lt;div class=&quot;language-java highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;kn&quot;&gt;import&lt;/span&gt; &lt;span class=&quot;nn&quot;&gt;javax.servlet.*&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;;&lt;/span&gt;
+&lt;span class=&quot;kn&quot;&gt;import&lt;/span&gt; &lt;span class=&quot;nn&quot;&gt;java.io.IOException&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;;&lt;/span&gt;
+
+&lt;span class=&quot;kd&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;kd&quot;&gt;class&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;SimpleServletFilter&lt;/span&gt; &lt;span class=&quot;kd&quot;&gt;implements&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;Filter&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;{&lt;/span&gt;
+
+    &lt;span class=&quot;kd&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;void&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;init&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nc&quot;&gt;FilterConfig&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;config&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;kd&quot;&gt;throws&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;ServletException&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;{}&lt;/span&gt;
+
+    &lt;span class=&quot;kd&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;void&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;doFilter&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nc&quot;&gt;ServletRequest&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;request&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;ServletResponse&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;response&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;,&lt;/span&gt;
+            &lt;span class=&quot;nc&quot;&gt;FilterChain&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;chain&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;kd&quot;&gt;throws&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;IOException&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;ServletException&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;{&lt;/span&gt;
+        &lt;span class=&quot;c1&quot;&gt;// before the request being handled&lt;/span&gt;
+        &lt;span class=&quot;n&quot;&gt;chain&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;doFilter&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;request&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;response&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;);&lt;/span&gt;
+        &lt;span class=&quot;c1&quot;&gt;// after the response being created&lt;/span&gt;
+    &lt;span class=&quot;o&quot;&gt;}&lt;/span&gt;
+
+    &lt;span class=&quot;kd&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;void&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;destroy&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;()&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;{}&lt;/span&gt;
+&lt;span class=&quot;o&quot;&gt;}&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;h3 id=&quot;jetty-server&quot;&gt;Jetty Server&lt;/h3&gt;
+
+&lt;p&gt;If you are using Jetty as the solution for your Java server, you can extend
+&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;AbstractNCSARequestLog&lt;/code&gt; to provide a custom access log solution in the
+pseudo-standard NCSA commong log format. To do that, you can create a request
+log handler which handles the request log, and then use the handler in your
+Jetty server:&lt;/p&gt;
+
+&lt;div class=&quot;language-java highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;kt&quot;&gt;var&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;logHandler&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;new&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;RequestLogHandler&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;();&lt;/span&gt;
+&lt;span class=&quot;n&quot;&gt;logHandler&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;setRequestLog&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;new&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;MyRequestLog&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;());&lt;/span&gt;
+&lt;span class=&quot;n&quot;&gt;server&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;setHandler&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;logHandler&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;);&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;where the implementation of &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;MyRequestLog&lt;/code&gt; looks like this:&lt;/p&gt;
+
+&lt;div class=&quot;language-java highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;kd&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;kd&quot;&gt;class&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;MyRequestLog&lt;/span&gt; &lt;span class=&quot;kd&quot;&gt;extends&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;AbstractNCSARequestLog&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;kd&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;MyRequestLog&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;()&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;{&lt;/span&gt;
+        &lt;span class=&quot;c1&quot;&gt;// configure options here: timezone, locale, extended, IP address, ...&lt;/span&gt;
+    &lt;span class=&quot;o&quot;&gt;}&lt;/span&gt;
+
+    &lt;span class=&quot;nd&quot;&gt;@Override&lt;/span&gt;
+    &lt;span class=&quot;kd&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;void&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;write&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nc&quot;&gt;String&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;entry&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;kd&quot;&gt;throws&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;IOException&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;{&lt;/span&gt;
+        &lt;span class=&quot;n&quot;&gt;logger&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;info&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;entry&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;);&lt;/span&gt;
+    &lt;span class=&quot;o&quot;&gt;}&lt;/span&gt;
+&lt;span class=&quot;o&quot;&gt;}&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;The problem with this approach is that the final result must be a string and it
+must look like an access log. Other output structures are not supported.
+So if you need a more custom solution, then you will need to find another way to
+handle it. &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;AbstractNCSARequestLog&lt;/code&gt; may be replaced by another class in the
+recent versions of Jetty, but the most important thing here is to understand
+that we can delegate the access log creation to a base class.&lt;/p&gt;
+
+&lt;h3 id=&quot;jax-rs-filter&quot;&gt;JAX-RS Filter&lt;/h3&gt;
+
+&lt;p&gt;Working with RESTful APIs is a very popular choice these days. Most of the web
+services communicate with the frontend or between them using RESTful APIs.
+Therefore, it makes sense to adapt the auditing solution to “Java API for
+RESTful Web Services” (JAX-RS). By doing so, we assume that we are not serving
+HTTP requests without APIs.&lt;/p&gt;
+
+&lt;p&gt;Here is a basic structure for auditing filter based on interface
+&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;ContainerResponseFilter&lt;/code&gt;. In the code block, we have access to information
+about the HTTP request and the HTTP response, such as request path, request
+headers, response status code, size of the response. These data allow us to
+provide our custom implementation of audit logging.&lt;/p&gt;
+
+&lt;div class=&quot;language-java highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;kd&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;kd&quot;&gt;class&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;MyFilter&lt;/span&gt; &lt;span class=&quot;kd&quot;&gt;implements&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;ContainerResponseFilter&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;nd&quot;&gt;@Override&lt;/span&gt;
+    &lt;span class=&quot;kd&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;void&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;filter&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nc&quot;&gt;ContainerRequestContext&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;requestContext&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;,&lt;/span&gt;
+            &lt;span class=&quot;nc&quot;&gt;ContainerResponseContext&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;responseContext&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;kd&quot;&gt;throws&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;IOException&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;{&lt;/span&gt;
+        &lt;span class=&quot;c1&quot;&gt;// TODO: implementation goes here&lt;/span&gt;
+        &lt;span class=&quot;c1&quot;&gt;// read request info, response info, read environment variables, ...&lt;/span&gt;
+    &lt;span class=&quot;o&quot;&gt;}&lt;/span&gt;
+&lt;span class=&quot;o&quot;&gt;}&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;But this may not satisfy you because compared to the Java Servlet solution,
+here we don’t have access to servlet anymore. It means some information may be
+missing. However, we can use the &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;@Context&lt;/code&gt; annotation to inject the servlet
+request again (or other resources if you need):&lt;/p&gt;
+
+&lt;div class=&quot;language-java highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;kd&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;kd&quot;&gt;class&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;MyFilter&lt;/span&gt; &lt;span class=&quot;kd&quot;&gt;implements&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;ContainerResponseFilter&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;{&lt;/span&gt;
+
+    &lt;span class=&quot;nd&quot;&gt;@Context&lt;/span&gt;
+    &lt;span class=&quot;kd&quot;&gt;private&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;HttpServletRequest&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;request&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;;&lt;/span&gt; &lt;span class=&quot;c1&quot;&gt;// HERE&lt;/span&gt;
+
+    &lt;span class=&quot;nd&quot;&gt;@Override&lt;/span&gt;
+    &lt;span class=&quot;kd&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;void&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;filter&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nc&quot;&gt;ContainerRequestContext&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;requestContext&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;,&lt;/span&gt;
+            &lt;span class=&quot;nc&quot;&gt;ContainerResponseContext&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;responseContext&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;kd&quot;&gt;throws&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;IOException&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;{&lt;/span&gt;
+        &lt;span class=&quot;c1&quot;&gt;// ...&lt;/span&gt;
+    &lt;span class=&quot;o&quot;&gt;}&lt;/span&gt;
+&lt;span class=&quot;o&quot;&gt;}&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;I didn’t have a chance to test this solution, but I saw it on &lt;a href=&quot;https://stackoverflow.com/questions/13198550/context-returns-proxy-instead-of-httpservletrequest-no-thread-local-value-in-s&quot;&gt;Stack
+Overflow&lt;/a&gt;.
+Hopefully, it will work for you.&lt;/p&gt;
+
+&lt;h2 id=&quot;going-further&quot;&gt;Going Further&lt;/h2&gt;
+
+&lt;p&gt;How to go further from here?&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;To learn more about the difference between a Servlet filter and a Jersey
+filter (JAX-RS), you can visit &lt;a href=&quot;https://stackoverflow.com/a/52210283/4381330&quot;&gt;this answer on Stack
+Overflow&lt;/a&gt; written by Paul
+Samsotha.&lt;/li&gt;
+  &lt;li&gt;To learn more about Jakarta Servet (formerly Java Servlet), visit this
+&lt;a href=&quot;https://en.wikipedia.org/wiki/Jakarta_Servlet&quot;&gt;Wikipedia&lt;/a&gt;.&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h2 id=&quot;conclusion&quot;&gt;Conclusion&lt;/h2&gt;
+
+&lt;p&gt;In this article, we discuss how to implement audit logs in Java based on
+Java JAX-RS. We discussed some technical and business requirements for the
+solution. Some principles for the implementation. And finally, three Java
+solutions based on Java Servlet, Jetty, and JAX-RS.
+Interested to know more? You can subscribe to &lt;a href=&quot;/feed.xml&quot;&gt;the feed of my blog&lt;/a&gt;, follow me
+on &lt;a href=&quot;https://twitter.com/mincong_h&quot;&gt;Twitter&lt;/a&gt; or
+&lt;a href=&quot;https://github.com/mincong-h/&quot;&gt;GitHub&lt;/a&gt;. Hope you enjoy this article, see you the next time!&lt;/p&gt;
+
+&lt;h2 id=&quot;references&quot;&gt;References&lt;/h2&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;&lt;a href=&quot;https://en.wikipedia.org/wiki/LDAP_Data_Interchange_Format&quot;&gt;“LDAP Data Interchange Format (LDIF)”&lt;/a&gt;, &lt;em&gt;Wikipedia&lt;/em&gt;, 2021.&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://en.wikipedia.org/wiki/Representational_state_transfer&quot;&gt;“Representational state
+transfer”&lt;/a&gt;,
+&lt;em&gt;Wikipedia&lt;/em&gt;, 2021.&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://www.baeldung.com/database-auditing-jpa&quot;&gt;“Auditing with JPA, Hibernate and Spring Data
+JPA”&lt;/a&gt;, &lt;em&gt;Baeldung&lt;/em&gt;, 2020.&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://eclipse-ee4j.github.io/jersey.github.io/documentation/latest/filters-and-interceptors.html&quot;&gt;“Chapter 10. Filters and
+Interceptors - Jersey”&lt;/a&gt;,
+&lt;em&gt;Eclipse EE4J&lt;/em&gt;, 2021.&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://docs.oracle.com/javaee/7/api/javax/servlet/Filter.html&quot;&gt;“Filter (Java(TM) EE 7 Specification
+APIs)”&lt;/a&gt;,
+&lt;em&gt;Oracle&lt;/em&gt;, 2015.&lt;/li&gt;
+  &lt;li&gt;Jakob Jenkov, &lt;a href=&quot;http://tutorials.jenkov.com/java-servlets/servlet-filters.html&quot;&gt;“Servlet
+Filters”&lt;/a&gt;,
+&lt;em&gt;jenkov.com&lt;/em&gt;, 2014.&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://docs.oracle.com/cd/E19693-01/819-0997/6n3cs0bsg/index.html#gbwud&quot;&gt;“Access, Error, and Audit
+Logs | Sun Java System Directory Server Enterprise Edition 6.0
+Reference”&lt;/a&gt;,
+&lt;em&gt;Oracle&lt;/em&gt;, 2010.&lt;/li&gt;
+&lt;/ul&gt;</content><author><name>Mincong Huang</name><email>mincong.h@gmail.com</email></author><category term="java-core" /><category term="java" /><category term="jetty" /><category term="jersey" /><category term="api" /><category term="jax-rs" /><summary type="html">This article discusses how to implement a simple audit logs solution with Java JAX-RS, including requirements, considerations for the implementation, and 3 different solutions based on Java Servlet, Jetty, and JAX-RS filter.</summary><media:thumbnail xmlns:media="http://search.yahoo.com/mrss/" url="https://mincong.io/assets/bg-markus-spiske-gnhxvdGmGG8-unsplash.jpg" /><media:content medium="image" url="https://mincong.io/assets/bg-markus-spiske-gnhxvdGmGG8-unsplash.jpg" xmlns:media="http://search.yahoo.com/mrss/" /></entry><entry xml:lang="en"><title type="html">Elasticsearch Snapshot Plugins</title><link href="https://mincong.io/en/elasticsearch-snapshot-plugins/" rel="alternate" type="text/html" title="Elasticsearch Snapshot Plugins" /><published>2021-11-01T10:00:00+01:00</published><updated>2021-11-01T10:00:00+01:00</updated><id>https://mincong.io/en/elasticsearch-snapshot-plugins</id><content type="html" xml:base="https://mincong.io/en/elasticsearch-snapshot-plugins/">&lt;h2 id=&quot;introduction&quot;&gt;Introduction&lt;/h2&gt;
 
 &lt;p&gt;The “Snapshot and Restore” feature is an important part of an Elasticsearch cluster.
 Its existence provides a strong guarantee for data reliability. That’s why we
@@ -2686,430 +2947,4 @@ and CN depending on the settings of the OS or the broswer.&lt;/li&gt;
 
 &lt;p&gt;Thanks for reading! Best,&lt;/p&gt;
 
-&lt;p&gt;Mincong&lt;/p&gt;</content><author><name>Mincong Huang</name><email>mincong.h@gmail.com</email></author><category term="review" /><category term="project" /><summary type="html">English to Chinese?</summary><media:thumbnail xmlns:media="http://search.yahoo.com/mrss/" url="https://mincong.io/assets/bg-javier-allegue-barros-C7B-ExXpOIE-unsplash.jpg" /><media:content medium="image" url="https://mincong.io/assets/bg-javier-allegue-barros-C7B-ExXpOIE-unsplash.jpg" xmlns:media="http://search.yahoo.com/mrss/" /></entry><entry xml:lang="en"><title type="html">DVF: Real Estate Analysis For Île-de-France in 2020</title><link href="https://mincong.io/2021/04/16/dvf-real-estate-analysis-idf-2020/" rel="alternate" type="text/html" title="DVF: Real Estate Analysis For Île-de-France in 2020" /><published>2021-04-16T02:03:43+02:00</published><updated>2021-04-16T02:03:43+02:00</updated><id>https://mincong.io/2021/04/16/dvf-real-estate-analysis-idf-2020</id><content type="html" xml:base="https://mincong.io/2021/04/16/dvf-real-estate-analysis-idf-2020/">&lt;h2 id=&quot;introduction&quot;&gt;Introduction&lt;/h2&gt;
-
-&lt;p&gt;Open data &lt;a href=&quot;https://www.data.gouv.fr/fr/datasets/demandes-de-valeurs-foncieres-geolocalisees/&quot;&gt;“Demande de valeurs foncières géolocalisées
-(DVF)”&lt;/a&gt;
-is an open dataset provided by the French government which collects all the
-real-estate transactions since January 2014, in mainland France and the overseas
-departments and territories, except in Mayotte and Alsace-Moselle. Today, we are
-going to explore this dataset using Elasticsearch and Kibana. In particular, we
-are going to study the real estate market of Île-de-France in 2020.&lt;/p&gt;
-
-&lt;p&gt;After reading this article, you will understand:&lt;/p&gt;
-
-&lt;ul&gt;
-  &lt;li&gt;The prerequisite before the analytics&lt;/li&gt;
-  &lt;li&gt;The overview of the market Île-de-France&lt;/li&gt;
-  &lt;li&gt;The comparison of apartments and houses&lt;/li&gt;
-  &lt;li&gt;Some more specific analytics on apartments&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;p&gt;Globally, the idea is to see the big picture and identify some valuable factors to
-study. Then step-by-step, we will go into a more specific direction to go
-further in our exploration. Now, let’s get started!&lt;/p&gt;
-
-&lt;h2 id=&quot;prerequisite&quot;&gt;Prerequisite&lt;/h2&gt;
-
-&lt;p&gt;Before the analytics, we need to prepare the dataset. Here, I am using
-&lt;a href=&quot;https://www.elastic.co/elasticsearch/&quot;&gt;Elasticsearch&lt;/a&gt; and
-&lt;a href=&quot;https://www.elastic.co/kibana/&quot;&gt;Kibana&lt;/a&gt;. For those who don’t know Elasticsearch, Elasticsearch
-is a distributed, RESTful search and analytics engine. As for Kibana, Kibana is
-a free and open user interface that lets you visualize your Elasticsearch data
-and navigate the Elastic Stack. The steps of the preparation are mainly the following
-ones:&lt;/p&gt;
-
-&lt;ol&gt;
-  &lt;li&gt;Download the dataset from &lt;a href=&quot;https://www.data.gouv.fr&quot;&gt;https://www.data.gouv.fr&lt;/a&gt;&lt;/li&gt;
-  &lt;li&gt;Design the data model and index them into Elaticsearch&lt;/li&gt;
-  &lt;li&gt;Optimize the storage for search&lt;/li&gt;
-  &lt;li&gt;Set up Kibana and create dashboards to analyze the data&lt;/li&gt;
-&lt;/ol&gt;
-
-&lt;p&gt;To set up Elasticsearch, you can use Docker: just running a Docker container in
-localhost and
-you are ready to go. The same thing applies to Kibana.
-However, you need to give the name of the Elasticsearch cluster to Kibana so that they
-can be linked together. Here, I am using the names “elasticsearch-dvf” and
-“kibana-dvf” to achieve that. Once the setup is done and the indexing process is finished, you can
-see all the data in Elasticsearch. There are several gigabytes (GB) of data:&lt;/p&gt;
-
-&lt;div class=&quot;language-plaintext highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;➜  curl &quot;localhost:9200/_cat/indices/transactions.*&quot;
-yellow open transactions.2019 ExlbB3EuQSqk__4MEW6eHQ 1 1 3142952 0 802.3mb 802.3mb
-yellow open transactions.2018 1B3pKi4URDar2w0vAvPysA 1 1 3319426 0 853.3mb 853.3mb
-yellow open transactions.2017 HJLTdbbtSqW686jQFzgg7g 1 1 3381190 0 862.4mb 862.4mb
-yellow open transactions.2016 ZNPlUNeTStS8KsOgvaMTww 1 1 2939004 0 753.5mb 753.5mb
-yellow open transactions.2015 h2CEOxWzTYymAt9KBMasJg 1 1 2750305 0 704.1mb 704.1mb
-yellow open transactions.2014 17ZVk9oMQ6KmvTpMgGdMBg 1 1 2516802 0 650.7mb 650.7mb
-yellow open transactions.2020 Khw7RAl1RcCDeLlz8Blt7g 1 1 2459560 0 623.5mb 623.5mb
-&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
-
-&lt;p&gt;On the Kibana side, we need to define an index pattern &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;transactions.*&lt;/code&gt; that
-matches all the indices mentioned above.
-Since this is not aimed to be a technical blog, I am going to skip the
-technical details here. If you were interested in the entire preparation, you
-can see my previous articles on the series page &lt;a href=&quot;/series/dvf&quot;&gt;“DVF”&lt;/a&gt;.&lt;/p&gt;
-
-&lt;p&gt;Starting from the next section, we are going to analyze the data of
-Île-de-France, the Greater Paris area. It consists of 8 departments:&lt;/p&gt;
-
-&lt;ul&gt;
-  &lt;li&gt;Paris (75)&lt;/li&gt;
-  &lt;li&gt;Hauts-de-Seine (92)&lt;/li&gt;
-  &lt;li&gt;Seine-Saint-Denis (93)&lt;/li&gt;
-  &lt;li&gt;Val-de-Marne (94)&lt;/li&gt;
-  &lt;li&gt;Seine-et-Marne (77)&lt;/li&gt;
-  &lt;li&gt;Yvelines (78)&lt;/li&gt;
-  &lt;li&gt;Essonne (91)&lt;/li&gt;
-  &lt;li&gt;Val-d’Oise (95)&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;h2 id=&quot;overview&quot;&gt;Overview&lt;/h2&gt;
-
-&lt;h3 id=&quot;transactions-2020&quot;&gt;Transactions 2020&lt;/h3&gt;
-
-&lt;p&gt;&lt;img src=&quot;/assets/20210416-idf-mutation-count.png&quot; alt=&quot;2020 Ile-de-France mutation count&quot; /&gt;&lt;/p&gt;
-
-&lt;p&gt;First of all, let’s take a look at the global landscape of the real estate
-market of Île-de-France in 2020. There were 146,084 transactions
-happened in this area with 387,425 mutations (*). From the widget above, we can
-see the number of mutations over the year. The real estate market was active
-despite the pandemic. However, the number of transactions was greatly reduced
-between the end of March and mid-May, probably because of the first lockdown measure
-taken by the French government. After that period, the market quickly regained its dynamics.&lt;/p&gt;
-
-&lt;blockquote&gt;
-  &lt;p&gt;(*) One mutation represents a transfer of ownership of a given premise. A premise
-can be an apartment, a house, a cellar, etc. Each transaction contains one or
-multiple mutations. For example, you can buy one apartment and one cellar in
-the same transaction.&lt;/p&gt;
-&lt;/blockquote&gt;
-
-&lt;h3 id=&quot;transactions-2014-to-2020&quot;&gt;Transactions 2014 To 2020&lt;/h3&gt;
-
-&lt;p&gt;&lt;img src=&quot;/assets/20210416-idf-mutation-count-2014-to-2020.png&quot; alt=&quot;2014-2020 Ile-de-France mutation count&quot; /&gt;&lt;/p&gt;
-
-&lt;p&gt;If we compare to the previous years, we can see that the market was impacted by
-the COVID-19 in 2020. The total number of mutations decreased 19.5% (481,002 in 2019
-vs 387,425 in 2020) in Île-de-France. Some contributing factors may be the COVID-19 measures
-taken by the government (lockdown, curfew), the economic impact (partial
-unemployment, complete unemployment), the psychological factor (uncertainty
-about the future).&lt;/p&gt;
-
-&lt;p&gt;Before going further, let’s spend some time understanding
-which part of the dataset is the most valuable for the analysis. To do that, we
-can aggregate the data per field and continue our study on the most significant ones.
-Here I chose the field “nature of mutation” and the field “premise type”.&lt;/p&gt;
-
-&lt;p&gt;&lt;img src=&quot;/assets/20210416-idf-nature_mutation-and-local_type.png&quot; alt=&quot;2020 Ile-de-France distribution of nature of mutation and distribution of premise type&quot; /&gt;&lt;/p&gt;
-
-&lt;p&gt;&lt;strong&gt;Nature of mutation.&lt;/strong&gt; From the widget on the left side, you can see that there are several reasons
-why people make a transaction: expropriation, vente terrain à bâtir
-(building plot for sales), adjudication (judgement), échange (exchange), vente
-(sales), and vente en l’état future d’achèvement” (sales before completion).
-Most of the time it’s either “Vente” or “Vente en l’état future d’achèvement”.
-That’s why I am going to focus my analysis on these two types in the following
-sections.&lt;/p&gt;
-
-&lt;p&gt;&lt;strong&gt;Premise type.&lt;/strong&gt; From the widget on the right side, you can see the different types of premises
-that people sell: local industriel, commercial ou assimilé (industrial,
-commercial or related premise), maison (house), dépendance (dependent),
-appartement (apartment), or empty. For those mutations having an empty type,
-they can be meadows, lands, gardins, thickets, etc that we love but we
-don’t have time to cover in this article. As for the “dependent” ones, they depend
-on the main types: apartment, house, … where these mutations happen in the
-same transaction. For example, a dependent can be a cellar. When someone buys an
-apartment, he/she buys the cellar at the same time. So I am going to
-filter them out as well.&lt;/p&gt;
-
-&lt;p&gt;In short, we are going to look into the sales of apartments and houses in the
-next sections.&lt;/p&gt;
-
-&lt;h2 id=&quot;apartment-and-house&quot;&gt;Apartment And House&lt;/h2&gt;
-
-&lt;h3 id=&quot;map&quot;&gt;Map&lt;/h3&gt;
-
-&lt;p&gt;If we put all the sales of apartments and houses (first-hand and second-hand
-combined) into a map, we can obtain the following result:&lt;/p&gt;
-
-&lt;p&gt;&lt;img src=&quot;/assets/20210416-idf-map-sales-apartments-and-houses-2020.png&quot; alt=&quot;Map: sales of apartments and houses in Ile-de-France in 2020&quot; /&gt;&lt;/p&gt;
-
-&lt;p&gt;This map is aggregated by the municipality (commune). The color represents the
-average price per meter square (€/m2) of the municipality. You can see that the
-most expensive ones are all located in Paris (75) in the middle of the map with
-an average price higher than 9,449 €/m2. Other municipalities around Paris are 
-also expensive, especially on the west side. These departements around Paris are
-called “La Petite Couronne” (The . It consists of three departments: les
-Hauts-de-Seine (92), la Seine-Saint-Denis (93), and le Val-de-Marne (94).&lt;/p&gt;
-
-&lt;h3 id=&quot;first-hand-vs-second-hand&quot;&gt;First-Hand vs Second-Hand&lt;/h3&gt;
-
-&lt;p&gt;If we split the market into first-hand and second-hand, you can see that they
-are actually quite different. In the widgets below, we compare the first-hand
-market and second-hard market for their volume in 2020. The first one is for the entire
-Île-de-France and the second one is aggregated by the department.&lt;/p&gt;
-
-&lt;p&gt;&lt;img src=&quot;/assets/20210416-idf-bar-sales-apartments-and-houses-2020-volumes.png&quot; alt=&quot;Bar chart: volume of apartments and houses in Ile-de-France in 2020&quot; /&gt;&lt;/p&gt;
-
-&lt;p&gt;For the entire Île-de-France, the first-hand apartments and houses represent about 1.1% of
-the total mutations and the second-hand ones represent 98.9%. On the right
-side, you can see the actual volume of each department. The first series (red)
-is for second-hand transactions and the second series (green) is for
-first-hand transactions.
-As you can see,
-second-hand transactions represent 99.9% of the transactions in Paris (75).
-In other departments, second-hand transactions represent
-about 98.5% of the market. I believe that this ratio is probably related to
-COVID-19 because historically speaking, the ratio of second-hand transactions is
-about 93% (2014 to 2019).&lt;/p&gt;
-
-&lt;h3 id=&quot;second-hand&quot;&gt;Second-Hand&lt;/h3&gt;
-
-&lt;p&gt;Now, what if we focus on the second-hand market?&lt;/p&gt;
-
-&lt;p&gt;&lt;img src=&quot;/assets/20210416-idf-bar-sales-apartments-and-houses-2020-second-hand-volumes.png&quot; alt=&quot;Bar chart: volume of second-hand apartments and houses in Ile-de-France in 2020&quot; /&gt;&lt;/p&gt;
-
-&lt;p&gt;If we focus on the second-hand market, we can see that there is almost no house
-to sell in Paris (75). The entire market is filled with apartments (30,956
-mutations). If you want to buy a house,
-you probably need to go to the petite gouronne (92, 93, 94) or the grande
-gouronne (77, 78, 91, 95). They have more offers. As for the price, Paris (75) is
-still the champion with an average of 11,673 €/m2 for houses and 14,959 €/m2 for
-the apartments. Les Hauts-de-Seine (92), le Val-de-Marne (94), and la
-Seine-Saint-Denis (93) follow Paris (75) and take the top 4.&lt;/p&gt;
-
-&lt;p&gt;We are reaching the end of this section. In this section, we compared the
-apartments and houses in Île-de-France. We
-compared the type of sales, the volume, and the price in different departments.
-In the next section, we are going to explore the market of second-hand
-apartments.&lt;/p&gt;
-
-&lt;h2 id=&quot;second-hand-apartments&quot;&gt;Second-Hand Apartments&lt;/h2&gt;
-
-&lt;h3 id=&quot;price&quot;&gt;Price&lt;/h3&gt;
-
-&lt;p align=&quot;center&quot;&gt;
-  &lt;img src=&quot;/assets/20210416-idf-line-sales-apartments-price-evolution-per-department.png&quot; alt=&quot;Line chart: median price of second-hand apartments and houses in Ile-de-France from 2016 to 2020&quot; width=&quot;700&quot; /&gt;
-&lt;/p&gt;
-
-&lt;p&gt;First of all, let’s take a look at the price. As you can see in the graph above,
-the median price of Paris is significantly higher than other departments and
-the trend continues in 2020 despite the global pandemic. The podium didn’t
-change in 2020: les Hauts-de-Seine (92) is still in the 2nd position and followed by
-le Val-de-Marne (94) at the 3rd position. However, the price of les
-Hauts-de-Seine (92) dropped significantly alongside with la Seine-et-Marne (77).
-If you want to have a more detailed version of the trends displayed above, here
-a table of comparison for you. In this table, there is the median price of the
-second-hand apartment for each department in 2015 (5 years ago), 2019 (1 year
-ago), and 2020. It allows you to better follow the department that matches your
-interest.&lt;/p&gt;
-
-&lt;p&gt;&lt;strong&gt;Table: Median Price of the second-hand apartments in Île-de-France&lt;/strong&gt;&lt;/p&gt;
-
-&lt;table&gt;
-  &lt;thead&gt;
-    &lt;tr&gt;
-      &lt;th style=&quot;text-align: left&quot;&gt;Department&lt;/th&gt;
-      &lt;th style=&quot;text-align: right&quot;&gt;2015 (€/m2)&lt;/th&gt;
-      &lt;th style=&quot;text-align: right&quot;&gt;5y Diff&lt;/th&gt;
-      &lt;th style=&quot;text-align: right&quot;&gt;2019 (€/m2)&lt;/th&gt;
-      &lt;th style=&quot;text-align: right&quot;&gt;1y Diff&lt;/th&gt;
-      &lt;th style=&quot;text-align: right&quot;&gt;2020 (€/m2)&lt;/th&gt;
-    &lt;/tr&gt;
-  &lt;/thead&gt;
-  &lt;tbody&gt;
-    &lt;tr&gt;
-      &lt;td style=&quot;text-align: left&quot;&gt;75 - Paris&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;8,098&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;+35.0%&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;10,218&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;+7.0%&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;10,933&lt;/td&gt;
-    &lt;/tr&gt;
-    &lt;tr&gt;
-      &lt;td style=&quot;text-align: left&quot;&gt;92 - Hauts-de-Seine&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;5,463&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;+25.6%&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;6,536&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;+5.0%&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;6,860&lt;/td&gt;
-    &lt;/tr&gt;
-    &lt;tr&gt;
-      &lt;td style=&quot;text-align: left&quot;&gt;93 - Seine-Saint-Denis&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;3,266&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;+25.2%&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;3,848&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;+6.3%&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;4,089&lt;/td&gt;
-    &lt;/tr&gt;
-    &lt;tr&gt;
-      &lt;td style=&quot;text-align: left&quot;&gt;94 - Val-de-Marne&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;4,122&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;+21.5%&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;4,733&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;+5.8%&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;5,009&lt;/td&gt;
-    &lt;/tr&gt;
-    &lt;tr&gt;
-      &lt;td style=&quot;text-align: left&quot;&gt;77 - Seine-et-Marne&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;2,989&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;+10.3%&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;3,176&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;+3.8%&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;3,296&lt;/td&gt;
-    &lt;/tr&gt;
-    &lt;tr&gt;
-      &lt;td style=&quot;text-align: left&quot;&gt;78 - Yvelines&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;3,685&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;+7.6%&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;3,899&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;+1.5%&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;3,956&lt;/td&gt;
-    &lt;/tr&gt;
-    &lt;tr&gt;
-      &lt;td style=&quot;text-align: left&quot;&gt;91 - Essonne&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;2,729&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;+8.7%&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;2,946&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;+0.5%&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;2,960&lt;/td&gt;
-    &lt;/tr&gt;
-    &lt;tr&gt;
-      &lt;td style=&quot;text-align: left&quot;&gt;95 - Val-d’Oise&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;2,877&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;+10.7%&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;3,071&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;+3.7%&lt;/td&gt;
-      &lt;td style=&quot;text-align: right&quot;&gt;3,184&lt;/td&gt;
-    &lt;/tr&gt;
-  &lt;/tbody&gt;
-&lt;/table&gt;
-
-&lt;h3 id=&quot;pieces&quot;&gt;Pieces&lt;/h3&gt;
-
-&lt;p&gt;Another important factor to take into account is the number of pieces. A single
-person, a young couple, a family with 2 children, … they probably don’t have
-the same needs. That’s why I want to study the number of pieces so that you can
-find out what matches you most. Here is the distribution of the transactions grouped by the number
-of pieces. The first one is for the entire Île-de-France and the second one is aggregated by department:&lt;/p&gt;
-
-&lt;p&gt;&lt;img src=&quot;/assets/20210416-idf-composite-apartments-pieces-per-department-2020.png&quot; alt=&quot;Number of pieces for second-hand apartments and houses in Ile-de-France from 2016 to 2020&quot; /&gt;&lt;/p&gt;
-
-&lt;blockquote&gt;
-  &lt;p&gt;:warning: On the widget on the right side, the percentage is not shown in order.
-The displayed order is 2, 5, 1, 3, and other. This is because
-the term having the highest percentage has to be placed first in Kibana.&lt;/p&gt;
-&lt;/blockquote&gt;
-
-&lt;p&gt;You can see that T1 and T2 represent about half of the offers in the market of
-the second-hand apartments. T3 and T4 represent almost the other half. There are only a few
-apartments having more than 4 pieces, maybe because people prefer houses over
-apartments when they need more rooms.&lt;/p&gt;
-
-&lt;h3 id=&quot;budget&quot;&gt;Budget&lt;/h3&gt;
-
-&lt;p&gt;We talked about the price per meter square (€/m2) and the number of pieces
-inside an apartment. But we didn’t talk about the total price — how many budgets
-do you have? Are you ready to spend that amount of money or make a mortgage?
-To let you better understand the situation, I prepared another widget. It tells
-you what you can buy with a given range of budget (200K€, 400K€, 600K€, 800K€):&lt;/p&gt;
-
-&lt;p&gt;&lt;img src=&quot;/assets/20210416-idf-bar-apartments-total-price-range.png&quot; alt=&quot;Number of pieces for second-hand apartments and houses in Ile-de-France from 2016 to 2020&quot; /&gt;&lt;/p&gt;
-
-&lt;blockquote&gt;
-  &lt;p&gt;The color is not great but I don’t have time to make it better. I hope that it
-won’t bother you too much.&lt;/p&gt;
-&lt;/blockquote&gt;
-
-&lt;p&gt;From the widget above, we can find interesting information:&lt;/p&gt;
-&lt;ul&gt;
-  &lt;li&gt;If you have 200K€, you have a wide range of choices across all the
-departments. You can buy an apartment at a reasonable price. It may not be
-the best apartment that you want, but buying it will allow you to
-start having your own property and stop wasting money on the apartment rent.
-Based on the salary in Île-de-France and the constraint about the loan (up to 33%
-net income), I think 200K€ is an important amount. Note that the choices are
-much less for les Hauts-de-Seine (92) compared to other departments.&lt;/li&gt;
-  &lt;li&gt;If you have 400K€, e.g. you are buying an apartment with your partner,
-you can see that the range of choices is even larger. You should be able to
-find something that fits your needs in each department.&lt;/li&gt;
-  &lt;li&gt;For 400K€+, you can see that Paris (75) still has a lot of apartments that are
-located in these ranges. They are super expensive. The buyers are probably not
-normal residents but rather some real-estate investors (person or company)
-or rich people. According to the Notary of France (Notaires de France), the
-number of investors coming from foreign countries is not negligible. However,
-the number reduced in 2020 and reached
-its lowest level. For example, in the 6th district of Paris, the number
-reduced from 17% in 2015 to 9.4% in Q3 2020 (&lt;a href=&quot;https://www.notaires.fr/fr/immobilier-fiscalit%C3%A9/prix-et-tendances-de-limmobilier/analyse-du-march%C3%A9-immobilier&quot;&gt;article link&lt;/a&gt;).&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;h2 id=&quot;going-further&quot;&gt;Going Further&lt;/h2&gt;
-
-&lt;p&gt;How to go further from here?&lt;/p&gt;
-
-&lt;ul&gt;
-  &lt;li&gt;To learn more about Kibana, visit Elastic’s official website
-&lt;a href=&quot;https://www.elastic.co/kibana/&quot;&gt;https://www.elastic.co/kibana/&lt;/a&gt;&lt;/li&gt;
-  &lt;li&gt;To learn more about Elasticsearch, visit Elastic’s official website
-&lt;a href=&quot;https://www.elastic.co/elasticsearch/&quot;&gt;https://www.elastic.co/elasticsearch/&lt;/a&gt;&lt;/li&gt;
-  &lt;li&gt;To learn more about how to use Elasticsearch for DVF, you can visit my
-previous articles of this series &lt;a href=&quot;/series/dvf&quot;&gt;“DVF”&lt;/a&gt;&lt;/li&gt;
-  &lt;li&gt;To see the source code about this DVF project, you can visit my GitHub
-repository &lt;a href=&quot;https://github.com/mincong-h/learning-elasticsearch&quot;&gt;mincong-h/learning-elasticsearch&lt;/a&gt;,
-the source code is under the directory “demo-dvf”.&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;h2 id=&quot;conclusion&quot;&gt;Conclusion&lt;/h2&gt;
-
-&lt;p&gt;In this article, we analyzed the real estate market of Île-de-France in 2020. We
-started from the global landscape and ended with a more focused analysis on the
-market of second-hand apartments. We
-saw the market was active in 2020 despite the pandemic. The period of March to May 2020
-was difficult because of the lockdown. We saw that the number of
-sales-under-completion reduced significantly in 2020 compared to last years (1%
-vs 7%). As for apartments, les Hauts-de-Seine (92) was impacted by the pandemic
-as the median price dropped at the end of 2020. On the other hand, the
-situation is more optimistic for Paris (75): the median price of second-hand
-apartments in Paris (75) increased 35.0% in 5 years and the growth continued
-(7.0%) in 2020. We also saw that the 400K€ is maybe enough for the greater Paris area,
-but not for Paris (75).
-Interested to know more? Please subscribe to &lt;a href=&quot;/feed.xml&quot;&gt;the feed of my blog&lt;/a&gt;, follow me
-on &lt;a href=&quot;https://twitter.com/mincong_h&quot;&gt;Twitter&lt;/a&gt; or
-&lt;a href=&quot;https://github.com/mincong-h/&quot;&gt;GitHub&lt;/a&gt;. This will really motivate me to
-write more. Hope you enjoy this article, see you the next time!&lt;/p&gt;
-
-&lt;h2 id=&quot;todo&quot;&gt;TODO&lt;/h2&gt;
-
-&lt;p&gt;&lt;em&gt;What to do the next time?&lt;/em&gt;&lt;/p&gt;
-
-&lt;p&gt;I did this analysis for fun during my holidays and I spent 3 days on it. The
-main issues were that the data preparation was very long and this is the first
-time I used Kibana. Because of my limited number of day-offs, I don’t have more
-time spent on it. If I can do that again in the future, here are some ideas of improvements:&lt;/p&gt;
-
-&lt;ol&gt;
-  &lt;li&gt;Going further in the one department, e.g. Paris (75) because real estate is
-highly related to geography, it does not have much added value if we only stay in
-a high-level overview.&lt;/li&gt;
-  &lt;li&gt;Perform a prediction-related widget to forecast the trend of a given metric.&lt;/li&gt;
-  &lt;li&gt;Create a widget using a time-based comparison (e.g. comparing the same period
-last year)&lt;/li&gt;
-  &lt;li&gt;Annotate some widgets to better fit the analysis.&lt;/li&gt;
-&lt;/ol&gt;
-
-&lt;p&gt;… and you, do you have suggestions for improvements or what do you want to know more
-about? Please let me know by leaving a comment 🙏&lt;/p&gt;
-
-&lt;h2 id=&quot;references&quot;&gt;References&lt;/h2&gt;
-
-&lt;ul&gt;
-  &lt;li&gt;Grégoire David, “France GeoJSON”, &lt;em&gt;github.com&lt;/em&gt;, 2018.
- &lt;a href=&quot;https://github.com/gregoiredavid/france-geojson&quot;&gt;https://github.com/gregoiredavid/france-geojson&lt;/a&gt;&lt;/li&gt;
-  &lt;li&gt;Notaires de France, “Marché immobilier : tendance et évolution des prix de
-l’immobilier”, &lt;em&gt;notaires.fr&lt;/em&gt;, 2021. &lt;a href=&quot;https://www.notaires.fr/fr/immobilier-fiscalit%C3%A9/prix-et-tendances-de-limmobilier/analyse-du-march%C3%A9-immobilier&quot;&gt;https://www.notaires.fr/fr/immobilier-fiscalit%C3%A9/prix-et-tendances-de-limmobilier/analyse-du-march%C3%A9-immobilier&lt;/a&gt;&lt;/li&gt;
-  &lt;li&gt;PwC, “Emerging Trends in Real Estate - United States and Canada 2019”, &lt;em&gt;PwC&lt;/em&gt;, 2019.
-&lt;a href=&quot;https://www.pwc.com/jg/en/publications/etre_us_2019_report.pdf&quot;&gt;https://www.pwc.com/jg/en/publications/etre_us_2019_report.pdf&lt;/a&gt;&lt;/li&gt;
-  &lt;li&gt;Jingwen Zheng, “Second-hand apartments transactions in Île-de-France (01/2014 - 06/2020)”,
-&lt;em&gt;jingwen-z.github.io&lt;/em&gt;, 2021.
-&lt;a href=&quot;https://jingwen-z.github.io/second-hand-apartments-transactions-in-idf-1420/&quot;&gt;https://jingwen-z.github.io/second-hand-apartments-transactions-in-idf-1420/&lt;/a&gt;&lt;/li&gt;
-&lt;/ul&gt;</content><author><name>Mincong Huang</name><email>mincong.h@gmail.com</email></author><category term="elasticsearch" /><category term="elasticsearch" /><category term="kibana" /><category term="open-data" /><summary type="html">This article studies the real estate market of Île-de-France in 2020 by exploring and visualizing the dataset DVF using Kibana. We will discuss the global landscape, the impact of COVID-19, the situation in different departments, and more.</summary><media:thumbnail xmlns:media="http://search.yahoo.com/mrss/" url="https://mincong.io/assets/bg-alexander-kagan-t9Td0zfDTwI-unsplash.jpg" /><media:content medium="image" url="https://mincong.io/assets/bg-alexander-kagan-t9Td0zfDTwI-unsplash.jpg" xmlns:media="http://search.yahoo.com/mrss/" /></entry></feed>
+&lt;p&gt;Mincong&lt;/p&gt;</content><author><name>Mincong Huang</name><email>mincong.h@gmail.com</email></author><category term="review" /><category term="project" /><summary type="html">English to Chinese?</summary><media:thumbnail xmlns:media="http://search.yahoo.com/mrss/" url="https://mincong.io/assets/bg-javier-allegue-barros-C7B-ExXpOIE-unsplash.jpg" /><media:content medium="image" url="https://mincong.io/assets/bg-javier-allegue-barros-C7B-ExXpOIE-unsplash.jpg" xmlns:media="http://search.yahoo.com/mrss/" /></entry></feed>
