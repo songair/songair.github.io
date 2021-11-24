@@ -184,12 +184,70 @@ public class MyRequestLog extends AbstractNCSARequestLog {
 ```
 
 The problem of this approach is that the final result must be a string and it
-must looks like an access log. So if you need a more custom solution, then you
-will need to find another way to handle it.
+must looks like an access log. Other output structures are not supported.
+So if you need a more custom solution, then you will need to find another way to
+handle it. `AbstractNCSARequestLog` may be replaced by another class in the
+recent versions of Jetty, but the most important thing here is to understand
+that we can delegate the access log creation to a base class.
+
+### JAX-RS Filter
+
+Working with RESTful APIs is very popular choice these days. Most of the web
+services communicate with the frontend or between them using RESTful APIs.
+Therefore, it makes sense to adapt the auditing solution to "Java API for
+RESTful Web Services" (JAX-RS). By doing so, we assume that we are not serving
+HTTP requests without APIs.
+
+Here is a basic structure for auditing filter based on interface
+`ContainerResponseFilter`. In the code block, we have access to information
+about the HTTP request and the HTTP response, such as request path, request
+headers, response status code, size of the response. These data allow us to
+provide our custom implementation of audit logging.
+
+```java
+public class MyFilter implements ContainerResponseFilter {
+    @Override
+    public void filter(ContainerRequestContext requestContext,
+            ContainerResponseContext responseContext) throws IOException {
+        // TODO: implementation goes here
+        // read request info, response info, read environment variables, ...
+    }
+}
+```
+
+But this may not satisfy you because comparing to the Java Servlet solution,
+here we don't have access to servlet anymore. It means some information may be
+missing. However, we can use the `@Context` annotation to inject the servlet
+request again (or other resources if you need):
+
+```java
+public class MyFilter implements ContainerResponseFilter {
+
+    @Context
+    private HttpServletRequest request; // HERE
+
+    @Override
+    public void filter(ContainerRequestContext requestContext,
+            ContainerResponseContext responseContext) throws IOException {
+        // TODO: implementation goes here
+        // read request info, response info, read environment variables, ...
+    }
+}
+```
+
+I didn't have chance to test this solution, but I saw it on [Stack
+Overflow](https://stackoverflow.com/questions/13198550/context-returns-proxy-instead-of-httpservletrequest-no-thread-local-value-in-s).
 
 ## Going Further
 
 How to go further from here?
+
+- To learn more about the difference between a Servlet filter and a Jersey
+  filter (JAX-RS), you can visit [this answer on Stack
+  Overflow](https://stackoverflow.com/a/52210283/4381330) written by Paul
+  Samsotha.
+- To learn more about Jakarta Servet (formerly Java Servlet), visit this
+  [Wikipedia](https://en.wikipedia.org/wiki/Jakarta_Servlet).
 
 ## Conclusion
 
@@ -208,5 +266,14 @@ on [Twitter](https://twitter.com/mincong_h) or
   JPA"](https://www.baeldung.com/database-auditing-jpa), _Baeldung_, 2020.
 - ["Chapter 10. Filters and
   Interceptors - Jersey"](https://eclipse-ee4j.github.io/jersey.github.io/documentation/latest/filters-and-interceptors.html),
-_Eclipse EE4J_, 2021.
-- ["Filter (Java(TM) EE 7 Specification APIs)"](https://docs.oracle.com/javaee/7/api/javax/servlet/Filter.html), 2015.
+  _Eclipse EE4J_, 2021.
+- ["Filter (Java(TM) EE 7 Specification
+  APIs)"](https://docs.oracle.com/javaee/7/api/javax/servlet/Filter.html),
+  _Oracle_, 2015.
+- Jakob Jenkov, ["Servlet
+  Filters"](http://tutorials.jenkov.com/java-servlets/servlet-filters.html),
+  _jenkov.com_, 2014.
+- ["Access, Error, and Audit
+  Logs | Sun Java System Directory Server Enterprice Edition 6.0
+  Reference"](https://docs.oracle.com/cd/E19693-01/819-0997/6n3cs0bsg/index.html#gbwud),
+  _Oracle_, 2010.
