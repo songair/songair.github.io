@@ -11,7 +11,10 @@ tags:                [java, jetty, jersey, api, jax-rs]
 ads_tags:            []
 comments:            true
 excerpt:             >
-    TODO
+    This article discusses how to implement a simple audit logs solution with
+    Java JAX-RS, including requirements, considerations for the implementation,
+    and 3 different solutions based on Java Servlet, Jetty, and JAX-RS filter.
+
 image:               /assets/bg-markus-spiske-gnhxvdGmGG8-unsplash.jpg
 cover:               /assets/bg-markus-spiske-gnhxvdGmGG8-unsplash.jpg
 article_header:
@@ -31,7 +34,7 @@ or any other operation that mutates the state of a given resource. This resource
 can be a database, a pipeline, or anything valuable for the company. You may
 want to keep track of these events since they can be useful for security
 analysis, troubleshooting, compliance, auditing, keeping track of the lifecycle
-of a data-store, etc, depending on your role. During
+of a data store, etc, depending on your role. During
 my work at Datadog, I had the chance to implement a simple audit solution for an
 internal tool. That's why I want to write down some thoughts and hopefully, they
 will be useful for you as well.
@@ -40,33 +43,33 @@ After reading this article, you will understand:
 
 * Requirements for audit logs
 * Principles when implementing audit logs
-* Focus deeper in Java solution using JAX-RS
+* Focus deeper on Java solution using JAX-RS
 * How to go further from this article
 
 Now, let's get started!
 
 ## Requirements For Audit Logs
 
-Generally speaking, there are some information that we care about:
+Generally speaking, there is some information that we care about:
 
 - **Resource.** We want to know what is being accessed or modified. Therefore,
   we may want to record the resource ID, resource name, resource type, resource
-  group, or any other information related to this resource. Regarding to RESTful
+  group, or any other information related to this resource. Regarding RESTful
   API, the resource ID can be the path, which is usually the representation of
   the resource.
 - **Time.** We want to know when does this happen precisely. This is important
   to construct a timeline for a bigger event, like an incident, an attack, or
   the lifecycle of a resource.
 - **Action.** We want to know what is being done on that resource. It provides
-  an accurate description about the type of operation. Some typical examples are
+  an accurate description of the type of operation. Some typical examples are
   "create", "read", "delete", "update", etc.
 - **User.** We want to know "who did that?" so that we can find out more
-  information based on that user or better understand the motiviation of this
-  operation. The user information may contain: the first name, last name, email,
+  information based on that user or better understand the motivation of this
+  operation. The user information may contain the first name, last name, email,
   department, organization unit, employee ID, etc.
 
-We can eventually go further by adding more metadata to faciliate the search,
-making the description more human readable, etc. But I believe that these are not
+We can eventually go further by adding more metadata to facilitate the search,
+making the description more human-readable, etc. But I believe that these are not
 requirements, but enhancements to make the feature more usable.
 
 Then on the business side, there are other also some requirements:
@@ -77,7 +80,7 @@ Then on the business side, there are other also some requirements:
 - **Access**. Perhaps not everyone should be accessed to audit logs. Taking
   Datadog's product ["Audit
   Logs"](https://docs.datadoghq.com/fr/account_management/audit_logs/) as an
-  example, only administrator or security team member can access Audit Logs. As
+  example, only administrator or security team members can access Audit Logs. As
   an individual, you can only see a stream of your own actions.
 
 I probably didn't cover everything in the section. If you have other ideas,
@@ -96,19 +99,19 @@ Persistence API (JPA), you can implement your logic using `@PrePersist`,
 `@PreUpdate`, `@PreRemove` callbacks. Or if you use Java RESTful API
 (JAX-RS), you can implement interfaces `ContainerRequestFilter` or
 `ContainerResponseFilter` to handle the audit logging, respectively before the
-request being handled or after the response being created. By hooking into the
+request is handled or after the response is created. By hooking into the
 lifecycle, we ensure that the audit logging is decoupled from the actual
 business logic. We avoid spamming the codebase by avoiding adding the audit logs
-into every method. It also makes it clear about when does the audit actually happen.
+into every method. It also makes it clear when does the audit actually happen.
 
 **Avoid blocking the actual event.** When adding audit logs, we should also
-avoid blocking actual events so that user's action won't be blocked or delayed.
-This is because sometime the audit logging requires API calls, which means that
+avoid blocking actual events so that the user's action won't be blocked or delayed.
+This is because sometimes the audit logging requires API calls, which means that
 they may be slow or suffer from network issues. So my suggestion is to use
 asynchronous implementation so that the actual event will be handled correctly.
-As for network issue or other types of error, we can make it fault-tolerent by
-adding a retry mechanism. We can also consider using batch API call to group
-multiple events together.
+As for network issues or other types of error, we can make it fault-tolerant by
+adding a retry mechanism. We can also consider using a batch API call to group
+multiple events.
 
 ## Java Solutions
 
@@ -124,16 +127,16 @@ the capabilities of a server. It's commonly used for implementing web containers
 for hosting web applications, similar to PHP and ASP.NET. The evolution of Java
 Servlet is part of the Java Specification Requests
 ([JSRs](https://jcp.org/en/jsr/all)). The latest one is Java Servlet 4.0
-(JSR-369) started on 2017.
+(JSR-369) started in 2017.
 
 In our case, we can implement a simple Servlet filter to intercept the HTTP
 request or response using the `doFilter()` method. Inside the method, you
 must call the filter chain to pass the request and response to the next
 filter so that they are handled. Otherwise, the request will be dropped
 (filtered), which is not desired. Then, you can implement the actual auditing
-logic before or after the chain. I perfer after the chain because in this case,
+logic before or after the chain. I prefer after the chain because in this case,
 we will have the information of both the HTTP request and the HTTP response,
-which makes the auditing logging more complet.
+which makes the auditing logging more complete.
 
 ```java
 import javax.servlet.*;
@@ -183,8 +186,8 @@ public class MyRequestLog extends AbstractNCSARequestLog {
 }
 ```
 
-The problem of this approach is that the final result must be a string and it
-must looks like an access log. Other output structures are not supported.
+The problem with this approach is that the final result must be a string and it
+must look like an access log. Other output structures are not supported.
 So if you need a more custom solution, then you will need to find another way to
 handle it. `AbstractNCSARequestLog` may be replaced by another class in the
 recent versions of Jetty, but the most important thing here is to understand
@@ -192,7 +195,7 @@ that we can delegate the access log creation to a base class.
 
 ### JAX-RS Filter
 
-Working with RESTful APIs is very popular choice these days. Most of the web
+Working with RESTful APIs is a very popular choice these days. Most of the web
 services communicate with the frontend or between them using RESTful APIs.
 Therefore, it makes sense to adapt the auditing solution to "Java API for
 RESTful Web Services" (JAX-RS). By doing so, we assume that we are not serving
@@ -215,7 +218,7 @@ public class MyFilter implements ContainerResponseFilter {
 }
 ```
 
-But this may not satisfy you because comparing to the Java Servlet solution,
+But this may not satisfy you because compared to the Java Servlet solution,
 here we don't have access to servlet anymore. It means some information may be
 missing. However, we can use the `@Context` annotation to inject the servlet
 request again (or other resources if you need):
@@ -229,15 +232,14 @@ public class MyFilter implements ContainerResponseFilter {
     @Override
     public void filter(ContainerRequestContext requestContext,
             ContainerResponseContext responseContext) throws IOException {
-        // TODO: implementation goes here
-        // read request info, response info, read environment variables, ...
+        // ...
     }
 }
 ```
 
-I didn't have chance to test this solution, but I saw it on [Stack
+I didn't have a chance to test this solution, but I saw it on [Stack
 Overflow](https://stackoverflow.com/questions/13198550/context-returns-proxy-instead-of-httpservletrequest-no-thread-local-value-in-s).
-Hopefully it will work for you.
+Hopefully, it will work for you.
 
 ## Going Further
 
@@ -252,7 +254,10 @@ How to go further from here?
 
 ## Conclusion
 
-What did we talk in this article?
+In this article, we discuss how to implement audit logs in Java based on
+Java JAX-RS. We discussed some technical and business requirements for the
+solution. Some principles for the implementation. And finally, three Java
+solutions based on Java Servlet, Jetty, and JAX-RS.
 Interested to know more? You can subscribe to [the feed of my blog](/feed.xml), follow me
 on [Twitter](https://twitter.com/mincong_h) or
 [GitHub](https://github.com/mincong-h/). Hope you enjoy this article, see you the next time!
@@ -275,6 +280,6 @@ on [Twitter](https://twitter.com/mincong_h) or
   Filters"](http://tutorials.jenkov.com/java-servlets/servlet-filters.html),
   _jenkov.com_, 2014.
 - ["Access, Error, and Audit
-  Logs | Sun Java System Directory Server Enterprice Edition 6.0
+  Logs | Sun Java System Directory Server Enterprise Edition 6.0
   Reference"](https://docs.oracle.com/cd/E19693-01/819-0997/6n3cs0bsg/index.html#gbwud),
   _Oracle_, 2010.
