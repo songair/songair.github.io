@@ -40,7 +40,7 @@ slow logs with you, in particular:
 
 Now, let's get started!
 
-## Log Structure
+## Query Slow Log
 
 Let's analyze a slow log provided Elasticsearch official documentation ([link](https://www.elastic.co/guide/en/elasticsearch/reference/current/index-modules-slowlog.html)):
 
@@ -85,6 +85,15 @@ PUT /my-index-000001/_settings
 }
 ```
 
+... but what is query-then-fetch?
+
+According to "Elasticsearch: The Definitive Guide", there are two phases in the search: query and fetch.
+
+* **query**: during the initial query phase, the query is broadcast to a shard copy (a primary or replica shard) of every shard in the index. Each shard executes the search locally and builds a priority queue of matching documents. It identifies which documents satisfy the search request.
+* **fetch**: we retrieve the documents themselves.
+
+For more details, you can visit ["Elasticsearch: The Definitive Guide 2.x"](https://www.elastic.co/guide/en/elasticsearch/guide/current/index.html), especially the ["Query Phase"](https://www.elastic.co/guide/en/elasticsearch/guide/current/_query_phase.html) and the ["Fetch Phase"](https://www.elastic.co/guide/en/elasticsearch/guide/current/_fetch_phase.html).
+
 ## Section 3
 
 ## Going Further
@@ -103,3 +112,4 @@ on [Twitter](https://twitter.com/mincong_h) or
 - Ran Ramati, Gedalyah Reback, ["A Beginner’s Guide to Logstash Grok"](https://logz.io/blog/logstash-grok/), _logz.io_, 2020.
 - ["Processors \| Datadog Documentation"](https://docs.datadoghq.com/logs/log_configuration/processors/), _docs.datadoghq.com_, 2021.
 - Vineeth Mohan, ["Slow Logs in Elasticsearch"](https://qbox.io/blog/slow-logs-in-elasticsearch-search-index-config-example), _qbox.io_, 2018.
+- Clinton Gormley, Zachary Tong, ["Elasticsearch: The Definitive Guide 2.x"](https://www.elastic.co/guide/en/elasticsearch/guide/current/index.html), Elasticsearch, 2014-2015.
