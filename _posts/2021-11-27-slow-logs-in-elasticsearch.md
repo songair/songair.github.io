@@ -33,14 +33,14 @@ troubleshoot the slowness of the write path (index) or the read path
 provide hints to mitigations and solutions. In this article, I want to discuss
 slow logs with you, in particular:
 
-* Some prequisites
+* How does the log look like?
 * Some general concepts
 * Some specific concepts to dig deeper
 * How to go further from this article
 
 Now, let's get started!
 
-## Section 1
+## Log Structure
 
 Let's analyze a slow log provided Elasticsearch official documentation ([link](https://www.elastic.co/guide/en/elasticsearch/reference/current/index-modules-slowlog.html)):
 
@@ -61,8 +61,29 @@ Index name | index6 | The name of the index that is impacted. We have similar tr
 Shard | 0 | The shard id.
 Took | 78.4micros | Execution time in humain readable format. It determines how slow the query is.
 Took in milliseconds | 0 | Execution time in milliseconds in numeric value. If you have the possibility to transform this value in your log pipelines, you can calculate filter the queries that are slower than certain threshold, e.g. ">= 2 seconds". Therefore, you can reduce noises and better indentify the source of the problem. This transformation can be done using a grok parser. Here is a great beginner's guide about [Logstash Grok](https://logz.io/blog/logstash-grok/) and here is the documentation of [Grok Parser in Datadog](https://docs.datadoghq.com/logs/log_configuration/processors/).
+Stats | | Statistics
+Search type | QUERY_THEN_FETCH | The type of search.
+Total shards | 1 | Total number of shards.
+Source | { "query": { "match_all": { "boost ": 1.0 } } } | The source of of the query. This is one of the most important fields. It allows us the determine how the query looks like and gives us an idea of what kind of information that the user is looking for.
+ID | MY_USER_ID | The user ID. It may help you determine whether the query problems come from the same user.
 
-## Section 2
+## Thresholds
+
+You can use thresholds to better define the level of logs depending on your requirements. Note that these settings are dynamic so you can change them without restarting the server. The 3 different kinds of thresholds that you can define are: index (`index`), the query phase of search (`query`), and the fetch phase of the search (`fetch`).
+
+```
+PUT /my-index-000001/_settings
+{
+  "index.search.slowlog.threshold.query.warn": "10s",
+  "index.search.slowlog.threshold.query.info": "5s",
+  "index.search.slowlog.threshold.query.debug": "2s",
+  "index.search.slowlog.threshold.query.trace": "500ms",
+  "index.search.slowlog.threshold.fetch.warn": "1s",
+  "index.search.slowlog.threshold.fetch.info": "800ms",
+  "index.search.slowlog.threshold.fetch.debug": "500ms",
+  "index.search.slowlog.threshold.fetch.trace": "200ms"
+}
+```
 
 ## Section 3
 
