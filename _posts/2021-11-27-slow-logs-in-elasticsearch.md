@@ -78,3 +78,7 @@ on [Twitter](https://twitter.com/mincong_h) or
 [GitHub](https://github.com/mincong-h/). Hope you enjoy this article, see you the next time!
 
 ## References
+
+- Ran Ramati, Gedalyah Reback, ["A Beginner’s Guide to Logstash Grok"](https://logz.io/blog/logstash-grok/), _logz.io_, 2020.
+- ["Processors \| Datadog Documentation"](https://docs.datadoghq.com/logs/log_configuration/processors/), _docs.datadoghq.com_, 2021.
+- Vineeth Mohan, ["Slow Logs in Elasticsearch"](https://qbox.io/blog/slow-logs-in-elasticsearch-search-index-config-example), _qbox.io_, 2018.
