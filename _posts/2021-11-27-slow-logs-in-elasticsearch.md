@@ -34,7 +34,7 @@ provide hints to mitigations and solutions. In this article, I want to discuss
 slow logs with you, in particular:
 
 * How does the log look like?
-* Some general concepts
+* How to change thresholds?
 * Some specific concepts to dig deeper
 * How to go further from this article
 
