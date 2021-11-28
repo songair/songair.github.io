@@ -1,8 +1,8 @@
 ---
 layout:              post
-title:               Slow Logs In Elasticsearch
+title:               Slow Query Logs In Elasticsearch
 subtitle:            >
-    How to better understand slow logs in Elasticsearch?
+    How to better understand slow query logs in Elasticsearch?
 
 lang:                en
 date:                2021-11-27 09:19:02 +0100
@@ -35,8 +35,8 @@ slow logs with you, in particular:
 
 * How does the log look like?
 * How to change thresholds?
-* Some specific concepts to dig deeper
-* How to go further from this article
+* Root causes of slow queries?
+* How to go further from this article?
 
 Now, let's get started!
 
@@ -73,6 +73,9 @@ You can use thresholds to better define the level of logs depending on your requ
 
 ```
 PUT /my-index-000001/_settings
+```
+
+```json
 {
   "index.search.slowlog.threshold.query.warn": "10s",
   "index.search.slowlog.threshold.query.info": "5s",
@@ -92,24 +95,49 @@ According to "Elasticsearch: The Definitive Guide", there are two phases in the 
 * **query**: during the initial query phase, the query is broadcast to a shard copy (a primary or replica shard) of every shard in the index. Each shard executes the search locally and builds a priority queue of matching documents. It identifies which documents satisfy the search request.
 * **fetch**: we retrieve the documents themselves.
 
-For more details, you can visit ["Elasticsearch: The Definitive Guide 2.x"](https://www.elastic.co/guide/en/elasticsearch/guide/current/index.html), especially the ["Query Phase"](https://www.elastic.co/guide/en/elasticsearch/guide/current/_query_phase.html) and the ["Fetch Phase"](https://www.elastic.co/guide/en/elasticsearch/guide/current/_fetch_phase.html).
+For more details, you can visit ["Elasticsearch: The Definitive Guide 2.x"](https://www.elastic.co/guide/en/elasticsearch/guide/current/index.html), especially the sections: ["Query Phase"](https://www.elastic.co/guide/en/elasticsearch/guide/current/_query_phase.html) and ["Fetch Phase"](https://www.elastic.co/guide/en/elasticsearch/guide/current/_fetch_phase.html).
 
-## Section 3
+## Root Causes
+
+Unfortunately, I don't have much experience working with slow queries. However, I know that Opster has an excellent article about analyzing slow logs. In their article ["Elasticsearch Slow Query Troubleshooting Guide"](https://opster.com/guides/data-structuring/elasticsearch-slow-search-query-guide/), they mention that the causes can be:
+
+1. Poorly written or expensive search queries.
+2. Poorly configured Elasticsearch clusters or indices.
+3. Saturated CPU, Memory, Disk and network resources on the cluster.
+4. Periodic background processes like snapshots or merging segments that consume cluster resources (CPU, Memory, disk) causing other search queries to perform slowly as resources are sparsely available for the main search queries.
+5. Segment merging is used to reduce the number of segments so that search latency is improved, however, merges can be expensive to perform, especially on low IO environments.
+
+Another great article comes from the engineering blog of Elasticsearch, written by Louis Ong as ["Advanced tuning: finding and fixing slow Elasticsearch queries"](https://www.elastic.co/blog/advanced-tuning-finding-and-fixing-slow-elasticsearch-queries). He mentioned that the common causes are:
+
+1. High resource utilization when inactive
+2. High thread pool rejected count
+3. High CPU and indexing latency
+4. Increased latency with more replica shards
+5. High utilization when sharing resources
+6. High heap aggregating highly unique fields
+
+Also this article written by Burak Altaş on Medium as ["How to Optimize Elasticsearch for Better Search Performance"](https://medium.com/@burak.altas/how-to-optimize-elasticsearch-for-better-search-performance-283492e475f8), talking about index configuration, shard optimization, Elasticsearch (cluster) configuration. Check it out.
 
 ## Going Further
 
 How to go further from here?
 
+- Due to time constraints, I only disucss slow query logs here but didn't mention much about index logs. In other words, we only discussed the read path and not the write path. You may want to explore that as well.
+- To learn more about how to fix the problems, check out the more detailed solutions mentioned in the "Root Causes" section.
+
 ## Conclusion
 
-What did we talk in this article? Take notes from introduction again.
+In this article, we discussed about the slow log structure in Elasticsearch, its thresholds, and the possible root causes of the problem.
 Interested to know more? You can subscribe to [the feed of my blog](/feed.xml), follow me
 on [Twitter](https://twitter.com/mincong_h) or
 [GitHub](https://github.com/mincong-h/). Hope you enjoy this article, see you the next time!
 
 ## References
 
-- Ran Ramati, Gedalyah Reback, ["A Beginner’s Guide to Logstash Grok"](https://logz.io/blog/logstash-grok/), _logz.io_, 2020.
-- ["Processors \| Datadog Documentation"](https://docs.datadoghq.com/logs/log_configuration/processors/), _docs.datadoghq.com_, 2021.
-- Vineeth Mohan, ["Slow Logs in Elasticsearch"](https://qbox.io/blog/slow-logs-in-elasticsearch-search-index-config-example), _qbox.io_, 2018.
-- Clinton Gormley, Zachary Tong, ["Elasticsearch: The Definitive Guide 2.x"](https://www.elastic.co/guide/en/elasticsearch/guide/current/index.html), Elasticsearch, 2014-2015.
+- Ran Ramati, Gedalyah Reback, ["A Beginner’s Guide to Logstash Grok"](https://logz.io/blog/logstash-grok/), _Logz_, 2020.
+- ["Processors"](https://docs.datadoghq.com/logs/log_configuration/processors/), _Datadog Documentation_, 2021.
+- Vineeth Mohan, ["Slow Logs in Elasticsearch"](https://qbox.io/blog/slow-logs-in-elasticsearch-search-index-config-example), _QBOX_, 2018.
+- Clinton Gormley, Zachary Tong, ["Elasticsearch: The Definitive Guide 2.x"](https://www.elastic.co/guide/en/elasticsearch/guide/current/index.html), _Elasticsearch_, 2014-2015.
+- Opster Team, ["Elasticsearch Slow Query Troubleshooting Guide"](https://opster.com/guides/data-structuring/elasticsearch-slow-search-query-guide/), _Opster_, 2021.
+- Louis Ong, ["Advanced tuning: finding and fixing slow Elasticsearch queries"](https://www.elastic.co/blog/advanced-tuning-finding-and-fixing-slow-elasticsearch-queries), _Elastic_, 2019.
+- Burak Altaş, ["How to Optimize Elasticsearch for Better Search Performance"](https://medium.com/@burak.altas/how-to-optimize-elasticsearch-for-better-search-performance-283492e475f8), _Medium_, 2019.
