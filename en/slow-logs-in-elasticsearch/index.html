@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="zh">
+<!DOCTYPE html><html lang="en">
   <head><!-- Global site tag (gtag.js) - Google Analytics -->
 	<script async src="https://www.googletagmanager.com/gtag/js?id=UA-87129300-1"></script>
 	<script>
@@ -10,37 +10,42 @@
 		
 	</script><meta charset="utf-8">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
-<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no"><title>Java 测试 - Mincong Huang</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no"><title>Slow Query Logs In Elasticsearch - Mincong Huang</title>
 
-<meta name="description" content="">
+<meta name="description" content="Better understand the slow queries in Elasticsearch by using the slow logs. In this article, we discuss the log structure, the thresholds, and some potential...">
 
 <!-- Begin Jekyll SEO tag v2.7.1 -->
-<title>Java 测试 | Mincong Huang</title>
+<title>Slow Query Logs In Elasticsearch | Mincong Huang</title>
 <meta name="generator" content="Jekyll v4.2.0" />
-<meta property="og:title" content="Java 测试" />
+<meta property="og:title" content="Slow Query Logs In Elasticsearch" />
 <meta name="author" content="Mincong Huang" />
-<meta property="og:locale" content="zh" />
-<meta name="description" content="Hi, welcome to my blog! I’m a software engineer at Datadog. I write blog posts in my free time. My blogs are bits and pieces of my tech journey. Most of them are related to Java. Hope you enjoy them! My opinions are my own, not Datadog’s. This blog is powered by Jekyll, a simple, blog-aware, static sites solution." />
-<meta property="og:description" content="Hi, welcome to my blog! I’m a software engineer at Datadog. I write blog posts in my free time. My blogs are bits and pieces of my tech journey. Most of them are related to Java. Hope you enjoy them! My opinions are my own, not Datadog’s. This blog is powered by Jekyll, a simple, blog-aware, static sites solution." />
-<link rel="canonical" href="https://mincong.io/cn/categories/java-testing/" />
-<meta property="og:url" content="https://mincong.io/cn/categories/java-testing/" />
+<meta property="og:locale" content="en" />
+<meta name="description" content="Better understand the slow queries in Elasticsearch by using the slow logs. In this article, we discuss the log structure, the thresholds, and some potential root causes." />
+<meta property="og:description" content="Better understand the slow queries in Elasticsearch by using the slow logs. In this article, we discuss the log structure, the thresholds, and some potential root causes." />
+<link rel="canonical" href="https://mincong.io/en/slow-logs-in-elasticsearch/" />
+<meta property="og:url" content="https://mincong.io/en/slow-logs-in-elasticsearch/" />
 <meta property="og:site_name" content="Mincong Huang" />
+<meta property="og:image" content="https://mincong.io/assets/bg-nareeta-martin-cOWn-bYGmlc-unsplash.jpg" />
 <meta property="og:type" content="article" />
-<meta property="article:published_time" content="2021-11-28T10:23:56+01:00" />
-<meta name="twitter:card" content="summary" />
-<meta property="twitter:title" content="Java 测试" />
+<meta property="article:published_time" content="2021-11-27T09:19:02+01:00" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta property="twitter:image" content="https://mincong.io/assets/bg-nareeta-martin-cOWn-bYGmlc-unsplash.jpg" />
+<meta property="twitter:title" content="Slow Query Logs In Elasticsearch" />
 <meta name="twitter:site" content="@mincong_h" />
 <meta name="twitter:creator" content="@mincong_h" />
 <script type="application/ld+json">
-{"headline":"Java 测试","description":"Hi, welcome to my blog! I’m a software engineer at Datadog. I write blog posts in my free time. My blogs are bits and pieces of my tech journey. Most of them are related to Java. Hope you enjoy them! My opinions are my own, not Datadog’s. This blog is powered by Jekyll, a simple, blog-aware, static sites solution.","datePublished":"2021-11-28T10:23:56+01:00","dateModified":"2021-11-28T10:23:56+01:00","@type":"BlogPosting","mainEntityOfPage":{"@type":"WebPage","@id":"https://mincong.io/cn/categories/java-testing/"},"url":"https://mincong.io/cn/categories/java-testing/","author":{"@type":"Person","name":"Mincong Huang"},"@context":"https://schema.org"}</script>
+{"image":"https://mincong.io/assets/bg-nareeta-martin-cOWn-bYGmlc-unsplash.jpg","headline":"Slow Query Logs In Elasticsearch","description":"Better understand the slow queries in Elasticsearch by using the slow logs. In this article, we discuss the log structure, the thresholds, and some potential root causes.","datePublished":"2021-11-27T09:19:02+01:00","dateModified":"2021-11-27T09:19:02+01:00","@type":"BlogPosting","mainEntityOfPage":{"@type":"WebPage","@id":"https://mincong.io/en/slow-logs-in-elasticsearch/"},"url":"https://mincong.io/en/slow-logs-in-elasticsearch/","author":{"@type":"Person","name":"Mincong Huang"},"@context":"https://schema.org"}</script>
 <!-- End Jekyll SEO tag -->
 
 
 <!-- Extra Open Graph :: Start -->
 
+<meta property="og:image:width" content="1161"/>
+<meta property="og:image:height" content="1920"/>
+
 <!-- Extra Open Graph :: End -->
 
-<link rel="canonical" href="https://mincong.io/cn/categories/java-testing/"><link rel="alternate" type="application/rss+xml" title="Mincong Huang" href="/feed.xml"><!-- start favicons snippet, use https://realfavicongenerator.net/ --><link rel="apple-touch-icon" sizes="180x180" href="/assets/apple-touch-icon.png"><link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon-32x32.png"><link rel="icon" type="image/png" sizes="16x16" href="/assets/favicon-16x16.png"><link rel="manifest" href="/assets/site.webmanifest"><link rel="mask-icon" href="/assets/safari-pinned-tab.svg" color="#fc4d50"><link rel="shortcut icon" href="/assets/favicon.ico">
+<link rel="canonical" href="https://mincong.io/en/slow-logs-in-elasticsearch/"><link rel="alternate" type="application/rss+xml" title="Mincong Huang" href="/feed.xml"><!-- start favicons snippet, use https://realfavicongenerator.net/ --><link rel="apple-touch-icon" sizes="180x180" href="/assets/apple-touch-icon.png"><link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon-32x32.png"><link rel="icon" type="image/png" sizes="16x16" href="/assets/favicon-16x16.png"><link rel="manifest" href="/assets/site.webmanifest"><link rel="mask-icon" href="/assets/safari-pinned-tab.svg" color="#fc4d50"><link rel="shortcut icon" href="/assets/favicon.ico">
 
 <meta name="msapplication-TileColor" content="#ffc40d"><meta name="msapplication-config" content="/assets/browserconfig.xml">
 
@@ -290,18 +295,7 @@
 </head>
   <body>
     <div class="root" data-is-touch="false">
-      <div class="layout--page layout--page--sidebar clearfix js-page-root">
-  <div class="page__mask d-print-none js-page-mask js-sidebar-hide"></div>
-  <div class="page__viewport">
-    <div class="page__actions d-print-none">
-      <div class="button button--circle button--lg box-shadow-2 sidebar-button js-sidebar-show">
-        <i class="fas fa-bars icon--show"></i>
-      </div>
-    </div>
-
-    <div class="grid page__grid">
-
-      <div class="page__sidebar d-print-none"><div class="sidebar-toc"><ul class="toc toc--navigator"><li class="toc-h1">文章类别</li><li class="toc-h2"><a href="/cn/categories/build/">构建工具</a></li><li class="toc-h2"><a href="/cn/categories/elasticsearch/">Elasticsearch</a></li><li class="toc-h2"><a href="/cn/categories/git/">Git</a></li><li class="toc-h2"><a href="/cn/categories/java-concurrency/">Java Concurrency</a></li><li class="toc-h2"><a href="/cn/categories/java-core/">Java 核心</a></li><li class="toc-h2"><a href="/cn/categories/java-rest/">Java RESTful APIs</a></li><li class="toc-h2"><a href="/cn/categories/java-serialization/">Java 序列化</a></li><li class="toc-h2 active"><a href="/cn/categories/java-testing/">Java 测试</a></li><li class="toc-h2"><a href="/cn/categories/python/">Python</a></li><li class="toc-h2"><a href="/cn/categories/reliability/">可靠性</a></li><li class="toc-h2"><a href="/cn/categories/review/">总结</a></li></ul></div></div><div class="page__main js-page-main cell cell--auto">
+      <div class="layout--page js-page-root"><div class="page__main js-page-main page__viewport has-aside cell cell--auto">
 
       <div class="page__main-inner"><div class="page__header d-print-none"><header class="header"><div class="main">
       <div class="header__title">
@@ -330,13 +324,13 @@
           
           
 
-          <a href="/cn/">码农小黄</a>
+          <a href="/">Home</a>
         </div><button class="button button--secondary button--circle search-button js-search-toggle">
             <i class="fas fa-search"></i>
           </button></div><nav class="navigation">
-        <ul><li class="navigation__item"><a href="/cn/categories/">分类</a></li><li class="navigation__item"><a href="/cn/series/">系列</a></li><li class="navigation__item"><a href="/cn/archive/">归档</a></li><li class="navigation__item"><a href="/cn/about/">关于</a></li><li><button class="button button--secondary button--circle search-button js-search-toggle"><i class="fas fa-search"></i></button></li><li>
-            <a href="/">
-             <img src="/assets/flag-US.png"
+        <ul><li class="navigation__item"><a href="/en/categories/">Categories</a></li><li class="navigation__item"><a href="/en/series/">Series</a></li><li class="navigation__item"><a href="/en/archive/">Archive</a></li><li class="navigation__item"><a href="/en/about/">About</a></li><li><button class="button button--secondary button--circle search-button js-search-toggle"><i class="fas fa-search"></i></button></li><li>
+            <a href="/cn/">
+             <img src="/assets/flag-CN.png"
                   alt=""
                   class="naviation__lang_img">
             </a>
@@ -344,122 +338,330 @@
         </ul>
       </nav></div>
   </header>
-</div><div class="page__content"><div class ="main"><div class="grid grid--reverse">
-
-              <div class="col-aside d-print-none js-col-aside"></div>
-
-              <div class="col-main cell cell--auto"><!-- start custom main top snippet -->
-
-<!-- end custom main top snippet -->
-<article itemscope itemtype="http://schema.org/WebPage"><div class="article__header"><header><h1>Java 测试</h1></header></div><meta itemprop="headline" content="Java 测试">
+</div><div class="page__content"><div class="article__header--overlay"><div class="hero hero--dark overlay" style="background-image:linear-gradient(135deg, rgba(0, 0, 0, .6), rgba(0, 0, 0, .4)),url(/assets/bg-nareeta-martin-cOWn-bYGmlc-unsplash.jpg);background-color:#203028;"><div class="hero__content"><div class ="main">
 
   
   <div class="article__info clearfix">
       <ul class="left-col menu">
+        <li>
+              <a class="button button--secondary button--pill button--sm"
+                href="/en/archive/?tag=elasticsearch">elasticsearch</a>
+            </li>
+
+        <li class="separator">|</li>
+          
+            <li>
+              <a class="button button--circle button--primary focus lang"
+                 href="/en/slow-logs-in-elasticsearch/"><span>EN</span></a>
+
+              
+
+
+
+
+
+
+              
+
+              
+            </li>
+          
         
-
-        
-      </ul><ul class="right-col menu"><li><i class="far fa-calendar-alt"></i> <span>2021年 11月28日</span>
-            </li></ul></div><meta itemprop="author" content="Mincong Huang"/><meta itemprop="datePublished" content="2021-11-28T10:23:56+01:00"><div class="js-article-content">
-
-
-<div class="layout--articles">
-  <section class="my-5">
-    <div class="article-list grid grid--p-3"><div class="cell cell--12 cell--md-6 cell--lg-4">
-          <div class="card card--flat"><div class="card__image"><div class="card__background_image card__background_image_md" style="background-image: url('/assets/bg-mike-kenneally-tNALoIZhqVM-unsplash.jpg')"></div></div><div class="card__content">
-                <header>
-                  <a href="/2021/04/09/junit-5-dynamic-tests/"><h2 class="card__header">JUnit 5: Dynamic Tests with TestFactory</h2></a>
-                </header>
-              </div>
-          </div>
-        </div><div class="cell cell--12 cell--md-6 cell--lg-4">
-          <div class="card card--flat"><div class="card__image"><div class="card__background_image card__background_image_md" style="background-image: url('/assets/bg-sonja-langford-eIkbSc3SDtI-unsplash.jpg')"></div></div><div class="card__content">
-                <header>
-                  <a href="/2020/05/24/java-clock/"><h2 class="card__header">Controlling Time with Java Clock</h2></a>
-                </header>
-              </div>
-          </div>
-        </div><div class="cell cell--12 cell--md-6 cell--lg-4">
-          <div class="card card--flat"><div class="card__image"><div class="card__background_image card__background_image_md" style="background-image: url('/assets/bg-mike-kenneally-tNALoIZhqVM-unsplash.jpg')"></div></div><div class="card__content">
-                <header>
-                  <a href="/2020/05/10/completablefuture-test/"><h2 class="card__header">How CompletableFuture is tested in OpenJDK?</h2></a>
-                </header>
-              </div>
-          </div>
-        </div><div class="cell cell--12 cell--md-6 cell--lg-4">
-          <div class="card card--flat"><div class="card__image"><div class="card__background_image card__background_image_md" style="background-image: url('/assets/bg-edward-howell-hYcriIw0gHc-unsplash.jpg')"></div></div><div class="card__content">
-                <header>
-                  <a href="/2020/04/19/mockito-junit5/"><h2 class="card__header">Mockito: 3 Ways to Init Mock in JUnit 5</h2></a>
-                </header>
-              </div>
-          </div>
-        </div><div class="cell cell--12 cell--md-6 cell--lg-4">
-          <div class="card card--flat"><div class="card__image"><div class="card__background_image card__background_image_md" style="background-image: url('/assets/bg-erwan-hesry-RJjY5Hpnifk-unsplash.jpg')"></div></div><div class="card__content">
-                <header>
-                  <a href="/2020/04/05/testing-elasticsearch-with-docker-and-java-client/"><h2 class="card__header">Testing Elasticsearch With Docker And Java High Level REST Client</h2></a>
-                </header>
-              </div>
-          </div>
-        </div><div class="cell cell--12 cell--md-6 cell--lg-4">
-          <div class="card card--flat"><div class="card__image"><div class="card__background_image card__background_image_md" style="background-image: url('/assets/bg-adrian-korte-5gn2soeAc40-unsplash.jpg')"></div></div><div class="card__content">
-                <header>
-                  <a href="/2020/02/02/logback-test-logging-event/"><h2 class="card__header">Logback: Test Logging Event</h2></a>
-                </header>
-              </div>
-          </div>
-        </div><div class="cell cell--12 cell--md-6 cell--lg-4">
-          <div class="card card--flat"><div class="card__image"><div class="card__background_image card__background_image_md" style="background-image: url('/assets/bg-romet-tagobert-ytrbFQSJBxw-unsplash.jpg')"></div></div><div class="card__content">
-                <header>
-                  <a href="/2019/12/15/mockito-argument-captor/"><h2 class="card__header">Mockito: ArgumentCaptor</h2></a>
-                </header>
-              </div>
-          </div>
-        </div><div class="cell cell--12 cell--md-6 cell--lg-4">
-          <div class="card card--flat"><div class="card__image"><div class="card__background_image card__background_image_md" style="background-image: url('/assets/bg-alex-block-eicoRD590x4-unsplash.jpg')"></div></div><div class="card__content">
-                <header>
-                  <a href="/2019/09/22/mockito-verify/"><h2 class="card__header">Mockito: 4 Ways to Verify Interactions</h2></a>
-                </header>
-              </div>
-          </div>
-        </div><div class="cell cell--12 cell--md-6 cell--lg-4">
-          <div class="card card--flat"><div class="card__image"><div class="card__background_image card__background_image_md" style="background-image: url('/assets/bg-mike-kenneally-tNALoIZhqVM-unsplash.jpg')"></div></div><div class="card__content">
-                <header>
-                  <a href="/2019/09/13/init-mock/"><h2 class="card__header">Mockito: 3 Ways to Init Mock in JUnit 4</h2></a>
-                </header>
-              </div>
-          </div>
-        </div><div class="cell cell--12 cell--md-6 cell--lg-4">
-          <div class="card card--flat"><div class="card__image"><div class="card__background_image card__background_image_md" style="background-image: url('/assets/bg-boy-666803_1280.jpg')"></div></div><div class="card__content">
-                <header>
-                  <a href="/2019/08/13/how-to-fix-bug-with-legacy-framework/"><h2 class="card__header">6 Tips for Fixing Bugs with Legacy Frameworks</h2></a>
-                </header>
-              </div>
-          </div>
-        </div><div class="cell cell--12 cell--md-6 cell--lg-4">
-          <div class="card card--flat"><div class="card__image"><div class="card__background_image card__background_image_md" style="background-image: url('/assets/bg-dog-2785074_1280.jpg')"></div></div><div class="card__content">
-                <header>
-                  <a href="/2019/02/05/tdd-after-3-months-practice/"><h2 class="card__header">TDD: After 3 Months' Practice</h2></a>
-                </header>
-              </div>
-          </div>
-        </div><div class="cell cell--12 cell--md-6 cell--lg-4">
-          <div class="card card--flat"><div class="card__image"><div class="card__background_image card__background_image_md" style="background-image: url('/assets/bg-coffee-171653_1280.jpg')"></div></div><div class="card__content">
-                <header>
-                  <a href="/2018/12/18/testing-jax-rs-resources/"><h2 class="card__header">Testing JAX-RS Resources</h2></a>
-                </header>
-              </div>
-          </div>
-        </div><div class="cell cell--12 cell--md-6 cell--lg-4">
-          <div class="card card--flat"><div class="card__image"><div class="card__background_image card__background_image_md" style="background-image: url('/assets/bg-board-2450236_1280.jpg')"></div></div><div class="card__content">
-                <header>
-                  <a href="/2018/04/03/learning-selenium-webdriver/"><h2 class="card__header">Introduction to Selenium WebDriver</h2></a>
-                </header>
-              </div>
-          </div>
-        </div></div>
-</section>
+      </ul><ul class="right-col menu"><li><i class="far fa-calendar-alt"></i> <span>Nov 27, 2021</span>
+            </li></ul></div><div class="article__header"><header><h1>Slow Query Logs In Elasticsearch</h1></header></div><div class="article__header">
+                        <p class="overlay__excerpt">How to better understand slow query logs in Elasticsearch?</p>
+                      </div><div class="article__info clearfix">
+  <ul class="left-col menu">
+    <li>
+      <i class="fas fa-camera"></i>
+      
+      Photo by
+      <a href="https://unsplash.com/@splashabout" target="_blank">Nareeta Martin</a>
+      
+      on
+      <a href="https://unsplash.com/license" target="_blank">Unplash </a>
+    </li>
+  </ul>
 </div>
-</div></article><!-- start custom main bottom snippet -->
+</div></div>
+              </div>
+            </div><div class ="main"><div class="grid grid--reverse">
+
+              <div class="col-aside d-print-none js-col-aside"><aside class="page__aside js-page-aside"><div class="toc-aside js-toc-root"></div>
+</aside></div>
+
+              <div class="col-main cell cell--auto"><!-- start custom main top snippet -->
+
+<!-- end custom main top snippet -->
+<article itemscope itemtype="http://schema.org/Article"><meta itemprop="headline" content="Slow Query Logs In Elasticsearch"><meta itemprop="author" content="Mincong Huang"/><meta itemprop="datePublished" content="2021-11-27T09:19:02+01:00">
+    <meta itemprop="keywords" content="elasticsearch"><div class="js-article-content"><div class="layout--article"><!-- start custom article top snippet -->
+
+
+<!-- end custom article top snippet -->
+<div class="article__content" itemprop="articleBody"><h2 id="introduction">Introduction</h2>
+
+<p>If you are using Elasticsearch in production, you are probably familiar with
+slow logs. Slow logs are logs provided by Elasticsearch, which help you to
+troubleshoot the slowness of the write path (index) or the read path
+(search). It’s useful for determing the root cause of the problem and may
+provide hints to mitigations and solutions. In this article, I want to discuss
+slow logs with you, in particular:</p>
+
+<ul>
+  <li>How does the log look like?</li>
+  <li>How to change thresholds?</li>
+  <li>Root causes of slow queries?</li>
+  <li>How to go further from this article?</li>
+</ul>
+
+<p>Now, let’s get started!</p>
+
+<h2 id="query-slow-log">Query Slow Log</h2>
+
+<p>Let’s analyze a slow log provided Elasticsearch official documentation (<a href="https://www.elastic.co/guide/en/elasticsearch/reference/current/index-modules-slowlog.html">link</a>):</p>
+
+<blockquote>
+  <p>[2030-08-30T11:59:37,786][WARN ][i.s.s.query              ] [node-0] [index6][0]
+took[78.4micros], took_millis[0], total_hits[0 hits], stats[],
+search_type[QUERY_THEN_FETCH], total_shards[1],
+source[{“query”:{“match_all”:{“boost”:1.0}}}], id[MY_USER_ID],</p>
+</blockquote>
+
+<p>If we split the log into pieces, we can obtain the following table:</p>
+
+<table>
+  <thead>
+    <tr>
+      <th style="text-align: left">Field</th>
+      <th style="text-align: left">Value</th>
+      <th style="text-align: left">Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td style="text-align: left">Timestamp</td>
+      <td style="text-align: left">2030-08-30T11:59:37,786</td>
+      <td style="text-align: left">The timestamp of the log.</td>
+    </tr>
+    <tr>
+      <td style="text-align: left">Log Level</td>
+      <td style="text-align: left">WARN</td>
+      <td style="text-align: left">It means that the query execution time is higher than the query “warn” threshold. This is configured in index settings API.</td>
+    </tr>
+    <tr>
+      <td style="text-align: left">Logger</td>
+      <td style="text-align: left">i.s.s.query</td>
+      <td style="text-align: left">This is a concise version of logger name (class name): “index.search.slowlog.query”. This is useful for users to determine the type of slowness: index or search.</td>
+    </tr>
+    <tr>
+      <td style="text-align: left">Node</td>
+      <td style="text-align: left">node-0</td>
+      <td style="text-align: left">It means that the slowness happens on node-0. If you select a time range and group by nodes, it will help you determine the distribution of the slowness across the cluster. In other words, determine if the slowness happens on one single node or happens on multiple ones. Also, if you name the node with some special meaning, e.g. roles (fresh, warm, cold), you will be able to determine which roles are slow.</td>
+    </tr>
+    <tr>
+      <td style="text-align: left">Index name</td>
+      <td style="text-align: left">index6</td>
+      <td style="text-align: left">The name of the index that is impacted. We have similar troubleshooting ideas as the “node” mentioned above. Additionally, you may have the customer’s id, product type, timestamp, or other useful information as part of the index names. Therefore, it’s useful for you to determine which customer, which product, or which range of indices are impacted.</td>
+    </tr>
+    <tr>
+      <td style="text-align: left">Shard</td>
+      <td style="text-align: left">0</td>
+      <td style="text-align: left">The shard id.</td>
+    </tr>
+    <tr>
+      <td style="text-align: left">Took</td>
+      <td style="text-align: left">78.4micros</td>
+      <td style="text-align: left">Execution time in human-readable format. It determines how slow the query is.</td>
+    </tr>
+    <tr>
+      <td style="text-align: left">Took in milliseconds</td>
+      <td style="text-align: left">0</td>
+      <td style="text-align: left">Execution time in milliseconds in numeric value. If you have the possibility to transform this value in your log pipelines, you can calculate filter the queries that are slower than a certain threshold, e.g. “&gt;= 2 seconds”. Therefore, you can reduce noises and better identify the source of the problem. This transformation can be done using a grok parser. Here is a great beginner’s guide about <a href="https://logz.io/blog/logstash-grok/">Logstash Grok</a> and here is the documentation of <a href="https://docs.datadoghq.com/logs/log_configuration/processors/">Grok Parser in Datadog</a>.</td>
+    </tr>
+    <tr>
+      <td style="text-align: left">Stats</td>
+      <td style="text-align: left"> </td>
+      <td style="text-align: left">Statistics</td>
+    </tr>
+    <tr>
+      <td style="text-align: left">Search type</td>
+      <td style="text-align: left">QUERY_THEN_FETCH</td>
+      <td style="text-align: left">The type of search.</td>
+    </tr>
+    <tr>
+      <td style="text-align: left">Total shards</td>
+      <td style="text-align: left">1</td>
+      <td style="text-align: left">Total number of shards.</td>
+    </tr>
+    <tr>
+      <td style="text-align: left">Source</td>
+      <td style="text-align: left">{ “query”: { “match_all”: { “boost “: 1.0 } } }</td>
+      <td style="text-align: left">The source of of the query. This is one of the most important fields. It allows us the determine how the query looks like and gives us an idea of what kind of information that the user is looking for.</td>
+    </tr>
+    <tr>
+      <td style="text-align: left">ID</td>
+      <td style="text-align: left">MY_USER_ID</td>
+      <td style="text-align: left">The user ID. It may help you determine whether the query problems come from the same user.</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2 id="thresholds">Thresholds</h2>
+
+<p>You can use thresholds to better define the level of logs depending on your requirements. Note that these settings are dynamic so you can change them without restarting the server. The 3 different kinds of thresholds that you can define are index (<code class="language-plaintext highlighter-rouge">index</code>), the query phase of search (<code class="language-plaintext highlighter-rouge">query</code>), and the fetch phase of the search (<code class="language-plaintext highlighter-rouge">fetch</code>).</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>PUT /my-index-000001/_settings
+</code></pre></div></div>
+
+<div class="language-json highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">{</span><span class="w">
+  </span><span class="nl">"index.search.slowlog.threshold.query.warn"</span><span class="p">:</span><span class="w"> </span><span class="s2">"10s"</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"index.search.slowlog.threshold.query.info"</span><span class="p">:</span><span class="w"> </span><span class="s2">"5s"</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"index.search.slowlog.threshold.query.debug"</span><span class="p">:</span><span class="w"> </span><span class="s2">"2s"</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"index.search.slowlog.threshold.query.trace"</span><span class="p">:</span><span class="w"> </span><span class="s2">"500ms"</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"index.search.slowlog.threshold.fetch.warn"</span><span class="p">:</span><span class="w"> </span><span class="s2">"1s"</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"index.search.slowlog.threshold.fetch.info"</span><span class="p">:</span><span class="w"> </span><span class="s2">"800ms"</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"index.search.slowlog.threshold.fetch.debug"</span><span class="p">:</span><span class="w"> </span><span class="s2">"500ms"</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"index.search.slowlog.threshold.fetch.trace"</span><span class="p">:</span><span class="w"> </span><span class="s2">"200ms"</span><span class="w">
+</span><span class="p">}</span><span class="w">
+</span></code></pre></div></div>
+
+<p>… but what is query-then-fetch?</p>
+
+<p>According to “Elasticsearch: The Definitive Guide”, there are two phases in the search: query and fetch.</p>
+
+<ul>
+  <li><strong>query</strong>: during the initial query phase, the query is broadcast to a shard copy (a primary or replica shard) of every shard in the index. Each shard executes the search locally and builds a priority queue of matching documents. It identifies which documents satisfy the search request.</li>
+  <li><strong>fetch</strong>: we retrieve the documents themselves.</li>
+</ul>
+
+<p>For more details, you can visit <a href="https://www.elastic.co/guide/en/elasticsearch/guide/current/index.html">“Elasticsearch: The Definitive Guide 2.x”</a>, especially the sections: <a href="https://www.elastic.co/guide/en/elasticsearch/guide/current/_query_phase.html">“Query Phase”</a> and <a href="https://www.elastic.co/guide/en/elasticsearch/guide/current/_fetch_phase.html">“Fetch Phase”</a>.</p>
+
+<h2 id="root-causes">Root Causes</h2>
+
+<p>Unfortunately, I don’t have much experience working with slow queries. However, I know that Opster has an excellent article about analyzing slow logs. In their article <a href="https://opster.com/guides/data-structuring/elasticsearch-slow-search-query-guide/">“Elasticsearch Slow Query Troubleshooting Guide”</a>, they mention that the causes can be:</p>
+
+<ol>
+  <li>Poorly written or expensive search queries.</li>
+  <li>Poorly configured Elasticsearch clusters or indices.</li>
+  <li>Saturated CPU, Memory, Disk and network resources on the cluster.</li>
+  <li>Periodic background processes like snapshots or merging segments that consume cluster resources (CPU, Memory, disk) causing other search queries to perform slowly as resources are sparsely available for the main search queries.</li>
+  <li>Segment merging is used to reduce the number of segments so that search latency is improved, however, merges can be expensive to perform, especially on low IO environments.</li>
+</ol>
+
+<p>Another great article comes from the engineering blog of Elasticsearch, written by Louis Ong as <a href="https://www.elastic.co/blog/advanced-tuning-finding-and-fixing-slow-elasticsearch-queries">“Advanced tuning: finding and fixing slow Elasticsearch queries”</a>. He mentioned that the common causes are:</p>
+
+<ol>
+  <li>High resource utilization when inactive</li>
+  <li>High thread pool rejected count</li>
+  <li>High CPU and indexing latency</li>
+  <li>Increased latency with more replica shards</li>
+  <li>High utilization when sharing resources</li>
+  <li>High heap aggregating highly unique fields</li>
+</ol>
+
+<p>Also, there is this article written by Burak Altaş on Medium as <a href="https://medium.com/@burak.altas/how-to-optimize-elasticsearch-for-better-search-performance-283492e475f8">“How to Optimize Elasticsearch for Better Search Performance”</a>, talking about index configuration, shard optimization, Elasticsearch (cluster) configuration. Check it out.</p>
+
+<h2 id="going-further">Going Further</h2>
+
+<p>How to go further from here?</p>
+
+<ul>
+  <li>Due to time constraints, I only discuss slow query logs here but didn’t mention much about index logs. In other words, we only discussed the read path and not the write path. You may want to explore that as well.</li>
+  <li>To learn more about how to fix the problems, check out the more detailed solutions mentioned in the “Root Causes” section.</li>
+</ul>
+
+<h2 id="conclusion">Conclusion</h2>
+
+<p>In this article, we discussed the slow log structure in Elasticsearch, its thresholds, and the possible root causes of the problem.
+Interested to know more? You can subscribe to <a href="/feed.xml">the feed of my blog</a>, follow me
+on <a href="https://twitter.com/mincong_h">Twitter</a> or
+<a href="https://github.com/mincong-h/">GitHub</a>. Hope you enjoy this article, see you the next time!</p>
+
+<h2 id="references">References</h2>
+
+<ul>
+  <li>Ran Ramati, Gedalyah Reback, <a href="https://logz.io/blog/logstash-grok/">“A Beginner’s Guide to Logstash Grok”</a>, <em>Logz</em>, 2020.</li>
+  <li><a href="https://docs.datadoghq.com/logs/log_configuration/processors/">“Processors”</a>, <em>Datadog Documentation</em>, 2021.</li>
+  <li>Vineeth Mohan, <a href="https://qbox.io/blog/slow-logs-in-elasticsearch-search-index-config-example">“Slow Logs in Elasticsearch”</a>, <em>QBOX</em>, 2018.</li>
+  <li>Clinton Gormley, Zachary Tong, <a href="https://www.elastic.co/guide/en/elasticsearch/guide/current/index.html">“Elasticsearch: The Definitive Guide 2.x”</a>, <em>Elasticsearch</em>, 2014-2015.</li>
+  <li>Opster Team, <a href="https://opster.com/guides/data-structuring/elasticsearch-slow-search-query-guide/">“Elasticsearch Slow Query Troubleshooting Guide”</a>, <em>Opster</em>, 2021.</li>
+  <li>Louis Ong, <a href="https://www.elastic.co/blog/advanced-tuning-finding-and-fixing-slow-elasticsearch-queries">“Advanced tuning: finding and fixing slow Elasticsearch queries”</a>, <em>Elastic</em>, 2019.</li>
+  <li>Burak Altaş, <a href="https://medium.com/@burak.altas/how-to-optimize-elasticsearch-for-better-search-performance-283492e475f8">“How to Optimize Elasticsearch for Better Search Performance”</a>, <em>Medium</em>, 2019.</li>
+</ul>
+</div><section class="article__sharing d-print-none"></section><div class="d-print-none"><footer class="article__footer"><meta itemprop="dateModified" content="2021-11-27T09:19:02+01:00"><!-- start custom article footer snippet -->
+
+
+  
+
+  
+
+  <div class="article__ads">
+    
+      <div id="ea-article"
+           data-ea-publisher="mincongio"
+           data-ea-keywords="elasticsearch"
+           data-ea-type="image">
+    
+    </div>
+  </div>
+
+<!-- end custom article footer snippet -->
+<div class="article__subscribe"><div class="subscribe">
+  <i class="fas fa-rss"></i>
+  <a type="application/rss+xml" href="/feed.xml">Subscribe</a>
+</div></div><div class="article__license"><div class="license">
+    <p>This work is licensed under a <a itemprop="license" rel="license" href="https://creativecommons.org/licenses/by/4.0/">Attribution 4.0 International</a> license.
+      <a rel="license" href="https://creativecommons.org/licenses/by/4.0/">
+        <img alt="Attribution 4.0 International" src="https://i.creativecommons.org/l/by/4.0/88x31.png" />
+      </a>
+    </p>
+  </div></div></footer>
+<div class="article__section-navigator clearfix"><div class="previous"><span>PREVIOUS</span><a href="/en/audit-logs/">Audit Logs</a></div></div></div>
+
+</div>
+
+<script>(function() {
+  var SOURCES = window.TEXT_VARIABLES.sources;
+  window.Lazyload.js(SOURCES.jquery, function() {
+    $(function() {
+      var $this ,$scroll;
+      var $articleContent = $('.js-article-content');
+      var hasSidebar = $('.js-page-root').hasClass('layout--page--sidebar');
+      var scroll = hasSidebar ? '.js-page-main' : 'html, body';
+      $scroll = $(scroll);
+
+      $articleContent.find('.highlight').each(function() {
+        $this = $(this);
+        $this.attr('data-lang', $this.find('code').attr('data-lang'));
+      });
+      $articleContent.find('h1[id], h2[id], h3[id], h4[id], h5[id], h6[id]').each(function() {
+        $this = $(this);
+        $this.append($('<a class="anchor d-print-none" aria-hidden="true"></a>').html('<i class="fas fa-anchor"></i>'));
+      });
+      $articleContent.on('click', '.anchor', function() {
+        $scroll.scrollToAnchor('#' + $(this).parent().attr('id'), 400);
+      });
+    });
+  });
+})();
+</script>
+</div><section class="page__comments d-print-none"><div id="disqus_thread"></div>
+  <script>
+  /**
+  *  RECOMMENDED CONFIGURATION VARIABLES: EDIT AND UNCOMMENT THE SECTION BELOW TO INSERT DYNAMIC VALUES FROM YOUR PLATFORM OR CMS.
+  *  LEARN WHY DEFINING THESE VARIABLES IS IMPORTANT: https://disqus.com/admin/universalcode/#configuration-variables*/
+  var disqus_config = function () {
+    this.page.url = 'https://mincong.io/en/slow-logs-in-elasticsearch/';
+    this.page.identifier = '/en/slow-logs-in-elasticsearch';
+  };
+  (function() { // DON'T EDIT BELOW THIS LINE
+    var d = document, s = d.createElement('script');
+    s.src = 'https://mincong-h.disqus.com/embed.js';
+    s.setAttribute('data-timestamp', +new Date());
+    (d.head || d.body).appendChild(s);
+  })();
+  </script>
+  <noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript></section></article><!-- start custom main bottom snippet -->
 
 <!-- end custom main bottom snippet -->
 </div>
@@ -467,24 +669,24 @@
 <footer class="footer py-4 js-page-footer">
   <div class="main"><div itemscope itemtype="http://schema.org/Person">
       <meta itemprop="name" content="Mincong Huang"><meta itemprop="url" content="/"><meta itemprop="description" content="I am an amazing person."><div class="footer__author-links"><div class="author-links">
-  <ul class="menu menu--nowrap menu--inline"><li title="给我发邮件。">
+  <ul class="menu menu--nowrap menu--inline"><li title="Send me an Email.">
       <a class="button button--circle mail-button" itemprop="email" href="mailto:mincong.h@gmail.com" target="_blank">
         <i class="fas fa-envelope"></i>
-      </a><li title="在 Twitter 上关注我。">
+      </a><li title="Follow me on Twitter.">
         <a class="button button--circle twitter-button" itemprop="sameAs" href="https://twitter.com/mincong_h" target="_blank">
           <div class="icon"><svg fill="#000000" width="24px" height="24px" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg">
   <path d="M1024.032 194.432c-37.664 16.704-78.176 28-120.672 33.088 43.36-26.016 76.672-67.168 92.384-116.224-40.608 24.064-85.568 41.568-133.408 50.976-38.336-40.832-92.928-66.336-153.344-66.336-116.032 0-210.08 94.048-210.08 210.08 0 16.48 1.856 32.512 5.44 47.872-174.592-8.768-329.408-92.416-433.024-219.52-18.08 31.04-28.448 67.104-28.448 105.632 0 72.896 37.088 137.184 93.472 174.88-34.432-1.088-66.816-10.528-95.168-26.272-0.032 0.864-0.032 1.76-0.032 2.656 0 101.792 72.416 186.688 168.512 205.984-17.632 4.8-36.192 7.36-55.36 7.36-13.536 0-26.688-1.312-39.52-3.776 26.72 83.456 104.32 144.192 196.256 145.888-71.904 56.352-162.496 89.92-260.928 89.92-16.96 0-33.664-0.992-50.112-2.944 92.96 59.616 203.392 94.4 322.048 94.4 386.432 0 597.728-320.128 597.728-597.76 0-9.12-0.192-18.176-0.608-27.168 41.056-29.632 76.672-66.624 104.832-108.736z" />
 </svg>
 </div>
         </a>
-      </li><li title="在 Linkedin 上关注我。">
+      </li><li title="Follow me on Linkedin.">
         <a class="button button--circle linkedin-button" itemprop="sameAs" href="https://www.linkedin.com/in/mincong-huang" target="_blank">
           <div class="icon"><svg fill="#000000" width="24px" height="24px" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg">
   <path d="M260.096 155.648c0 27.307008-9.899008 50.516992-29.696 69.632-19.796992 19.115008-45.396992 28.672-76.8 28.672-30.036992 0-54.612992-9.556992-73.728-28.672-19.115008-19.115008-28.672-42.324992-28.672-69.632 0-28.672 9.556992-52.224 28.672-70.656 19.115008-18.432 44.372992-27.648 75.776-27.648 31.403008 0 56.32 9.216 74.752 27.648 18.432 18.432 28.331008 41.984 29.696 70.656 0 0 0 0 0 0m-202.752 808.96c0 0 0-632.832 0-632.832 0 0 196.608 0 196.608 0 0 0 0 632.832 0 632.832 0 0-196.608 0-196.608 0 0 0 0 0 0 0m313.344-430.08c0-58.708992-1.364992-126.292992-4.096-202.752 0 0 169.984 0 169.984 0 0 0 10.24 88.064 10.24 88.064 0 0 4.096 0 4.096 0 40.96-68.267008 105.812992-102.4 194.56-102.4 68.267008 0 123.220992 22.868992 164.864 68.608 41.643008 45.739008 62.464 113.664 62.464 203.776 0 0 0 374.784 0 374.784 0 0-196.608 0-196.608 0 0 0 0-350.208 0-350.208 0-91.476992-33.451008-137.216-100.352-137.216-47.787008 0-81.236992 24.576-100.352 73.728-4.096 8.192-6.144 24.576-6.144 49.152 0 0 0 364.544 0 364.544 0 0-198.656 0-198.656 0 0 0 0-430.08 0-430.08 0 0 0 0 0 0" />
 </svg>
 </div>
         </a>
-      </li><li title="在 Github 上关注我。">
+      </li><li title="Follow me on Github.">
         <a class="button button--circle github-button" itemprop="sameAs" href="https://github.com/mincong-h" target="_blank">
           <div class="icon"><svg fill="#000000" width="24px" height="24px" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg">
   <path class="svgpath" data-index="path_0" fill="#272636" d="M0 525.2c0 223.6 143.3 413.7 343 483.5 26.9 6.8 22.8-12.4 22.8-25.4l0-88.7c-155.3 18.2-161.5-84.6-172-101.7-21.1-36-70.8-45.2-56-62.3 35.4-18.2 71.4 4.6 113.1 66.3 30.2 44.7 89.1 37.2 119 29.7 6.5-26.9 20.5-50.9 39.7-69.6C248.8 728.2 181.7 630 181.7 513.2c0-56.6 18.7-108.7 55.3-150.7-23.3-69.3 2.2-128.5 5.6-137.3 66.5-6 135.5 47.6 140.9 51.8 37.8-10.2 80.9-15.6 129.1-15.6 48.5 0 91.8 5.6 129.8 15.9 12.9-9.8 77-55.8 138.8-50.2 3.3 8.8 28.2 66.7 6.3 135 37.1 42.1 56 94.6 56 151.4 0 117-67.5 215.3-228.8 243.7 26.9 26.6 43.6 63.4 43.6 104.2l0 128.8c0.9 10.3 0 20.5 17.2 20.5C878.1 942.4 1024 750.9 1024 525.3c0-282.9-229.3-512-512-512C229.1 13.2 0 242.3 0 525.2L0 525.2z" />
@@ -503,7 +705,7 @@
   </div>
 </footer>
 </div></div>
-    </div></div></div><script>(function() {
+    </div><script>(function() {
   var SOURCES = window.TEXT_VARIABLES.sources;
   window.Lazyload.js(SOURCES.jquery, function() {
     var $body = $('body'), $window = $(window);
@@ -655,7 +857,7 @@
 })();
 </script><div class="search search--dark">
   <div class="main">
-    <div class="search__header">搜索</div>
+    <div class="search__header">Search</div>
     <div class="search-bar">
       <div class="search-box js-search-box">
         <div class="search-box__icon-search"><i class="fas fa-search"></i></div>
@@ -665,7 +867,7 @@
         </div>
       </div>
       <button class="button button--theme-dark button--pill search__cancel js-search-toggle">
-        取消</button>
+        Cancel</button>
     </div>
     <div class="search-result js-search-result"></div>
   </div>
@@ -1020,36 +1222,79 @@ window.Lazyload.js([SOURCES.jquery, PAHTS.search_js], function() {
 /*(function () {
 
 })();*/
-</script><script>(function() {
+</script><script>
+  /* toc must before affix, since affix need to konw toc' height. */(function() {
   var SOURCES = window.TEXT_VARIABLES.sources;
-
+  var TOC_SELECTOR = window.TEXT_VARIABLES.site.toc.selectors;
   window.Lazyload.js(SOURCES.jquery, function() {
-    var $pageMask = $('.js-page-mask');
-    var $pageRoot = $('.js-page-root');
-    var $sidebarShow = $('.js-sidebar-show');
-    var $sidebarHide = $('.js-sidebar-hide');
+    var $window = $(window);
+    var $articleContent = $('.js-article-content');
+    var $tocRoot = $('.js-toc-root'), $col2 = $('.js-col-aside');
+    var toc;
+    var tocDisabled = false;
+    var hasSidebar = $('.js-page-root').hasClass('layout--page--sidebar');
+    var hasToc = $articleContent.find(TOC_SELECTOR).length > 0;
 
-    function freeze(e) {
-      if (e.target === $pageMask[0]) {
-        e.preventDefault();
-      }
-    }
-    function stopBodyScrolling(bool) {
-      if (bool === true) {
-        window.addEventListener('touchmove', freeze, { passive: false });
-      } else {
-        window.removeEventListener('touchmove', freeze, { passive: false });
-      }
+    function disabled() {
+      return $col2.css('display') === 'none' || !hasToc;
     }
 
-    $sidebarShow.on('click', function() {
-      stopBodyScrolling(true); $pageRoot.addClass('show-sidebar');
+    tocDisabled = disabled();
+
+    toc = $tocRoot.toc({
+      selectors: TOC_SELECTOR,
+      container: $articleContent,
+      scrollTarget: hasSidebar ? '.js-page-main' : null,
+      scroller: hasSidebar ? '.js-page-main' : null,
+      disabled: tocDisabled
     });
-    $sidebarHide.on('click', function() {
-      stopBodyScrolling(false); $pageRoot.removeClass('show-sidebar');
-    });
+
+    $window.on('resize', window.throttle(function() {
+      tocDisabled = disabled();
+      toc && toc.setOptions({
+        disabled: tocDisabled
+      });
+    }, 100));
+
   });
 })();
+(function() {
+  var SOURCES = window.TEXT_VARIABLES.sources;
+  window.Lazyload.js(SOURCES.jquery, function() {
+    var $window = $(window), $pageFooter = $('.js-page-footer');
+    var $pageAside = $('.js-page-aside');
+    var affix;
+    var tocDisabled = false;
+    var hasSidebar = $('.js-page-root').hasClass('layout--page--sidebar');
+
+    affix = $pageAside.affix({
+      offsetBottom: $pageFooter.outerHeight(),
+      scrollTarget: hasSidebar ? '.js-page-main' : null,
+      scroller: hasSidebar ? '.js-page-main' : null,
+      scroll: hasSidebar ? $('.js-page-main').children() : null,
+      disabled: tocDisabled
+    });
+
+    $window.on('resize', window.throttle(function() {
+      affix && affix.setOptions({
+        disabled: tocDisabled
+      });
+    }, 100));
+
+    window.pageAsideAffix = affix;
+  });
+})();
+</script><script src="https://media.ethicalads.io/media/client/ethicalads.min.js"></script>
+<script>
+ethicalads.wait.then((placements) => {
+  if (!placements.length) {
+    console.debug('Loading backup content');
+    div = document.querySelector('[data-ea-publisher]')
+    div.innerHTML = '<p>Check out our first-party ad content.</p>'
+  } else {
+    console.debug('EthicalAds are loaded');
+  }
+});
 </script>
     </div>
     <script>(function () {
