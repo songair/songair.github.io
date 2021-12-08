@@ -12,8 +12,8 @@ ads_tags:            []
 comments:            true
 excerpt:             >
     TODO
-image:               /assets/bg-coffee-84624_1280.jpg
-cover:               /assets/bg-coffee-84624_1280.jpg
+image:               /assets/bg-pawel-czerwinski-ScYk6KKEPUI-unsplash.jpg
+cover:               /assets/bg-pawel-czerwinski-ScYk6KKEPUI-unsplash.jpg
 article_header:
   type:              overlay
   theme:             dark
