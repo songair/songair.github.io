@@ -81,7 +81,48 @@ YAML
 )
 ```
 
-## Section 2
+## Substring Removal
+
+Removing a substring can be done inside a shell parameter expansion `${param}`.
+Using character `#` can delete a prefix of the string and using character `%`
+can delete a suffix of the string. Using the same characters once or twice will
+delete the shortest and the longer match respectively. To better remember this,
+look at your ISO layout keyboard:
+
+`# 3`, `$ 4`, `% 5`
+
+In a standard keyboard layout, keys 3/4/5 represent `#`/`$`/`%`. Since `#` is
+before `$` and `%` is after `$`, deletion with `#` happens from front of string
+(`$`), and deletion with `%` happens from end of string (`$`). Here are some
+concrete examples:
+
+Deleting the shortest match from front of string:
+
+```sh
+d=2021-12-04
+echo ${d#*-}  # 12-04
+```
+
+Deleting the longest match from front of string:
+
+```sh
+d=2021-12-04
+echo ${d##*-}  # 04
+```
+
+Deleting the shortest match from back of string:
+
+```sh
+d=2021-12-04
+echo ${d%-*}  # 2021-12
+```
+
+Deleting the longest match from back of string:
+
+```sh
+d=2021-12-04
+echo ${d%%-*}  # 2021
+```
 
 ## Section 3
 
@@ -97,3 +138,8 @@ on [Twitter](https://twitter.com/mincong_h) or
 [GitHub](https://github.com/mincong-h/). Hope you enjoy this article, see you the next time!
 
 ## References
+
+- Kewei Shang & Mincong Huang, ["Bash | Tech Resources"](https://github.com/keweishang/tech-resources/blob/master/tool/bash.md), _GitHub_, 2020.
+- GNU, ["3.5.3 Shell Parameter
+  Expansion"](https://www.gnu.org/software/bash/manual/html_node/Shell-Parameter-Expansion.html),
+_GNU_, 2021.
