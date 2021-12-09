@@ -139,7 +139,7 @@ on [Twitter](https://twitter.com/mincong_h) or
 
 ## References
 
-- Kewei Shang & Mincong Huang, ["Bash | Tech Resources"](https://github.com/keweishang/tech-resources/blob/master/tool/bash.md), _GitHub_, 2020.
+- Kewei Shang & Mincong Huang, ["Bash \| Tech Resources"](https://github.com/keweishang/tech-resources/blob/master/tool/bash.md), _GitHub_, 2020.
 - GNU, ["3.5.3 Shell Parameter
   Expansion"](https://www.gnu.org/software/bash/manual/html_node/Shell-Parameter-Expansion.html),
 _GNU_, 2021.
