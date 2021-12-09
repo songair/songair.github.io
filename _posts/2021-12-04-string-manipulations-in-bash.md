@@ -33,10 +33,21 @@ your terminal, generating file for configuration or documentation, sharing a
 command with your teammates, etc. In this post, we are going to explore some
 frequently used techniques about string manipulations.
 
+This article is written in the following environment:
+
+```sh
+$ bash -version && sw_vers
+GNU bash, version 3.2.57(1)-release (x86_64-apple-darwin20)
+Copyright (C) 2007 Free Software Foundation, Inc.
+ProductName:	macOS
+ProductVersion:	11.6
+BuildVersion:	20G165
+```
+
 After reading this article, you will understand:
 
 * How to declare a variable?
-* Some general concepts
+* How to remove a substring?
 * Some specific concepts to dig deeper
 * How to go further from this article
 
