@@ -35,7 +35,7 @@ frequently used techniques about string manipulations.
 
 After reading this article, you will understand:
 
-* Some prequisites
+* How to declare a variable?
 * Some general concepts
 * Some specific concepts to dig deeper
 * How to go further from this article
@@ -44,7 +44,17 @@ Now, let's get started!
 
 ## Declaring Variables
 
-**Declare a multi-line text.** A heredoc is a special-prupose code block that
+**Declare a single line variable.** To declare a single line variable, just
+declare a variable, followed by an equal sign (`=`) for the assignment, and ends
+with the value of the variable, either using a string directly, or using a
+command inside a subshell (`$(...)`):
+
+```sh
+content="Hello Bash"
+creation_date=$(date +"%Y-%m-%d") # 2012-12-04
+```
+
+**Declare a multi-line text.** A heredoc is a special-purpose code block that
 tells the shell to read input from the current source until it encounters a line
 containing a delimiter. EOF (end of file) is a commonly used delimiter but it's
 not mandatory. You can use JSON, YAML, TEXT, or any other delimiter that you
