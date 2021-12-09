@@ -154,3 +154,5 @@ on [Twitter](https://twitter.com/mincong_h) or
 - GNU, ["3.5.3 Shell Parameter
   Expansion"](https://www.gnu.org/software/bash/manual/html_node/Shell-Parameter-Expansion.html),
 _GNU_, 2021.
+- Vivek Gite, ["How to find out macOS version information from Terminal command
+  prompt"](https://www.cyberciti.biz/faq/mac-osx-find-tell-operating-system-version-from-bash-prompt/), _CyberCiti_, 2021.
