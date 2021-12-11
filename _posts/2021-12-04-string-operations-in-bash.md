@@ -2,7 +2,7 @@
 layout:              post
 title:               String Operations in Bash
 subtitle:            >
-    N tips for making your scripting easier.
+    4 tips for making your scripting easier.
 
 lang:                en
 date:                2021-12-04 12:10:41 +0100
