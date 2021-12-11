@@ -136,6 +136,29 @@ d=2021-12-04
 echo ${d%%-*}  # 2021
 ```
 
+## If Statement
+
+Normal regular expression:
+
+```sh
+if [[ "$date" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}$ ]]
+```
+
+Negate regular expression:
+
+```sh
+# inside
+if [[ ! "$date" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}$ ]]
+# outside
+if ! [[ "$date" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}$ ]]
+```
+
+Contain keyword using `==`, e.g. word "2021":
+
+```sh
+if [[ "$date" == *"2021"* ]]
+```
+
 ## Section 3
 
 ## Going Further
