@@ -161,7 +161,78 @@ Contain keyword using `==`, e.g. word "2021":
 if [[ "$date" == *"2021"* ]]
 ```
 
-## Section 3
+## Stream
+
+To manipulate streams (`stdin`, `stdout`, `stderr`) in Bash, you can use a pipe
+(`|`) following by a `command` after your stream to filter, update, or collect
+information. This can be achieved using `grep`, `sed`, `cut`, `xargs`, or other
+commands. Here is the syntax:
+
+```sh
+my_stream | <command>
+```
+
+Here are some examples using "users.csv":
+
+```sh
+$ cat users.csv
+"User A","10","Paris"
+"User B","20","London"
+"User C","30","New York"
+"User d","40","Toulouse"
+```
+
+Find users in Paris:
+
+```sh
+$ cat users.csv | grep Paris
+"User A","10","Paris"
+```
+
+Remove quotes (`"`):
+
+```sh
+$ cat users.csv | sed 's/"//g'
+User A,10,Paris
+User B,20,London
+User C,30,New York
+User d,40,Toulouse
+```
+
+Remove user with incorrect format, e.g. ID written in lower case:
+
+```sh
+$ cat users.csv | sed '/User [[:lower:]]/d'
+"User A","10","Paris"
+"User B","20","London"
+"User C","30","New York"
+```
+
+Cut column 2 and only keep columns 1 and 3:
+
+```sh
+$ cat users.csv | cut -f 1,3 -d ,
+"User A","Paris"
+"User B","London"
+"User C","New York"
+"User d","Toulouse"
+```
+
+... to learn more about the syntax of your target command, use `man` command or
+use the help option `-h`:
+
+```sh
+# man cut
+# man grep
+# man sed
+# ...
+man <command>
+
+# cut -h
+# grep -h
+# sed -h
+<command> -h
+```
 
 ## Going Further
 
