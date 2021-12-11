@@ -11,7 +11,10 @@ tags:                [bash, scripting]
 ads_tags:            []
 comments:            true
 excerpt:             >
-    TODO
+    This article shares tips for different string operations in Bash, including
+    string declaration, substring removal, regular expressions in if-statement, and
+    operations in streams.
+
 image:               /assets/bg-pawel-czerwinski-ScYk6KKEPUI-unsplash.jpg
 cover:               /assets/bg-pawel-czerwinski-ScYk6KKEPUI-unsplash.jpg
 article_header:
@@ -26,11 +29,11 @@ wechat:              false
 ## Introduction
 
 When working in the software industry, no matter you are a software engineer, a
-data scientist, a support enginner, or any other roles, you probably need to
+data scientist, a support engineer, or any other role, you probably need to
 know some basic skills about Bash to
-improve your productvity. This can be useful for automating complex tasks in
-your terminal, generating file for configuration or documentation, sharing a
-command with your teammates, etc. In this post, we are going to explore some
+improve your productivity. This can be useful for automating complex tasks in
+your terminal, generating the file for configuration or documentation, sharing
+commands with your teammates, etc. In this post, we are going to explore some
 frequently used techniques about string operations.
 
 This article is written in macOS 11.6 and the default Bash environment (more
@@ -70,7 +73,7 @@ creation_date=$(date +"%Y-%m-%d") # 2012-12-04
 tells the shell to read input from the current source until it encounters a line
 containing a delimiter. EOF (end of file) is a commonly used delimiter but it's
 not mandatory. You can use JSON, YAML, TEXT, or any other delimiter that you
-think relevant for your situation. The syntax for Heredoc in Bash is:
+think is relevant to your situation. The syntax for Heredoc in Bash is:
 
 ```sh
 COMMAND << DELIMITER
@@ -98,38 +101,38 @@ YAML
 Removing a substring can be done inside a shell parameter expansion `${param}`.
 Using character `#` can delete a prefix of the string and using character `%`
 can delete a suffix of the string. Using the same characters once or twice will
-delete the shortest and the longer match respectively. To better remember this,
+delete the shortest and the longest match respectively. To better remember this,
 look at your ISO layout keyboard:
 
 `# 3`, `$ 4`, `% 5`
 
 In a standard keyboard layout, keys 3/4/5 represent `#`/`$`/`%`. Since `#` is
-before `$` and `%` is after `$`, deletion with `#` happens from front of string
-(`$`), and deletion with `%` happens from end of string (`$`). Here are some
+before `$` and `%` is after `$`, deletion with `#` happens from the front of a string
+(`$`), and deletion with `%` happens from the end of a string (`$`). Here are some
 concrete examples:
 
-Deleting the shortest match from front of string:
+Deleting the shortest match from the front of a string:
 
 ```sh
 d=2021-12-04
 echo ${d#*-}  # 12-04
 ```
 
-Deleting the longest match from front of string:
+Deleting the longest match from the front of a string:
 
 ```sh
 d=2021-12-04
 echo ${d##*-}  # 04
 ```
 
-Deleting the shortest match from back of string:
+Deleting the shortest match from the back of a string:
 
 ```sh
 d=2021-12-04
 echo ${d%-*}  # 2021-12
 ```
 
-Deleting the longest match from back of string:
+Deleting the longest match from the back of a string:
 
 ```sh
 d=2021-12-04
@@ -163,7 +166,7 @@ if [[ "$date" == *"2021"* ]]
 ## Stream
 
 To manipulate streams (`stdin`, `stdout`, `stderr`) in Bash, you can use a pipe
-(`|`) following by a `command` after your stream to filter, update, or collect
+(`|`) followed by a `command` after your stream to filter, update, or collect
 information. This can be achieved using `grep`, `sed`, `cut`, `xargs`, or other
 commands. Here is the syntax:
 
