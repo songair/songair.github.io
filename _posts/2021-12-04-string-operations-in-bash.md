@@ -149,6 +149,7 @@ Negate regular expression:
 ```sh
 # inside
 if [[ ! "$date" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}$ ]]
+
 # outside
 if ! [[ "$date" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}$ ]]
 ```
