@@ -1,8 +1,8 @@
 ---
 layout:              post
-title:               String Manipulations in Bash
+title:               String Operations in Bash
 subtitle:            >
-    Given one sentence to expand the title or explain why this article may interest your readers.
+    N tips for making your scripting easier.
 
 lang:                en
 date:                2021-12-04 12:10:41 +0100
@@ -31,9 +31,10 @@ know some basic skills about Bash to
 improve your productvity. This can be useful for automating complex tasks in
 your terminal, generating file for configuration or documentation, sharing a
 command with your teammates, etc. In this post, we are going to explore some
-frequently used techniques about string manipulations.
+frequently used techniques about string operations.
 
-This article is written in the following environment:
+This article is written in macOS 11.6 and the default Bash environment (more
+details are described in the command below):
 
 ```sh
 $ bash -version && sw_vers
@@ -47,7 +48,7 @@ BuildVersion:	20G165
 After reading this article, you will understand:
 
 * How to declare a variable?
-* How to remove a substring?
+* How to remove a substring using shell parameter expansion?
 * Some specific concepts to dig deeper
 * How to go further from this article
 
