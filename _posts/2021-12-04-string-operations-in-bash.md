@@ -50,7 +50,7 @@ After reading this article, you will understand:
 * How to declare a variable?
 * How to remove a substring using shell parameter expansion?
 * How to determine string value using regular expressions in if-statement?
-* Some specific concepts to dig deeper
+* How to manipulate streams using different commands?
 * How to go further from this article
 
 Now, let's get started!
