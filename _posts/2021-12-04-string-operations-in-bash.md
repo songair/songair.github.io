@@ -51,7 +51,6 @@ After reading this article, you will understand:
 * How to remove a substring using shell parameter expansion?
 * How to determine string value using regular expressions in if-statement?
 * How to manipulate streams using different commands?
-* How to go further from this article
 
 Now, let's get started!
 
@@ -234,13 +233,13 @@ man <command>
 <command> -h
 ```
 
-## Going Further
-
-How to go further from here?
-
 ## Conclusion
 
-What did we talk in this article? Take notes from introduction again.
+In this article, we discussed different string operations in Bash, including
+variable declaration, substring removal, built-in regular expression for
+if-statement, manipulating streams (filter, update, collect). The source code is
+also available on
+[GitHub](https://github.com/keweishang/tech-resources/tree/master/tool).
 Interested to know more? You can subscribe to [the feed of my blog](/feed.xml), follow me
 on [Twitter](https://twitter.com/mincong_h) or
 [GitHub](https://github.com/mincong-h/). Hope you enjoy this article, see you the next time!
