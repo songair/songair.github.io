@@ -12,7 +12,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no"><title>String Operations in Bash - Mincong Huang</title>
 
-<meta name="description" content="This article shares tips for different string operations in Bash, including string declaration, substring removal, regular expressions in if-statement, and o...">
+<meta name="description" content="This article shares tips for different string operations in Bash, including string declaration, substring removal, substring replacement, regular expressions...">
 
 <!-- Begin Jekyll SEO tag v2.7.1 -->
 <title>String Operations in Bash | Mincong Huang</title>
@@ -20,8 +20,8 @@
 <meta property="og:title" content="String Operations in Bash" />
 <meta name="author" content="Mincong Huang" />
 <meta property="og:locale" content="en" />
-<meta name="description" content="This article shares tips for different string operations in Bash, including string declaration, substring removal, regular expressions in if-statement, and operations in streams." />
-<meta property="og:description" content="This article shares tips for different string operations in Bash, including string declaration, substring removal, regular expressions in if-statement, and operations in streams." />
+<meta name="description" content="This article shares tips for different string operations in Bash, including string declaration, substring removal, substring replacement, regular expressions in if-statement, and operations in streams." />
+<meta property="og:description" content="This article shares tips for different string operations in Bash, including string declaration, substring removal, substring replacement, regular expressions in if-statement, and operations in streams." />
 <link rel="canonical" href="https://mincong.io/en/string-operations-in-bash/" />
 <meta property="og:url" content="https://mincong.io/en/string-operations-in-bash/" />
 <meta property="og:site_name" content="Mincong Huang" />
@@ -34,7 +34,7 @@
 <meta name="twitter:site" content="@mincong_h" />
 <meta name="twitter:creator" content="@mincong_h" />
 <script type="application/ld+json">
-{"image":"https://mincong.io/assets/bg-pawel-czerwinski-ScYk6KKEPUI-unsplash.jpg","headline":"String Operations in Bash","description":"This article shares tips for different string operations in Bash, including string declaration, substring removal, regular expressions in if-statement, and operations in streams.","datePublished":"2021-12-04T12:10:41+01:00","dateModified":"2021-12-04T12:10:41+01:00","@type":"BlogPosting","mainEntityOfPage":{"@type":"WebPage","@id":"https://mincong.io/en/string-operations-in-bash/"},"url":"https://mincong.io/en/string-operations-in-bash/","author":{"@type":"Person","name":"Mincong Huang"},"@context":"https://schema.org"}</script>
+{"image":"https://mincong.io/assets/bg-pawel-czerwinski-ScYk6KKEPUI-unsplash.jpg","headline":"String Operations in Bash","description":"This article shares tips for different string operations in Bash, including string declaration, substring removal, substring replacement, regular expressions in if-statement, and operations in streams.","datePublished":"2021-12-04T12:10:41+01:00","dateModified":"2021-12-04T12:10:41+01:00","@type":"BlogPosting","mainEntityOfPage":{"@type":"WebPage","@id":"https://mincong.io/en/string-operations-in-bash/"},"url":"https://mincong.io/en/string-operations-in-bash/","author":{"@type":"Person","name":"Mincong Huang"},"@context":"https://schema.org"}</script>
 <!-- End Jekyll SEO tag -->
 
 
@@ -372,7 +372,7 @@
         
       </ul><ul class="right-col menu"><li><i class="far fa-calendar-alt"></i> <span>Dec 04, 2021</span>
             </li></ul></div><div class="article__header"><header><h1>String Operations in Bash</h1></header></div><div class="article__header">
-                        <p class="overlay__excerpt">4 tips for making your scripting easier.</p>
+                        <p class="overlay__excerpt">5 tips for making your scripting easier.</p>
                       </div><div class="article__info clearfix">
   <ul class="left-col menu">
     <li>
@@ -427,8 +427,10 @@ BuildVersion:	20G165
 <ul>
   <li>How to declare a variable?</li>
   <li>How to remove a substring using shell parameter expansion?</li>
+  <li>How to replace a substring using shell parameter expansion?</li>
   <li>How to determine string value using regular expressions in if-statement?</li>
   <li>How to manipulate streams using different commands?</li>
+  <li>How to go further from here?</li>
 </ul>
 
 <p>Now, let’s get started!</p>
@@ -506,6 +508,28 @@ concrete examples:</p>
 
 <div class="language-sh highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nv">d</span><span class="o">=</span>2021-12-04
 <span class="nb">echo</span> <span class="k">${</span><span class="nv">d</span><span class="p">%%-*</span><span class="k">}</span>  <span class="c"># 2021</span>
+</code></pre></div></div>
+
+<h2 id="substring-replacement">Substring Replacement</h2>
+
+<p>Replace first match of <code class="language-plaintext highlighter-rouge">$substring</code> with <code class="language-plaintext highlighter-rouge">$replacementi</code>:</p>
+
+<div class="language-sh highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">${</span><span class="nv">string</span><span class="p">/substring/replacement</span><span class="k">}</span>
+</code></pre></div></div>
+
+<p>Replace all matches of <code class="language-plaintext highlighter-rouge">$substring</code> with <code class="language-plaintext highlighter-rouge">$replacement</code>:</p>
+
+<div class="language-sh highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">${</span><span class="nv">string</span><span class="p">//substring/replacement</span><span class="k">}</span>
+</code></pre></div></div>
+
+<p>Examples:</p>
+
+<div class="language-sh highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nv">d</span><span class="o">=</span>2021-12-04
+<span class="nb">echo</span> <span class="k">${</span><span class="nv">d</span><span class="p">/-/_</span><span class="k">}</span>  <span class="c"># 2021_12-04</span>
+</code></pre></div></div>
+
+<div class="language-sh highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nv">d</span><span class="o">=</span>2021-12-04
+<span class="nb">echo</span> <span class="k">${</span><span class="nv">d</span><span class="p">//-/_</span><span class="k">}</span>  <span class="c"># 2021_12_04</span>
 </code></pre></div></div>
 
 <h2 id="if-statement">If Statement</h2>
@@ -595,6 +619,15 @@ man &lt;<span class="nb">command</span><span class="o">&gt;</span>
 &lt;<span class="nb">command</span><span class="o">&gt;</span> <span class="nt">-h</span>
 </code></pre></div></div>
 
+<h2 id="going-further">Going Further</h2>
+
+<ul>
+  <li>To know more techniques about manipulating strings, visit <a href="https://tldp.org/LDP/abs/html/string-manipulation.html">Advanced
+Bash-Scripting Guide: Chapter 10. Manipulating
+Variables</a> in The Linux
+Documentation Project (TLDP).</li>
+</ul>
+
 <h2 id="conclusion">Conclusion</h2>
 
 <p>In this article, we discussed different string operations in Bash, including
@@ -610,11 +643,14 @@ on <a href="https://twitter.com/mincong_h">Twitter</a> or
 
 <ul>
   <li>Kewei Shang &amp; Mincong Huang, <a href="https://github.com/keweishang/tech-resources/blob/master/tool/bash.md">“Bash | Tech Resources”</a>, <em>GitHub</em>, 2020.</li>
-  <li>GNU, <a href="https://www.gnu.org/software/bash/manual/html_node/Shell-Parameter-Expansion.html">“3.5.3 Shell Parameter
-Expansion”</a>,
-<em>GNU</em>, 2021.</li>
   <li>Vivek Gite, <a href="https://www.cyberciti.biz/faq/mac-osx-find-tell-operating-system-version-from-bash-prompt/">“How to find out macOS version information from Terminal command
 prompt”</a>, <em>CyberCiti</em>, 2021.</li>
+  <li><a href="https://www.gnu.org/software/bash/manual/html_node/Shell-Parameter-Expansion.html">“3.5.3 Shell Parameter
+Expansion”</a>,
+<em>GNU</em>, 2021.</li>
+  <li><a href="https://tldp.org/LDP/abs/html/string-manipulation.html">“Manipulating
+Strings”</a>, <em>The Linux
+Documentation Project (TLDP)</em>, 2021.</li>
 </ul>
 </div><section class="article__sharing d-print-none"></section><div class="d-print-none"><footer class="article__footer"><meta itemprop="dateModified" content="2021-12-04T12:10:41+01:00"><!-- start custom article footer snippet -->
 

@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" xml:lang="en"><generator uri="https://jekyllrb.com/" version="4.2.0">Jekyll</generator><link href="https://mincong.io/feed.xml" rel="self" type="application/atom+xml" /><link href="https://mincong.io/" rel="alternate" type="text/html" hreflang="en" /><updated>2021-12-11T18:36:16+01:00</updated><id>https://mincong.io/feed.xml</id><title type="html">Mincong Huang</title><subtitle>Hi, welcome to my blog! I'm a software engineer at Datadog. I write blog posts in my free time. My blogs are bits and pieces of my tech journey. Most of them are related to Java. Hope you enjoy them! My opinions are my own, not Datadog's. This blog is powered by Jekyll, a simple, blog-aware, static sites solution.
+<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" xml:lang="en"><generator uri="https://jekyllrb.com/" version="4.2.0">Jekyll</generator><link href="https://mincong.io/feed.xml" rel="self" type="application/atom+xml" /><link href="https://mincong.io/" rel="alternate" type="text/html" hreflang="en" /><updated>2021-12-12T18:20:52+01:00</updated><id>https://mincong.io/feed.xml</id><title type="html">Mincong Huang</title><subtitle>Hi, welcome to my blog! I'm a software engineer at Datadog. I write blog posts in my free time. My blogs are bits and pieces of my tech journey. Most of them are related to Java. Hope you enjoy them! My opinions are my own, not Datadog's. This blog is powered by Jekyll, a simple, blog-aware, static sites solution.
 </subtitle><author><name>Mincong Huang</name><email>mincong.h@gmail.com</email></author><entry xml:lang="en"><title type="html">String Operations in Bash</title><link href="https://mincong.io/en/string-operations-in-bash/" rel="alternate" type="text/html" title="String Operations in Bash" /><published>2021-12-04T12:10:41+01:00</published><updated>2021-12-04T12:10:41+01:00</updated><id>https://mincong.io/en/string-operations-in-bash</id><content type="html" xml:base="https://mincong.io/en/string-operations-in-bash/">&lt;h2 id=&quot;introduction&quot;&gt;Introduction&lt;/h2&gt;
 
 &lt;p&gt;When working in the software industry, no matter you are a software engineer, a
@@ -25,8 +25,10 @@ BuildVersion:	20G165
 &lt;ul&gt;
   &lt;li&gt;How to declare a variable?&lt;/li&gt;
   &lt;li&gt;How to remove a substring using shell parameter expansion?&lt;/li&gt;
+  &lt;li&gt;How to replace a substring using shell parameter expansion?&lt;/li&gt;
   &lt;li&gt;How to determine string value using regular expressions in if-statement?&lt;/li&gt;
   &lt;li&gt;How to manipulate streams using different commands?&lt;/li&gt;
+  &lt;li&gt;How to go further from here?&lt;/li&gt;
 &lt;/ul&gt;
 
 &lt;p&gt;Now, let’s get started!&lt;/p&gt;
@@ -104,6 +106,28 @@ concrete examples:&lt;/p&gt;
 
 &lt;div class=&quot;language-sh highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;nv&quot;&gt;d&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;2021-12-04
 &lt;span class=&quot;nb&quot;&gt;echo&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;${&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;d&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;%%-*&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;}&lt;/span&gt;  &lt;span class=&quot;c&quot;&gt;# 2021&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;h2 id=&quot;substring-replacement&quot;&gt;Substring Replacement&lt;/h2&gt;
+
+&lt;p&gt;Replace first match of &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;$substring&lt;/code&gt; with &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;$replacementi&lt;/code&gt;:&lt;/p&gt;
+
+&lt;div class=&quot;language-sh highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;k&quot;&gt;${&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;string&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;/substring/replacement&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;}&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;Replace all matches of &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;$substring&lt;/code&gt; with &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;$replacement&lt;/code&gt;:&lt;/p&gt;
+
+&lt;div class=&quot;language-sh highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;k&quot;&gt;${&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;string&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;//substring/replacement&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;}&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;Examples:&lt;/p&gt;
+
+&lt;div class=&quot;language-sh highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;nv&quot;&gt;d&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;2021-12-04
+&lt;span class=&quot;nb&quot;&gt;echo&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;${&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;d&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;/-/_&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;}&lt;/span&gt;  &lt;span class=&quot;c&quot;&gt;# 2021_12-04&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;div class=&quot;language-sh highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;nv&quot;&gt;d&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;2021-12-04
+&lt;span class=&quot;nb&quot;&gt;echo&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;${&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;d&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;//-/_&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;}&lt;/span&gt;  &lt;span class=&quot;c&quot;&gt;# 2021_12_04&lt;/span&gt;
 &lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
 
 &lt;h2 id=&quot;if-statement&quot;&gt;If Statement&lt;/h2&gt;
@@ -193,6 +217,15 @@ man &amp;lt;&lt;span class=&quot;nb&quot;&gt;command&lt;/span&gt;&lt;span class=
 &amp;lt;&lt;span class=&quot;nb&quot;&gt;command&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;&amp;gt;&lt;/span&gt; &lt;span class=&quot;nt&quot;&gt;-h&lt;/span&gt;
 &lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
 
+&lt;h2 id=&quot;going-further&quot;&gt;Going Further&lt;/h2&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;To know more techniques about manipulating strings, visit &lt;a href=&quot;https://tldp.org/LDP/abs/html/string-manipulation.html&quot;&gt;Advanced
+Bash-Scripting Guide: Chapter 10. Manipulating
+Variables&lt;/a&gt; in The Linux
+Documentation Project (TLDP).&lt;/li&gt;
+&lt;/ul&gt;
+
 &lt;h2 id=&quot;conclusion&quot;&gt;Conclusion&lt;/h2&gt;
 
 &lt;p&gt;In this article, we discussed different string operations in Bash, including
@@ -208,12 +241,15 @@ on &lt;a href=&quot;https://twitter.com/mincong_h&quot;&gt;Twitter&lt;/a&gt; or
 
 &lt;ul&gt;
   &lt;li&gt;Kewei Shang &amp;amp; Mincong Huang, &lt;a href=&quot;https://github.com/keweishang/tech-resources/blob/master/tool/bash.md&quot;&gt;“Bash | Tech Resources”&lt;/a&gt;, &lt;em&gt;GitHub&lt;/em&gt;, 2020.&lt;/li&gt;
-  &lt;li&gt;GNU, &lt;a href=&quot;https://www.gnu.org/software/bash/manual/html_node/Shell-Parameter-Expansion.html&quot;&gt;“3.5.3 Shell Parameter
-Expansion”&lt;/a&gt;,
-&lt;em&gt;GNU&lt;/em&gt;, 2021.&lt;/li&gt;
   &lt;li&gt;Vivek Gite, &lt;a href=&quot;https://www.cyberciti.biz/faq/mac-osx-find-tell-operating-system-version-from-bash-prompt/&quot;&gt;“How to find out macOS version information from Terminal command
 prompt”&lt;/a&gt;, &lt;em&gt;CyberCiti&lt;/em&gt;, 2021.&lt;/li&gt;
-&lt;/ul&gt;</content><author><name>Mincong Huang</name><email>mincong.h@gmail.com</email></author><category term="bash" /><category term="bash" /><category term="scripting" /><summary type="html">This article shares tips for different string operations in Bash, including string declaration, substring removal, regular expressions in if-statement, and operations in streams.</summary><media:thumbnail xmlns:media="http://search.yahoo.com/mrss/" url="https://mincong.io/assets/bg-pawel-czerwinski-ScYk6KKEPUI-unsplash.jpg" /><media:content medium="image" url="https://mincong.io/assets/bg-pawel-czerwinski-ScYk6KKEPUI-unsplash.jpg" xmlns:media="http://search.yahoo.com/mrss/" /></entry><entry xml:lang="en"><title type="html">Slow Query Logs In Elasticsearch</title><link href="https://mincong.io/en/slow-logs-in-elasticsearch/" rel="alternate" type="text/html" title="Slow Query Logs In Elasticsearch" /><published>2021-11-27T09:19:02+01:00</published><updated>2021-11-27T09:19:02+01:00</updated><id>https://mincong.io/en/slow-logs-in-elasticsearch</id><content type="html" xml:base="https://mincong.io/en/slow-logs-in-elasticsearch/">&lt;h2 id=&quot;introduction&quot;&gt;Introduction&lt;/h2&gt;
+  &lt;li&gt;&lt;a href=&quot;https://www.gnu.org/software/bash/manual/html_node/Shell-Parameter-Expansion.html&quot;&gt;“3.5.3 Shell Parameter
+Expansion”&lt;/a&gt;,
+&lt;em&gt;GNU&lt;/em&gt;, 2021.&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://tldp.org/LDP/abs/html/string-manipulation.html&quot;&gt;“Manipulating
+Strings”&lt;/a&gt;, &lt;em&gt;The Linux
+Documentation Project (TLDP)&lt;/em&gt;, 2021.&lt;/li&gt;
+&lt;/ul&gt;</content><author><name>Mincong Huang</name><email>mincong.h@gmail.com</email></author><category term="bash" /><category term="bash" /><category term="scripting" /><summary type="html">This article shares tips for different string operations in Bash, including string declaration, substring removal, substring replacement, regular expressions in if-statement, and operations in streams.</summary><media:thumbnail xmlns:media="http://search.yahoo.com/mrss/" url="https://mincong.io/assets/bg-pawel-czerwinski-ScYk6KKEPUI-unsplash.jpg" /><media:content medium="image" url="https://mincong.io/assets/bg-pawel-czerwinski-ScYk6KKEPUI-unsplash.jpg" xmlns:media="http://search.yahoo.com/mrss/" /></entry><entry xml:lang="en"><title type="html">Slow Query Logs In Elasticsearch</title><link href="https://mincong.io/en/slow-logs-in-elasticsearch/" rel="alternate" type="text/html" title="Slow Query Logs In Elasticsearch" /><published>2021-11-27T09:19:02+01:00</published><updated>2021-11-27T09:19:02+01:00</updated><id>https://mincong.io/en/slow-logs-in-elasticsearch</id><content type="html" xml:base="https://mincong.io/en/slow-logs-in-elasticsearch/">&lt;h2 id=&quot;introduction&quot;&gt;Introduction&lt;/h2&gt;
 
 &lt;p&gt;If you are using Elasticsearch in production, you are probably familiar with
 slow logs. Slow logs are logs provided by Elasticsearch, which help you to
