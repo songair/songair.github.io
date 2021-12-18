@@ -1,5 +1,81 @@
-<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" xml:lang="en"><generator uri="https://jekyllrb.com/" version="4.2.0">Jekyll</generator><link href="https://mincong.io/feed.xml" rel="self" type="application/atom+xml" /><link href="https://mincong.io/" rel="alternate" type="text/html" hreflang="en" /><updated>2021-12-12T18:20:52+01:00</updated><id>https://mincong.io/feed.xml</id><title type="html">Mincong Huang</title><subtitle>Hi, welcome to my blog! I'm a software engineer at Datadog. I write blog posts in my free time. My blogs are bits and pieces of my tech journey. Most of them are related to Java. Hope you enjoy them! My opinions are my own, not Datadog's. This blog is powered by Jekyll, a simple, blog-aware, static sites solution.
-</subtitle><author><name>Mincong Huang</name><email>mincong.h@gmail.com</email></author><entry xml:lang="en"><title type="html">String Operations in Bash</title><link href="https://mincong.io/en/string-operations-in-bash/" rel="alternate" type="text/html" title="String Operations in Bash" /><published>2021-12-04T12:10:41+01:00</published><updated>2021-12-04T12:10:41+01:00</updated><id>https://mincong.io/en/string-operations-in-bash</id><content type="html" xml:base="https://mincong.io/en/string-operations-in-bash/">&lt;h2 id=&quot;introduction&quot;&gt;Introduction&lt;/h2&gt;
+<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" xml:lang="en"><generator uri="https://jekyllrb.com/" version="4.2.0">Jekyll</generator><link href="https://mincong.io/feed.xml" rel="self" type="application/atom+xml" /><link href="https://mincong.io/" rel="alternate" type="text/html" hreflang="en" /><updated>2021-12-18T10:12:33+01:00</updated><id>https://mincong.io/feed.xml</id><title type="html">Mincong Huang</title><subtitle>Hi, welcome to my blog! I'm a software engineer at Datadog. I write blog posts in my free time. My blogs are bits and pieces of my tech journey. Most of them are related to Java. Hope you enjoy them! My opinions are my own, not Datadog's. This blog is powered by Jekyll, a simple, blog-aware, static sites solution.
+</subtitle><author><name>Mincong Huang</name><email>mincong.h@gmail.com</email></author><entry xml:lang="en"><title type="html">Change Log Level At Runtime in Logback</title><link href="https://mincong.io/en/change-log-level-at-runtime-in-logback/" rel="alternate" type="text/html" title="Change Log Level At Runtime in Logback" /><published>2021-12-18T09:02:43+01:00</published><updated>2021-12-18T09:02:43+01:00</updated><id>https://mincong.io/en/change-log-level-at-runtime-in-logback</id><content type="html" xml:base="https://mincong.io/en/change-log-level-at-runtime-in-logback/">&lt;h2 id=&quot;question&quot;&gt;Question&lt;/h2&gt;
+
+&lt;p&gt;I have a Java application using &lt;a href=&quot;http://logback.qos.ch/&quot;&gt;Logback&lt;/a&gt; as
+implementation for logging. I want to change log level at runtime for a given
+Java package or a given Java class without restarting my Java application. Is
+it possible? In particular, I am interested in enable the DEBUG level logs for a
+given package a short period of time so that I can troubleshoot issues in
+production.&lt;/p&gt;
+
+&lt;h2 id=&quot;answer&quot;&gt;Answer&lt;/h2&gt;
+
+&lt;p&gt;One possible solution is to retrieve the logger from logger context and modify
+its log level. Let’s say that you are uring &lt;a href=&quot;http://www.slf4j.org/&quot;&gt;SLF4J&lt;/a&gt; as
+interface and Logback as implementation, you can do that as follows:&lt;/p&gt;
+
+&lt;div class=&quot;language-java highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;kn&quot;&gt;import&lt;/span&gt; &lt;span class=&quot;nn&quot;&gt;ch.qos.logback.classic.Level&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;;&lt;/span&gt;
+&lt;span class=&quot;kn&quot;&gt;import&lt;/span&gt; &lt;span class=&quot;nn&quot;&gt;ch.qos.logback.classic.Logger&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;;&lt;/span&gt;
+&lt;span class=&quot;kn&quot;&gt;import&lt;/span&gt; &lt;span class=&quot;nn&quot;&gt;ch.qos.logback.classic.LoggerContext&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;;&lt;/span&gt;
+
+&lt;span class=&quot;kd&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;kd&quot;&gt;class&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;LogbackLevelChanger&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;{&lt;/span&gt;
+
+  &lt;span class=&quot;kd&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;kd&quot;&gt;static&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;void&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;setLevel&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nc&quot;&gt;String&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;name&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;Level&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;level&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;kt&quot;&gt;var&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;context&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nc&quot;&gt;LoggerContext&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;LoggerFactory&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;getILoggerFactory&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;();&lt;/span&gt;
+    &lt;span class=&quot;kt&quot;&gt;var&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;logger&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;context&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;getLogger&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;name&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;);&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;if&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;logger&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;!=&lt;/span&gt; &lt;span class=&quot;kc&quot;&gt;null&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;{&lt;/span&gt;
+      &lt;span class=&quot;n&quot;&gt;logger&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;setLevel&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;level&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;);&lt;/span&gt;
+    &lt;span class=&quot;o&quot;&gt;}&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;else&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;{&lt;/span&gt;
+      &lt;span class=&quot;c1&quot;&gt;// handle missing logger here&lt;/span&gt;
+    &lt;span class=&quot;o&quot;&gt;}&lt;/span&gt;
+  &lt;span class=&quot;o&quot;&gt;}&lt;/span&gt;
+&lt;span class=&quot;o&quot;&gt;}&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;Then you can expose this method to your RESTful API so that the log level can be
+changed remotely at runtime:&lt;/p&gt;
+
+&lt;div class=&quot;language-java highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;nd&quot;&gt;@PUT&lt;/span&gt;
+&lt;span class=&quot;nd&quot;&gt;@Path&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;/log-level/{name}/{level}&quot;&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt;
+&lt;span class=&quot;kd&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;void&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;setLogLevel&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;
+    &lt;span class=&quot;nd&quot;&gt;@PathParam&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;name&quot;&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;String&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;name&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;,&lt;/span&gt;
+    &lt;span class=&quot;nd&quot;&gt;@PathParam&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;level&quot;&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;String&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;level&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;{&lt;/span&gt;
+  &lt;span class=&quot;o&quot;&gt;...&lt;/span&gt;
+&lt;span class=&quot;o&quot;&gt;}&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;If you are using this technique for troubleshooting, you may consider adding a
+duration for the expiry so that the log level can be reset after the given
+duration. This avoid creating additional logs and potentially increase the fee
+for logging.&lt;/p&gt;
+
+&lt;h2 id=&quot;going-further&quot;&gt;Going Further&lt;/h2&gt;
+
+&lt;p&gt;The solution described above is not the only solution. Milind Deobhankar
+described &lt;a href=&quot;https://dzone.com/articles/5-ways-to-change-the-log-levels-at-runtime&quot;&gt;5 ways to change log levels at
+runtime&lt;/a&gt;
+in his post, including:&lt;/p&gt;
+
+&lt;ol&gt;
+  &lt;li&gt;Using the Spring Boot Admin&lt;/li&gt;
+  &lt;li&gt;Scan the logback.xml&lt;/li&gt;
+  &lt;li&gt;Access logback.xml via URL&lt;/li&gt;
+  &lt;li&gt;Creating API To Change the Log Levels (what we discussed in this post)&lt;/li&gt;
+  &lt;li&gt;Pub / Sub – the application instance needs to subscribe to the topic where log level changes will get published.&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;It’s worth reading if you need more options.&lt;/p&gt;
+
+&lt;p&gt;Hope you enjoy this article, see you the next time!&lt;/p&gt;
+
+&lt;h2 id=&quot;references&quot;&gt;References&lt;/h2&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;&lt;a href=&quot;http://logback.qos.ch/&quot;&gt;“Logback Project”&lt;/a&gt;, &lt;em&gt;Logback&lt;/em&gt;, 2021.&lt;/li&gt;
+  &lt;li&gt;Milind Deobhankar, &lt;a href=&quot;https://dzone.com/articles/5-ways-to-change-the-log-levels-at-runtime&quot;&gt;“5 ways to change log levels at
+runtime”&lt;/a&gt;,
+&lt;em&gt;DZone&lt;/em&gt;, 2020.&lt;/li&gt;
+&lt;/ul&gt;</content><author><name>Mincong Huang</name><email>mincong.h@gmail.com</email></author><category term="java-core" /><category term="java" /><category term="logging" /><summary type="html">This Q&amp;A explains how to change logger level dynamically at runtime via RESTful API for your Java application when using Logback.</summary><media:thumbnail xmlns:media="http://search.yahoo.com/mrss/" url="https://mincong.io/assets/bg-icons8-team-dhZtNlvNE8M-unsplash.jpg" /><media:content medium="image" url="https://mincong.io/assets/bg-icons8-team-dhZtNlvNE8M-unsplash.jpg" xmlns:media="http://search.yahoo.com/mrss/" /></entry><entry xml:lang="en"><title type="html">String Operations in Bash</title><link href="https://mincong.io/en/string-operations-in-bash/" rel="alternate" type="text/html" title="String Operations in Bash" /><published>2021-12-04T12:10:41+01:00</published><updated>2021-12-04T12:10:41+01:00</updated><id>https://mincong.io/en/string-operations-in-bash</id><content type="html" xml:base="https://mincong.io/en/string-operations-in-bash/">&lt;h2 id=&quot;introduction&quot;&gt;Introduction&lt;/h2&gt;
 
 &lt;p&gt;When working in the software industry, no matter you are a software engineer, a
 data scientist, a support engineer, or any other role, you probably need to
@@ -2501,229 +2577,4 @@ curl &lt;span class=&quot;nt&quot;&gt;-X&lt;/span&gt; POST &lt;span class=&quot;
   &lt;li&gt;Elastic, &lt;a href=&quot;https://www.elastic.co/guide/cn/elasticsearch/guide/current/index.html&quot; title=&quot;Elasticsearch: The Definitive Guide&quot;&gt;“Elasticsearch: The Definitive Guide”&lt;/a&gt;, 2021.&lt;/li&gt;
   &lt;li&gt;Elastic, &lt;a href=&quot;https://www.elastic.co/guide/en/elasticsearch/plugins/7.x/repository.html&quot;&gt;“Snapshot/Restore Repository Plugins”&lt;/a&gt;, 2021.&lt;/li&gt;
   &lt;li&gt;慕课网, &lt;a href=&quot;https://zhuanlan.zhihu.com/p/51170719&quot;&gt;RAID磁盘阵列是什么（一看就懂）&lt;/a&gt;, 2018.&lt;/li&gt;
-&lt;/ul&gt;</content><author><name>Mincong Huang</name><email>mincong.h@gmail.com</email></author><category term="elasticsearch" /><category term="elasticsearch" /><category term="java" /><category term="system-design" /><category term="reliability" /><summary type="html">Six practical solutions to improve data reliability: improve number of replicas, snapshot and restore, RAID, MQ, etc.</summary><media:thumbnail xmlns:media="http://search.yahoo.com/mrss/" url="https://mincong.io/assets/bg-chase-charaba-uRHzV3ca2fk-unsplash.jpg" /><media:content medium="image" url="https://mincong.io/assets/bg-chase-charaba-uRHzV3ca2fk-unsplash.jpg" xmlns:media="http://search.yahoo.com/mrss/" /></entry><entry xml:lang="en"><title type="html">Fix Corrupted Index in Elasticsearch</title><link href="https://mincong.io/en/elasticsearch-corrupted-index/" rel="alternate" type="text/html" title="Fix Corrupted Index in Elasticsearch" /><published>2021-07-14T16:57:49+02:00</published><updated>2021-07-14T16:57:49+02:00</updated><id>https://mincong.io/en/elasticsearch-corrupted-index</id><content type="html" xml:base="https://mincong.io/en/elasticsearch-corrupted-index/">&lt;p class=&quot;info&quot;&gt;This article is translated with Google Translate and reviewed by Mincong.&lt;/p&gt;
-
-&lt;h2 id=&quot;problem&quot;&gt;Problem&lt;/h2&gt;
-
-&lt;p&gt;A red index appeared on the production line because of the use of &lt;a href=&quot;https://www.elastic.co/guide/en/elasticsearch/reference/7.x/indices-forcemerge.html&quot; title=&quot;Force Merge API&quot;&gt;Force Merge API&lt;/a&gt;:&lt;/p&gt;
-
-&lt;div class=&quot;language-json highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;nl&quot;&gt;&quot;store_exception&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;
-    &lt;/span&gt;&lt;span class=&quot;nl&quot;&gt;&quot;type&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;corrupt_index_exception&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;
-    &lt;/span&gt;&lt;span class=&quot;nl&quot;&gt;&quot;reason&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;failed engine (reason: [corrupt file (source: [force merge])]) (resource=preexisting_corruption)&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;
-        &lt;/span&gt;&lt;span class=&quot;nl&quot;&gt;&quot;caused_by&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;
-        &lt;/span&gt;&lt;span class=&quot;nl&quot;&gt;&quot;type&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;i_o_exception&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;
-        &lt;/span&gt;&lt;span class=&quot;nl&quot;&gt;&quot;reason&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;failed engine (reason: [corrupt file (source: [force merge])])&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;
-        &lt;/span&gt;&lt;span class=&quot;nl&quot;&gt;&quot;caused_by&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;
-            &lt;/span&gt;&lt;span class=&quot;nl&quot;&gt;&quot;type&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;corrupt_index_exception&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;
-            &lt;/span&gt;&lt;span class=&quot;nl&quot;&gt;&quot;reason&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;checksum failed (hardware problem?): expected=70193aa8 actual=c48ab092 (resource=BufferedChecksumIndexInput(NIOFSIndexInput(path=&lt;/span&gt;&lt;span class=&quot;se&quot;&gt;\&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;/usr/share/elasticsearch/data/nodes/0/indices/w76sdoDFRm-xxxxxxxxxxx/0 /index/_ke.fdt&lt;/span&gt;&lt;span class=&quot;se&quot;&gt;\&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;)))&quot;&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;
-        &lt;/span&gt;&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;
-    &lt;/span&gt;&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;
-&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;
-&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
-
-&lt;p&gt;Because of this index, the health of the Elasticsearch cluster is in red, and an urgent fix is needed.&lt;/p&gt;
-
-&lt;h2 id=&quot;situation-analysis&quot;&gt;Situation Analysis&lt;/h2&gt;
-
-&lt;p&gt;Preliminary investigation:&lt;/p&gt;
-
-&lt;ul&gt;
-  &lt;li&gt;The cluster does not use Elasticsearch Snapshot for backup&lt;/li&gt;
-  &lt;li&gt;The index is not being written with new data, and the data is old data two weeks ago, which is basically read-only.&lt;/li&gt;
-  &lt;li&gt;Tried restarting the corresponding data node, but it didn’t get better&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;p&gt;A similar situation was found on the Elastic forum, and someone encountered a damaged index that needed to be repaired &lt;a href=&quot;https://discuss.elastic.co/t/corrupted-elastic-index/135932&quot; title=&quot;Corrupted Elastic Index&quot;&gt;Corrupted elastic index&lt;/a&gt;:&lt;/p&gt;
-
-&lt;p&gt;&lt;img src=&quot;/assets/20210714-question.png&quot; alt=&quot;Forum Questions&quot; /&gt;&lt;/p&gt;
-
-&lt;p&gt;In the forum question, Mr. Thiago Souza and Mr. Yannick Welsch each provided a solution. Let’s take a look together.&lt;/p&gt;
-
-&lt;p&gt;&lt;strong&gt;Potential solution provided by Thiago Souza:&lt;/strong&gt;&lt;/p&gt;
-
-&lt;p&gt;This is an indication of either hardware errors (check &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;dmesg&lt;/code&gt;) or that it maybe ran out of disk space.
-At this point segments are corrupted and data is lost, meaning that you can’t recover the whole index anymore. Unless you have a snapshot (which is recommended for production).
-There are a couple of options to try to partially recover this index:&lt;/p&gt;
-
-&lt;ol&gt;
-  &lt;li&gt;Try to partially recover the corrupted shard:
-    &lt;ol&gt;
-      &lt;li&gt;Close the index.&lt;/li&gt;
-      &lt;li&gt;Set &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;index.shard.check_on_startup: fix&lt;/code&gt; for this index.&lt;/li&gt;
-      &lt;li&gt;Open the index. At this time index will start to be verified and may take a long time.&lt;/li&gt;
-      &lt;li&gt;If it recovers, then you need to redo step 1 to 3 but set &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;index.shard.check_on_startup: false&lt;/code&gt; otherwise it will always try to fix when it opens again.&lt;/li&gt;
-    &lt;/ol&gt;
-  &lt;/li&gt;
-  &lt;li&gt;If shard can’t be partially recovered then the only way is to completely drop it so at least the index can be recovered with the other healthy shards. For doing that you could try the &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;allocate_empty_primary&lt;/code&gt; command of Cluster Reroute API 109.&lt;/li&gt;
-&lt;/ol&gt;
-
-&lt;p&gt;None of these are guaranteed to work as it is highly dependent of the type of damage.&lt;/p&gt;
-
-&lt;p&gt;&lt;strong&gt;Potential solution provided by Yannick Welsch:&lt;/strong&gt;&lt;/p&gt;
-
-&lt;p&gt;Note that the corruption marker file &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;corrupted_*&lt;/code&gt; will prevent the shard from being allocated as primary. This file is managed by Elasticsearch, and is unaware of the fact that you’ve fixed the index using Lucene’s CheckIndex. Removing this failure marker file should allow this shard to be allocated again.&lt;/p&gt;
-
-&lt;h2 id=&quot;resolution-steps&quot;&gt;Resolution Steps&lt;/h2&gt;
-
-&lt;p&gt;Next, we will try the solutions suggested by these two engieers.&lt;/p&gt;
-
-&lt;h3 id=&quot;step-1-try-to-fix-the-index&quot;&gt;Step 1: Try to Fix The index&lt;/h3&gt;
-
-&lt;p&gt;Try Thiago Souza’s suggestion to partially repair the corrupted shards:&lt;/p&gt;
-
-&lt;blockquote&gt;
-  &lt;ol&gt;
-    &lt;li&gt;Try to partially recover the corrupted shard:
-      &lt;ol&gt;
-        &lt;li&gt;Close the index.&lt;/li&gt;
-      &lt;/ol&gt;
-    &lt;/li&gt;
-  &lt;/ol&gt;
-&lt;/blockquote&gt;
-
-&lt;p&gt;1.1 Use &lt;a href=&quot;https://www.elastic.co/guide/en/elasticsearch/reference/7.x/indices-close.html&quot; title=&quot;Close Index API (7.x)&quot;&gt;Close Index API (7.x)&lt;/a&gt; Close the index:&lt;/p&gt;
-
-&lt;div class=&quot;language-sh highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;curl &lt;span class=&quot;nt&quot;&gt;-X&lt;/span&gt; POST localhost:9200/MY_INDEX/_close
-&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
-
-&lt;p&gt;Note that after closing the index, the index will not be able to write new data.&lt;/p&gt;
-
-&lt;blockquote&gt;
-  &lt;p&gt;\2. Set &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;index.shard.check_on_startup: fix&lt;/code&gt; for this index.&lt;/p&gt;
-&lt;/blockquote&gt;
-
-&lt;p&gt;1.2 Add the configuration &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;index.shard.check_on_startup: fix&lt;/code&gt; to configure the index level configuration so that the corresponding check can be performed when the index is started. However, after Elasticsearch 7.0, the &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;fix&lt;/code&gt; option has been permanently removed and can no longer be used. Let’s take a look at the official document &lt;a href=&quot;https://www.elastic.co/guide/en/elasticsearch/reference/6.8/index-modules.html&quot; title=&quot;Index Modules (6.8)&quot;&gt;Index Modules (6.8)&lt;/a&gt; to better understand the configuration &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;index.shard.check_on_startup&lt;/code&gt;:&lt;/p&gt;
-
-&lt;blockquote&gt;
-  &lt;p&gt;Whether or not shards should be checked for corruption before opening. When corruption is detected, it will prevent the shard from being opened.&lt;/p&gt;
-&lt;/blockquote&gt;
-
-&lt;p&gt;It accepts the following options:&lt;/p&gt;
-
-&lt;table&gt;
-  &lt;thead&gt;
-    &lt;tr&gt;
-      &lt;th style=&quot;text-align: left&quot;&gt;Option&lt;/th&gt;
-      &lt;th style=&quot;text-align: left&quot;&gt;Description&lt;/th&gt;
-    &lt;/tr&gt;
-  &lt;/thead&gt;
-  &lt;tbody&gt;
-    &lt;tr&gt;
-      &lt;td style=&quot;text-align: left&quot;&gt;false&lt;/td&gt;
-      &lt;td style=&quot;text-align: left&quot;&gt;(default) Don’t check for corruption when opening a shard.&lt;/td&gt;
-    &lt;/tr&gt;
-    &lt;tr&gt;
-      &lt;td style=&quot;text-align: left&quot;&gt;checksum&lt;/td&gt;
-      &lt;td style=&quot;text-align: left&quot;&gt;Check for physical corruption.&lt;/td&gt;
-    &lt;/tr&gt;
-    &lt;tr&gt;
-      &lt;td style=&quot;text-align: left&quot;&gt;true&lt;/td&gt;
-      &lt;td style=&quot;text-align: left&quot;&gt;Check for both physical and logical corruption. This is much more expensive in terms of CPU and memory usage.&lt;/td&gt;
-    &lt;/tr&gt;
-    &lt;tr&gt;
-      &lt;td style=&quot;text-align: left&quot;&gt;fix&lt;/td&gt;
-      &lt;td style=&quot;text-align: left&quot;&gt;The same as false. This option is deprecated and will be completely removed in 7.0. Same as false. (Note: it was deprecated in &lt;a href=&quot;https://github.com/elastic/elasticsearch/pull/32279/files&quot; title=&quot;PR-32279&quot;&gt;PR-32279&lt;/a&gt;)&lt;/td&gt;
-    &lt;/tr&gt;
-  &lt;/tbody&gt;
-&lt;/table&gt;
-
-&lt;p&gt;So for an Elasticsearch 7.x cluster, you should try:&lt;/p&gt;
-
-&lt;div class=&quot;language-sh highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;curl &lt;span class=&quot;nt&quot;&gt;-X&lt;/span&gt; PUT localhost:9200/MY_INDEX/_settings &lt;span class=&quot;se&quot;&gt;\&lt;/span&gt;
-  &lt;span class=&quot;nt&quot;&gt;-H&lt;/span&gt;&lt;span class=&quot;s1&quot;&gt;'Content-Type: application/json'&lt;/span&gt; &lt;span class=&quot;nt&quot;&gt;-d&lt;/span&gt;&lt;span class=&quot;s1&quot;&gt;'
-{
-  &quot;index.shard.check_on_startup&quot;: false
-}
-'&lt;/span&gt;
-&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
-
-&lt;p&gt;But I think this option is invalid, because &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;false&lt;/code&gt; means that no corruption will be checked and fixed. Moreover, as mentioned in the &lt;a href=&quot;#problem&quot;&gt;Problem&lt;/a&gt; section at the beginning of the article, restarting the data node did not improve the situation and the problem persists. I also tried &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;true&lt;/code&gt; and didn’t fix anything.&lt;/p&gt;
-
-&lt;blockquote&gt;
-  &lt;p&gt;\4. If it recovers, then you need to redo step 1 to 3 but set &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;index.shard.check_on_startup: false&lt;/code&gt; otherwise it will always try to fix when it opens again.&lt;/p&gt;
-&lt;/blockquote&gt;
-
-&lt;p&gt;1.4 Skip this step, because the previous step was unsuccessful and there is no need to continue. Before proceeding to the next step, clear the configuration set above and restore the default configuration.&lt;/p&gt;
-
-&lt;h3 id=&quot;step-2-accept-data-loss&quot;&gt;Step 2: Accept data loss?&lt;/h3&gt;
-
-&lt;blockquote&gt;
-  &lt;ol&gt;
-    &lt;li&gt;If shard can’t be partially recovered then the only way is to completely drop it so at least the index can be recovered with the other healthy shards. For doing that you could try the &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;allocate_empty_primary&lt;/code&gt; command of &lt;a href=&quot;https://www.elastic.co/guide/en/elasticsearch/reference/7.x/cluster-reroute.html&quot; title=&quot;Cluster Reroute API (7.x)&quot;&gt;Cluster Reroute API (7.x)&lt;/a&gt;.&lt;/li&gt;
-  &lt;/ol&gt;
-&lt;/blockquote&gt;
-
-&lt;p&gt;As a data engineer, how can we accept data loss casually? Can’t accept it! Let’s take a look at Mr. Yannick Welsch’s advice first.&lt;/p&gt;
-
-&lt;h3 id=&quot;step-3-fix-through-lucene-level&quot;&gt;Step 3: Fix through Lucene level&lt;/h3&gt;
-
-&lt;p&gt;Try to fix the data according to the original steps provided by Mr. Matthias Wilhelm, that is:&lt;/p&gt;
-
-&lt;ol&gt;
-  &lt;li&gt;Log in to the data node remotely&lt;/li&gt;
-  &lt;li&gt;Run Lucene repair tool CheckIndex&lt;/li&gt;
-  &lt;li&gt;Remove the corrupted flag file &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;corrupted_*&lt;/code&gt; so that Elasticsearch can start normally&lt;/li&gt;
-&lt;/ol&gt;
-
-&lt;p&gt;The specific operations are as follows.&lt;/p&gt;
-
-&lt;p&gt;First, you can use Elasticsearch’s &lt;a href=&quot;https://www.elastic.co/guide/en/elasticsearch/reference/7.x/search-explain.html&quot; title=&quot;Explain API (7. .x)&quot;&gt;Explain API (7.x)&lt;/a&gt; Find the corresponding shard that cannot be allocated and the machine where it is located. Then log in to the machine remotely.&lt;/p&gt;
-
-&lt;p&gt;The second point is to repair shards (also known as Lucene Index). This is detailed in Lucene’s Javadoc, such as &lt;a href=&quot;https://lucene.apache.org/core/6_4_0/core/org/apache/lucene/index/CheckIndex.html#main -java.lang.String:A-&quot; title=&quot;CheckIndex (Lucene 6.4.0 API)&quot;&gt;CheckIndex (Lucene 6.4.0 API)&lt;/a&gt;&lt;/p&gt;
-
-&lt;blockquote&gt;
-  &lt;p&gt;Command-line interface to check and exorcise corrupt segments from an index.&lt;/p&gt;
-
-  &lt;p&gt;Run it like this:&lt;/p&gt;
-
-  &lt;div class=&quot;language-plaintext highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;java -ea:org.apache.lucene... org.apache.lucene.index.CheckIndex pathToIndex [-exorcise] [-verbose] [-segment X] [-segment Y]
-
-
--exorcise: actually write a new segments_N file, removing any problematic segments. *LOSES DATA*
--segment X: only check the specified segment(s). This can be specified multiple times, to check more than one segment, eg -segment _2 -segment _a. You can't use this with the -exorcise option.
-&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;  &lt;/div&gt;
-
-  &lt;p&gt;WARNING: &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;-exorcise&lt;/code&gt; should only be used on an emergency basis as it will cause documents (perhaps many) to be permanently removed from the index. Always make a backup copy of your index before running this! Do not run this tool on an index that is actively being written to. You have been warned!&lt;/p&gt;
-
-  &lt;p&gt;Run without &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;-exorcise&lt;/code&gt;, this tool will open the index, report version information and report any exceptions it hits and what action it would take if -exorcise were specified. With &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;-exorcise&lt;/code&gt;, this tool will remove any segments that have issues and write a new segments_N file. This means all documents contained in the affected segments will be removed.&lt;/p&gt;
-
-  &lt;p&gt;This tool exits with exit code 1 if the index cannot be opened or has any corruption, else 0.&lt;/p&gt;
-&lt;/blockquote&gt;
-
-&lt;p&gt;After confirming that you want to use the repair tool &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;CheckIndex&lt;/code&gt;, you need to confirm:&lt;/p&gt;
-
-&lt;ul&gt;
-  &lt;li&gt;The specific location of Elasticsearch shards. If a machine has only one Elasticsearch server running, it should be in a folder under &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;${ES_HOME}/data/nodes/0/indices/...&lt;/code&gt;. The specific path can be seen in the Explain API reponse (see the JSON excerpt at the beginning of the article).&lt;/li&gt;
-  &lt;li&gt;The specific location of the Elasticsearch library. It should be in &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;${ES_HOME}/lib&lt;/code&gt;. We need this location because it is where Lucene Core’s JAR files are stored.&lt;/li&gt;
-  &lt;li&gt;Decide whether to back up the shards first, and then perform the fix.&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;p&gt;After everything is ready, execute the following command. Note that the three dots after Lucene are three characters dot, not one character, because some operating systems/blogs will switch them to another similar character.&lt;/p&gt;
-
-&lt;div class=&quot;language-sh highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;nb&quot;&gt;cd&lt;/span&gt; /usr/share/elasticsearch/lib
-java &lt;span class=&quot;nt&quot;&gt;-cp&lt;/span&gt; lucene-core&lt;span class=&quot;k&quot;&gt;*&lt;/span&gt;.jar &lt;span class=&quot;nt&quot;&gt;-ea&lt;/span&gt;:org.apache.lucene... org.apache.lucene.index.CheckIndex /usr/share/elasticsearch/data/nodes/0/indices/w76sdoDFRm-xxxxxxxxxxx/0/ index &lt;span class=&quot;nt&quot;&gt;-verbose&lt;/span&gt; &lt;span class=&quot;nt&quot;&gt;-exorcise&lt;/span&gt;
-&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
-
-&lt;p&gt;After executing the command, CheckIndex returns:&lt;/p&gt;
-
-&lt;div class=&quot;language-plaintext highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;No problems were detected with this index.
-
-Took 118.609 sec total.
-&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
-
-&lt;p&gt;Uh. . . So there are no problems? No data corruption at all? Could it be an unexpected situation, and Elasticsearch did not handle the exception correctly?&lt;/p&gt;
-
-&lt;p&gt;Ok. Since the data is not corrupted, the next step is to move the corrupted flag file &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;corrupted_*&lt;/code&gt; to another folder (equivalent to removal). After a while, this shard was restored: it was successfully allocated, and it does not appear in the Explain API. There is no need to restart the server during this process. Next, connect to other machines and perform the same operation on all related red shards (shards that were not successfully allocated). Finally, the cluster turned back to green again, oh yeah!&lt;/p&gt;
-
-&lt;h2 id=&quot;conclusion&quot;&gt;Conclusion&lt;/h2&gt;
-
-&lt;p&gt;In this article, we saw the red index caused by the use of Force Merge API. With the help of the Elastic forum, I tried to fix the data through &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;index.shard.check_on_startup: fix&lt;/code&gt;, but this option no longer exists in Elasticsearch 7. We saw that through &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;allocate_empty_primary&lt;/code&gt; it is possible to accept partial data loss and keep the remaining healthy fragments, but we did not do this because we wanted to get all the data back. Next, we used the CheckIndex tool to repair at the Lucene level and found that there was no data corruption, which was actually a false alarm. Finally, remove the data corruption label file &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;corrupted_*&lt;/code&gt; to realize recovery.&lt;/p&gt;
-
-&lt;p&gt;I hope this article about Elasticsearch in practice can bring you some new inspiration. If you are interested in learning more about Elasticsearch, please follow my GitHub account &lt;a href=&quot;https://github.com/mincong-h&quot; title=&quot;mincong-h&quot;&gt;mincong-h&lt;/a&gt;. Thank you all!&lt;/p&gt;
-
-&lt;h2 id=&quot;references&quot;&gt;References&lt;/h2&gt;
-
-&lt;ul&gt;
-  &lt;li&gt;Matthias Wilhelm, “Corrupted elastic index”, &lt;em&gt;Elastic.co&lt;/em&gt;, 2021.
-&lt;a href=&quot;https://discuss.elastic.co/t/corrupted-elastic-index/135932&quot;&gt;https://discuss.elastic.co/t/corrupted-elastic-index/135932&lt;/a&gt;&lt;/li&gt;
-&lt;/ul&gt;</content><author><name>Mincong Huang</name><email>mincong.h@gmail.com</email></author><category term="elasticsearch" /><category term="elasticsearch" /><category term="java" /><summary type="html">How to fix corrupted index in Elasticsearch cluster without snapshot?</summary><media:thumbnail xmlns:media="http://search.yahoo.com/mrss/" url="https://mincong.io/assets/bg-jonnica-hill-V5nq6u-Ce_U-unsplash.jpg" /><media:content medium="image" url="https://mincong.io/assets/bg-jonnica-hill-V5nq6u-Ce_U-unsplash.jpg" xmlns:media="http://search.yahoo.com/mrss/" /></entry></feed>
+&lt;/ul&gt;</content><author><name>Mincong Huang</name><email>mincong.h@gmail.com</email></author><category term="elasticsearch" /><category term="elasticsearch" /><category term="java" /><category term="system-design" /><category term="reliability" /><summary type="html">Six practical solutions to improve data reliability: improve number of replicas, snapshot and restore, RAID, MQ, etc.</summary><media:thumbnail xmlns:media="http://search.yahoo.com/mrss/" url="https://mincong.io/assets/bg-chase-charaba-uRHzV3ca2fk-unsplash.jpg" /><media:content medium="image" url="https://mincong.io/assets/bg-chase-charaba-uRHzV3ca2fk-unsplash.jpg" xmlns:media="http://search.yahoo.com/mrss/" /></entry></feed>
