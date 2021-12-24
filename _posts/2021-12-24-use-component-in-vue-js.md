@@ -38,17 +38,23 @@ the original vue file to a new file, and then import the component again into
 the original one. Let's say we have two files:
 
 * `my-page.vue` -- the main page that contains most of the logic and
-  it's getting big.
+  it's getting big, probably 1000+ lines of code.
 * `my-component.vue` -- the new component that you are creating
 
-First of all, you need to declare the structure in the component file.
+First of all, you need to declare the structure in the component file. The
+component should contain the HTML structure in the `template` section and the
+logic in the `script` section. The logic usually contains the properties
+(`props`), which are the fields passed from the main page when creating the
+component; the `data` fields that are present during the lifecycle of the
+component; the methods that are used for operating the template, such as loading
+resources from the backend via RESTful APIs, methods for displaying or hidding
+certains blocks, etc.
 
 ```html
 <template>
-  <div>
-    <!-- TODO Add content for your resource (component) here -->
-  </div>
+  <!-- TODO Add content for your resource (component) here -->
 </template>
+
 <script>
 export default {
   props: {
@@ -70,24 +76,54 @@ export default {
   }
 }
 </script>
+
+<style>
+// CSS goes here
+</style>
 ```
 
-Provide some text to explain what is it, requirements, how does it work, etc.
+Then you need to import and use the new component in your main page.
 
-```java
-// Then follow by a code snippet to provide a concrete example
+```html
+<template>
+  <div>
+    <!--
+      Use the component here.
+
+      The property "resourceId" becomes kebab case: "resource-id"
+    -->
+    <my-component resource-id="foo">
+
+    <!-- ... -->
+  </div>
+</template>
+<script>
+import MyComponent from "@/path/to/my-component.vue"
+
+export default {
+  components: { MyComponent },
+  props: { ... },
+  methods: { ... },
+}
+</script>
+
+<style>
+// CSS goes here
+</style>
 ```
 
-Explain the example a bit or continue the answer here.
+Using components has many benefits. Some of them are:
+
+* Having a clear input parameters for an element
+* Making logic easy to understand, i.e. avoid having huge files
+* Making test easy
+* Re-use the same componet in multiple pages
 
 ## Going Further
 
 How to go further from here?
 
-- Other answers that we didn't see
-- More context about the framework
-- Other tricks regarding the question
+- Read the official [Style Guide](https://vuejs.org/v2/style-guide/) provided by
+  Vue.js to learn the best practices about this framework.
 
 Hope you enjoy this article, see you the next time!
-
-## References
