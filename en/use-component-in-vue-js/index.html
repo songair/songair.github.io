@@ -10,38 +10,42 @@
 		
 	</script><meta charset="utf-8">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
-<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no"><title>Home - page 22 - Mincong Huang</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no"><title>Using Component in Vue.js - Mincong Huang</title>
 
-<meta name="description" content="Hi, welcome to my blog! I'm a software engineer at Datadog. I write blog posts in my free time. My blogs are bits and pieces of my tech journey. Most of them are related to Java. Hope you enjoy them! My opinions are my own, not Datadog's. This blog is powered by Jekyll, a simple, blog-aware, static sites solution.
-">
+<meta name="description" content="Your vue file is getting big? This Q&amp;A explains how to use component in Vue.js by extracting logic from your existing page.">
 
 <!-- Begin Jekyll SEO tag v2.7.1 -->
-<title>Page 22 of 23 for Home - page 22 | Mincong Huang</title>
+<title>Using Component in Vue.js | Mincong Huang</title>
 <meta name="generator" content="Jekyll v4.2.0" />
-<meta property="og:title" content="Home - page 22" />
+<meta property="og:title" content="Using Component in Vue.js" />
 <meta name="author" content="Mincong Huang" />
 <meta property="og:locale" content="en" />
-<meta name="description" content="Hi, welcome to my blog! I’m a software engineer at Datadog. I write blog posts in my free time. My blogs are bits and pieces of my tech journey. Most of them are related to Java. Hope you enjoy them! My opinions are my own, not Datadog’s. This blog is powered by Jekyll, a simple, blog-aware, static sites solution." />
-<meta property="og:description" content="Hi, welcome to my blog! I’m a software engineer at Datadog. I write blog posts in my free time. My blogs are bits and pieces of my tech journey. Most of them are related to Java. Hope you enjoy them! My opinions are my own, not Datadog’s. This blog is powered by Jekyll, a simple, blog-aware, static sites solution." />
-<link rel="canonical" href="https://mincong.io/page22/" />
-<meta property="og:url" content="https://mincong.io/page22/" />
+<meta name="description" content="Your vue file is getting big? This Q&amp;A explains how to use component in Vue.js by extracting logic from your existing page." />
+<meta property="og:description" content="Your vue file is getting big? This Q&amp;A explains how to use component in Vue.js by extracting logic from your existing page." />
+<link rel="canonical" href="https://mincong.io/en/use-component-in-vue-js/" />
+<meta property="og:url" content="https://mincong.io/en/use-component-in-vue-js/" />
 <meta property="og:site_name" content="Mincong Huang" />
-<link rel="prev" href="https://mincong.io/page21/" />
-<link rel="next" href="https://mincong.io/page23/" />
-<meta name="twitter:card" content="summary" />
-<meta property="twitter:title" content="Home - page 22" />
+<meta property="og:image" content="https://mincong.io/assets/vuebigwhite.png" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2021-12-24T08:05:27+01:00" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta property="twitter:image" content="https://mincong.io/assets/vuebigwhite.png" />
+<meta property="twitter:title" content="Using Component in Vue.js" />
 <meta name="twitter:site" content="@mincong_h" />
 <meta name="twitter:creator" content="@mincong_h" />
 <script type="application/ld+json">
-{"headline":"Home - page 22","description":"Hi, welcome to my blog! I’m a software engineer at Datadog. I write blog posts in my free time. My blogs are bits and pieces of my tech journey. Most of them are related to Java. Hope you enjoy them! My opinions are my own, not Datadog’s. This blog is powered by Jekyll, a simple, blog-aware, static sites solution.","@type":"WebPage","url":"https://mincong.io/page22/","author":{"@type":"Person","name":"Mincong Huang"},"@context":"https://schema.org"}</script>
+{"image":"https://mincong.io/assets/vuebigwhite.png","headline":"Using Component in Vue.js","description":"Your vue file is getting big? This Q&amp;A explains how to use component in Vue.js by extracting logic from your existing page.","datePublished":"2021-12-24T08:05:27+01:00","dateModified":"2021-12-24T08:05:27+01:00","@type":"BlogPosting","mainEntityOfPage":{"@type":"WebPage","@id":"https://mincong.io/en/use-component-in-vue-js/"},"url":"https://mincong.io/en/use-component-in-vue-js/","author":{"@type":"Person","name":"Mincong Huang"},"@context":"https://schema.org"}</script>
 <!-- End Jekyll SEO tag -->
 
 
 <!-- Extra Open Graph :: Start -->
 
+<meta property="og:image:width" content="660"/>
+<meta property="og:image:height" content="1200"/>
+
 <!-- Extra Open Graph :: End -->
 
-<link rel="canonical" href="https://mincong.io/page22/"><link rel="alternate" type="application/rss+xml" title="Mincong Huang" href="/feed.xml"><!-- start favicons snippet, use https://realfavicongenerator.net/ --><link rel="apple-touch-icon" sizes="180x180" href="/assets/apple-touch-icon.png"><link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon-32x32.png"><link rel="icon" type="image/png" sizes="16x16" href="/assets/favicon-16x16.png"><link rel="manifest" href="/assets/site.webmanifest"><link rel="mask-icon" href="/assets/safari-pinned-tab.svg" color="#fc4d50"><link rel="shortcut icon" href="/assets/favicon.ico">
+<link rel="canonical" href="https://mincong.io/en/use-component-in-vue-js/"><link rel="alternate" type="application/rss+xml" title="Mincong Huang" href="/feed.xml"><!-- start favicons snippet, use https://realfavicongenerator.net/ --><link rel="apple-touch-icon" sizes="180x180" href="/assets/apple-touch-icon.png"><link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon-32x32.png"><link rel="icon" type="image/png" sizes="16x16" href="/assets/favicon-16x16.png"><link rel="manifest" href="/assets/site.webmanifest"><link rel="mask-icon" href="/assets/safari-pinned-tab.svg" color="#fc4d50"><link rel="shortcut icon" href="/assets/favicon.ico">
 
 <meta name="msapplication-TileColor" content="#ffc40d"><meta name="msapplication-config" content="/assets/browserconfig.xml">
 
@@ -291,7 +295,7 @@
 </head>
   <body>
     <div class="root" data-is-touch="false">
-      <div class="layout--page js-page-root"><div class="page__main js-page-main page__viewport cell cell--auto">
+      <div class="layout--page js-page-root"><div class="page__main js-page-main page__viewport has-aside cell cell--auto">
 
       <div class="page__main-inner"><div class="page__header d-print-none"><header class="header"><div class="main">
       <div class="header__title">
@@ -334,201 +338,252 @@
         </ul>
       </nav></div>
   </header>
-</div><div class="page__content"><div class ="main"><div class="grid grid--reverse">
+</div><div class="page__content"><div class="article__header--overlay"><div class="hero hero--dark overlay" style="background-image:linear-gradient(135deg, rgba(0, 0, 0, .6), rgba(0, 0, 0, .4)),url(/assets/vuebigwhite.png);background-color:#203028;"><div class="hero__content"><div class ="main">
 
-              <div class="col-aside d-print-none js-col-aside"></div>
+  
+  <div class="article__info clearfix">
+      <ul class="left-col menu">
+        <li>
+              <a class="button button--secondary button--pill button--sm"
+                href="/en/archive/?tag=javascript">javascript</a>
+            </li><li>
+              <a class="button button--secondary button--pill button--sm"
+                href="/en/archive/?tag=vuejs">vuejs</a>
+            </li><li>
+              <a class="button button--secondary button--pill button--sm"
+                href="/en/archive/?tag=vuejs2">vuejs2</a>
+            </li>
+
+        <li class="separator">|</li>
+          
+            <li>
+              <a class="button button--circle button--primary focus lang"
+                 href="/en/use-component-in-vue-js/"><span>EN</span></a>
+
+              
+
+
+
+
+
+
+              
+
+              
+            </li>
+          
+        
+      </ul><ul class="right-col menu"><li><i class="far fa-calendar-alt"></i> <span>Dec 24, 2021</span>
+            </li></ul></div><div class="article__header"><header><h1>Using Component in Vue.js</h1></header></div><div class="article__header">
+                        <p class="overlay__excerpt">Avoid having thousands of lines of code in a single file.</p>
+                      </div><div class="article__info clearfix">
+  <ul class="left-col menu">
+    <li>
+      <i class="fas fa-camera"></i>
+      
+      Photo by
+      <a href="https://www.filepicker.io/api/file/jpJaPUQmSWq1uFU1cpUs" target="_blank">Internet</a>
+      
+      on
+      <a href="https://duckduckgo.com" target="_blank">Unknown</a>
+    </li>
+  </ul>
+</div>
+</div></div>
+              </div>
+            </div><div class ="main"><div class="grid grid--reverse">
+
+              <div class="col-aside d-print-none js-col-aside"><aside class="page__aside js-page-aside"><div class="toc-aside js-toc-root"></div>
+</aside></div>
 
               <div class="col-main cell cell--auto"><!-- start custom main top snippet -->
 
 <!-- end custom main top snippet -->
-<article itemscope itemtype="http://schema.org/WebPage"><header style="display:none;"><h1>Home - page 22</h1></header><meta itemprop="headline" content="Home - page 22">
-
-  
-  <meta itemprop="author" content="Mincong Huang"/><div class="js-article-content"><div class="layout--articles"><div class="article-list items items--divided"><article class="item" itemscope itemtype="http://schema.org/BlogPosting"><div class="item__content">
-          <header><a href="/2016/11/08/git-hook-for-jira-number/"><h2 itemprop="headline" class="item__header">Git Hook for JIRA Number</h2></a></header>
-          <div class="item__description"><div class="article__content" itemprop="description articleBody">Git commit hook for checking the JIRA number before commiting.</div><p><a href="/2016/11/08/git-hook-for-jira-number/">Read more</a></p></div>
-
-  
-  <div class="article__info clearfix">
-      <ul class="left-col menu">
-        <li>
-              <a class="button button--secondary button--pill button--sm"
-                href="/en/archive/?tag=git">git</a>
-            </li>
-
-        
-      </ul><ul class="right-col menu"><li><i class="far fa-calendar-alt"></i> <span>Nov 08, 2016</span>
-            </li></ul></div><meta itemprop="author" content="Mincong Huang"/><meta itemprop="datePublished" content="2016-11-08T12:00:00+01:00">
-    <meta itemprop="keywords" content="git"></div>
-      </article><article class="item" itemscope itemtype="http://schema.org/BlogPosting"><div class="item__content">
-          <header><a href="/2016/09/01/projects-highlight-2015-2016/"><h2 itemprop="headline" class="item__header">Projects Highlight 2015-2016</h2></a></header>
-          <div class="item__description"><div class="article__content" itemprop="description articleBody">Today, I want to share with you all the projects that I've done during the last 365 days. They’ve special meaning for me because it’s the first time that I kept a very active status in programming during a whole year. There're many projects that have been done in various contexts, including IoT, Mobile, Web, blog, Business Intelligence and open-...</div><p><a href="/2016/09/01/projects-highlight-2015-2016/">Read more</a></p></div>
-
-  
-  <div class="article__info clearfix">
-      <ul class="left-col menu">
-        <li>
-              <a class="button button--secondary button--pill button--sm"
-                href="/en/archive/?tag=project">project</a>
-            </li>
-
-        
-      </ul><ul class="right-col menu"><li><i class="far fa-calendar-alt"></i> <span>Sep 01, 2016</span>
-            </li></ul></div><meta itemprop="author" content="Mincong Huang"/><meta itemprop="datePublished" content="2016-09-01T08:00:00+02:00">
-    <meta itemprop="keywords" content="project"></div>
-      </article><article class="item" itemscope itemtype="http://schema.org/BlogPosting"><div class="item__content">
-          <header><a href="/2016/08/09/java-examples/"><h2 itemprop="headline" class="item__header">New repo: Java Examples</h2></a></header>
-          <div class="item__description"><div class="article__content" itemprop="description articleBody">I’ve been learning different Java frameworks since my last intern in Beijing. Today, I want to share my new GitHub repository: Java Examples. This repository is built on Maven, modularized and extensible.</div><p><a href="/2016/08/09/java-examples/">Read more</a></p></div>
-
-  
-  <div class="article__info clearfix">
-      <ul class="left-col menu">
-        <li>
-              <a class="button button--secondary button--pill button--sm"
-                href="/en/archive/?tag=java">java</a>
-            </li>
-
-        
-      </ul><ul class="right-col menu"><li><i class="far fa-calendar-alt"></i> <span>Aug 09, 2016</span>
-            </li></ul></div><meta itemprop="author" content="Mincong Huang"/><meta itemprop="datePublished" content="2016-08-09T23:15:00+02:00">
-    <meta itemprop="keywords" content="java"></div>
-      </article><article class="item" itemscope itemtype="http://schema.org/BlogPosting"><div class="item__content">
-          <header><a href="/2016/05/19/massindexer-in-hibernate-search/"><h2 itemprop="headline" class="item__header">MassIndexer in Hibernate Search</h2></a></header>
-          <div class="item__description"><div class="article__content" itemprop="description articleBody">In this article, I'll focus on how batch indexing is implemented in Hibernate Search.</div><p><a href="/2016/05/19/massindexer-in-hibernate-search/">Read more</a></p></div>
-
-  
-  <div class="article__info clearfix">
-      <ul class="left-col menu">
-        <li>
-              <a class="button button--secondary button--pill button--sm"
-                href="/en/archive/?tag=hibernate-search">hibernate-search</a>
-            </li>
-
-        
-      </ul><ul class="right-col menu"><li><i class="far fa-calendar-alt"></i> <span>May 19, 2016</span>
-            </li></ul></div><meta itemprop="author" content="Mincong Huang"/><meta itemprop="datePublished" content="2016-05-19T20:00:00+02:00">
-    <meta itemprop="keywords" content="hibernate-search"></div>
-      </article><article class="item" itemscope itemtype="http://schema.org/BlogPosting"><div class="item__content">
-          <header><a href="/2016/05/05/lucene-queries/"><h2 itemprop="headline" class="item__header">Lucene queries in Hibernate Search</h2></a></header>
-          <div class="item__description"><div class="article__content" itemprop="description articleBody">Today, I want to share something about the search feature in Hiberante Search.
-As mentionned in the official guide 
-Getting started with Hibernate Search :
+<article><meta itemprop="headline" content="Using Component in Vue.js"><meta itemprop="author" content="Mincong Huang"/><meta itemprop="datePublished" content="2021-12-24T08:05:27+01:00">
+    <meta itemprop="keywords" content="javascript,vuejs,vuejs2"><div class="js-article-content"><div class="layout--article"><!-- start custom article top snippet -->
 
 
-  Now we’ll finally execute a first search. The general approach is to create a 
-Lucene query, …, and then wrap this query into a org.hibernate.Query in 
-order to get all the functionality ...</div><p><a href="/2016/05/05/lucene-queries/">Read more</a></p></div>
+<!-- end custom article top snippet -->
+<div class="article__content" itemprop="articleBody"><h2 id="question">Question</h2>
 
-  
-  <div class="article__info clearfix">
-      <ul class="left-col menu">
-        <li>
-              <a class="button button--secondary button--pill button--sm"
-                href="/en/archive/?tag=hibernate-search">hibernate-search</a>
-            </li>
+<p>My <code class="language-plaintext highlighter-rouge">*.vue</code> files are getting bigger and bigger. It’s hard to maintain. I would
+like to split the file and move part of the structure (HTML) and the logic
+(JS) to another location. Is it possible?</p>
 
-        
-      </ul><ul class="right-col menu"><li><i class="far fa-calendar-alt"></i> <span>May 06, 2016</span>
-            </li></ul></div><meta itemprop="author" content="Mincong Huang"/><meta itemprop="datePublished" content="2016-05-06T00:00:00+02:00">
-    <meta itemprop="keywords" content="hibernate-search"></div>
-      </article><article class="item" itemscope itemtype="http://schema.org/BlogPosting"><div class="item__content">
-          <header><a href="/2016/05/05/how-to-use-the-public-dataset-twilio-wigle-net-street-vector-in-amazon-aws/"><h2 itemprop="headline" class="item__header">How to use the public dataset Twilio Wigle.net Street Vector in Amazon AWS</h2></a></header>
-          <div class="item__description"><div class="article__content" itemprop="description articleBody">The Twilio/Wigle.net Street Vector data set provides a complete database of US street names and address ranges mapped to zip codes and latitude/longitude ranges, with DTMF key mappings for all street names. The complete description about this data set can be found on Amazon Web Service. This article will mainly focus on how to use the install an...</div><p><a href="/2016/05/05/how-to-use-the-public-dataset-twilio-wigle-net-street-vector-in-amazon-aws/">Read more</a></p></div>
+<h2 id="answer">Answer</h2>
 
-  
-  <div class="article__info clearfix">
-      <ul class="left-col menu">
-        <li>
-              <a class="button button--secondary button--pill button--sm"
-                href="/en/archive/?tag=open-data">open-data</a>
-            </li>
+<p>You can do that by using components. You can extract part of the structure from
+the original vue file to a new file and then import the component again into
+the original one. Let’s say we have two files:</p>
 
-        
-      </ul><ul class="right-col menu"><li><i class="far fa-calendar-alt"></i> <span>May 05, 2016</span>
-            </li></ul></div><meta itemprop="author" content="Mincong Huang"/><meta itemprop="datePublished" content="2016-05-05T12:00:00+02:00">
-    <meta itemprop="keywords" content="open-data"></div>
-      </article><article class="item" itemscope itemtype="http://schema.org/BlogPosting"><div class="item__content">
-          <header><a href="/2016/04/16/starting-hibernate-search/"><h2 itemprop="headline" class="item__header">Starting Hibernate Search</h2></a></header>
-          <div class="item__description"><div class="article__content" itemprop="description articleBody">This week I’ve started learning the Hibernate Search. Actually, this is my
-very first experience in open source project, so I’m really excited about it.
-At the first step, I started by Apache Lucene about the index and search.
-Then I learnt the Lucene query syntax, such as wildcard search, fuzzy search,
-proximatity search. Then I read a book abo...</div><p><a href="/2016/04/16/starting-hibernate-search/">Read more</a></p></div>
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">my-page.vue</code> – the main page that contains most of the logic and
+it’s getting big, probably 1000+ lines of code.</li>
+  <li><code class="language-plaintext highlighter-rouge">my-component.vue</code> – the new component that you are creating</li>
+</ul>
 
-  
-  <div class="article__info clearfix">
-      <ul class="left-col menu">
-        <li>
-              <a class="button button--secondary button--pill button--sm"
-                href="/en/archive/?tag=hibernate-search">hibernate-search</a>
-            </li>
+<p>First of all, you need to declare the structure in the component file. The
+component should contain the HTML structure in the <code class="language-plaintext highlighter-rouge">template</code> section and the
+logic in the <code class="language-plaintext highlighter-rouge">script</code> section. The logic usually contains the properties
+(<code class="language-plaintext highlighter-rouge">props</code>), which are the fields passed from the main page when creating the
+component; the <code class="language-plaintext highlighter-rouge">data</code> fields that are present during the lifecycle of the
+component; the methods that are used for operating the template, such as loading
+resources from the backend via RESTful APIs, methods for displaying or hiding
+certain blocks, etc.</p>
 
-        
-      </ul><ul class="right-col menu"><li><i class="far fa-calendar-alt"></i> <span>Apr 17, 2016</span>
-            </li></ul></div><meta itemprop="author" content="Mincong Huang"/><meta itemprop="datePublished" content="2016-04-17T00:00:00+02:00">
-    <meta itemprop="keywords" content="hibernate-search"></div>
-      </article><article class="item" itemscope itemtype="http://schema.org/BlogPosting"><div class="item__content">
-          <header><a href="/2016/04/12/boolean-query-in-lucene/"><h2 itemprop="headline" class="item__header">Boolean query in Apache Lucene</h2></a></header>
-          <div class="item__description"><div class="article__content" itemprop="description articleBody">Today, I created an example to demostrate how BooleanQuery works and two different ways to construct a boolean query, using default constructor and using query builder.</div><p><a href="/2016/04/12/boolean-query-in-lucene/">Read more</a></p></div>
+<div class="language-html highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nt">&lt;template&gt;</span>
+  <span class="c">&lt;!-- TODO Add content for your resource (component) here --&gt;</span>
+<span class="nt">&lt;/template&gt;</span>
 
-  
-  <div class="article__info clearfix">
-      <ul class="left-col menu">
-        <li>
-              <a class="button button--secondary button--pill button--sm"
-                href="/en/archive/?tag=apache-lucene">apache-lucene</a>
-            </li>
+<span class="nt">&lt;script&gt;</span>
+<span class="k">export</span> <span class="k">default</span> <span class="p">{</span>
+  <span class="na">props</span><span class="p">:</span> <span class="p">{</span>
+    <span class="na">resourceId</span><span class="p">:</span> <span class="p">{</span>
+      <span class="na">type</span><span class="p">:</span> <span class="nb">String</span><span class="p">,</span>
+      <span class="na">required</span><span class="p">:</span> <span class="kc">true</span>
+    <span class="p">}</span>
+  <span class="p">},</span>
+  <span class="nx">data</span><span class="p">()</span> <span class="p">{</span>
+    <span class="k">return</span> <span class="p">{</span>
+      <span class="na">isLoading</span><span class="p">:</span> <span class="kc">true</span><span class="p">,</span>
+      <span class="na">resource</span><span class="p">:</span> <span class="kc">null</span>
+    <span class="p">}</span>
+  <span class="p">},</span>
+  <span class="na">methods</span><span class="p">:</span> <span class="p">{</span>
+    <span class="nx">loadResource</span><span class="p">()</span> <span class="p">{</span>
+       <span class="c1">// TODO Implement async HTTP call here</span>
+    <span class="p">}</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+<span class="nt">&lt;/script&gt;</span>
 
-        
-      </ul><ul class="right-col menu"><li><i class="far fa-calendar-alt"></i> <span>Apr 12, 2016</span>
-            </li></ul></div><meta itemprop="author" content="Mincong Huang"/><meta itemprop="datePublished" content="2016-04-12T22:34:00+02:00">
-    <meta itemprop="keywords" content="apache-lucene"></div>
-      </article></div>
-</div><div class="layout--home"><div class="pagination"><p>181 post articles, 23 pages.</p>
-    <div class="pagination__menu">
-      <ul class="menu menu--nowrap"><li><a class="button button--secondary button--circle" href="/page21/">
-            <i class="fas fa-angle-left"></i>
-          </a></li><li>
-              <a class="button button--secondary button--circle" href="/"><span>1</span></a>
-            </li><li><span class="pagination__omit"><i class="fas fa-ellipsis-h"></i></span></li><li>
-                  <a class="button button--secondary button--circle" href="/page20/"><span>20</span></a>
-                </li><li>
-                  <a class="button button--secondary button--circle" href="/page21/"><span>21</span></a>
-                </li><li>
-              <div class="button button--primary button--circle focus"><span>22</span></div>
-            </li><li>
-                  <a class="button button--secondary button--circle" href="/page23/"><span>23</span></a>
-                </li><li><a class="button button--secondary button--circle" href="/page23/">
-            <i class="fas fa-angle-right"></i>
-          </a></li></ul>
-    </div>
-  </div></div>
-<script>/*(function () {
+<span class="nt">&lt;style&gt;</span>
+<span class="o">//</span> <span class="nt">CSS</span> <span class="nt">goes</span> <span class="nt">here</span>
+<span class="nt">&lt;/style&gt;</span>
+</code></pre></div></div>
 
-})();*/
-</script>
+<p>Then you need to import and use the new component in your main page.</p>
 
+<div class="language-html highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nt">&lt;template&gt;</span>
+  <span class="nt">&lt;div&gt;</span>
+    <span class="c">&lt;!--
+      Use the component here.
 
+      The property "resourceId" becomes kebab case: "resource-id"
+    --&gt;</span>
+    <span class="nt">&lt;my-component</span> <span class="na">resource-id=</span><span class="s">"foo"</span><span class="nt">&gt;</span>
 
-</div><section class="page__comments d-print-none"></section></article><!-- start custom main bottom snippet -->
+    <span class="c">&lt;!-- ... --&gt;</span>
+  <span class="nt">&lt;/div&gt;</span>
+<span class="nt">&lt;/template&gt;</span>
+<span class="nt">&lt;script&gt;</span>
+<span class="k">import</span> <span class="nx">MyComponent</span> <span class="k">from</span> <span class="dl">"</span><span class="s2">@/path/to/my-component.vue</span><span class="dl">"</span>
+
+<span class="k">export</span> <span class="k">default</span> <span class="p">{</span>
+  <span class="na">components</span><span class="p">:</span> <span class="p">{</span> <span class="nx">MyComponent</span> <span class="p">},</span>
+  <span class="na">props</span><span class="p">:</span> <span class="p">{</span> <span class="p">...</span> <span class="p">},</span>
+  <span class="na">methods</span><span class="p">:</span> <span class="p">{</span> <span class="p">...</span> <span class="p">},</span>
+<span class="p">}</span>
+<span class="nt">&lt;/script&gt;</span>
+
+<span class="nt">&lt;style&gt;</span>
+<span class="o">//</span> <span class="nt">CSS</span> <span class="nt">goes</span> <span class="nt">here</span>
+<span class="nt">&lt;/style&gt;</span>
+</code></pre></div></div>
+
+<p>Using components has many benefits. Some of them are:</p>
+
+<ul>
+  <li>Having clear input parameters for an element</li>
+  <li>Making logic easy to understand, i.e. avoid having huge files</li>
+  <li>Making tests easy</li>
+  <li>Re-use the same component in multiple pages</li>
+</ul>
+
+<h2 id="going-further">Going Further</h2>
+
+<p>How to go further from here?</p>
+
+<ul>
+  <li>Read the official <a href="https://vuejs.org/v2/style-guide/">Style Guide</a> provided by
+Vue.js to learn the best practices about this framework.</li>
+</ul>
+
+<p>Hope you enjoy this article, see you the next time!</p>
+</div><section class="article__sharing d-print-none"></section><div class="d-print-none"><footer class="article__footer"><meta itemprop="dateModified" content="2021-12-24T08:05:27+01:00"><!-- start custom article footer snippet -->
+
 
   
 
   
-  
+
+  <div class="article__ads">
     
-
-    <div class="main__ads">
-      
-        <div id="ea-article"
-             class="horizontal"
-             data-ea-publisher="mincongio"
-             data-ea-keywords="java|elasticsearch|devops|git|api|backend"
-             data-ea-type="image">
-      
-      </div>
+      <div id="ea-article"
+           data-ea-publisher="mincongio"
+           data-ea-keywords="javascript|vuejs|vuejs2"
+           data-ea-type="image">
+    
     </div>
-  
+  </div>
+
+<!-- end custom article footer snippet -->
+<div class="article__subscribe"><div class="subscribe">
+  <i class="fas fa-rss"></i>
+  <a type="application/rss+xml" href="/feed.xml">Subscribe</a>
+</div></div><div class="article__license"><div class="license">
+    <p>This work is licensed under a <a itemprop="license" rel="license" href="https://creativecommons.org/licenses/by/4.0/">Attribution 4.0 International</a> license.
+      <a rel="license" href="https://creativecommons.org/licenses/by/4.0/">
+        <img alt="Attribution 4.0 International" src="https://i.creativecommons.org/l/by/4.0/88x31.png" />
+      </a>
+    </p>
+  </div></div></footer>
+<div class="article__section-navigator clearfix"><div class="previous"><span>PREVIOUS</span><a href="/en/change-log-level-at-runtime-in-logback/">Change Log Level At Runtime in Logback</a></div></div></div>
+
+</div>
+
+<script>(function() {
+  var SOURCES = window.TEXT_VARIABLES.sources;
+  window.Lazyload.js(SOURCES.jquery, function() {
+    $(function() {
+      var $this ,$scroll;
+      var $articleContent = $('.js-article-content');
+      var hasSidebar = $('.js-page-root').hasClass('layout--page--sidebar');
+      var scroll = hasSidebar ? '.js-page-main' : 'html, body';
+      $scroll = $(scroll);
+
+      $articleContent.find('.highlight').each(function() {
+        $this = $(this);
+        $this.attr('data-lang', $this.find('code').attr('data-lang'));
+      });
+      $articleContent.find('h1[id], h2[id], h3[id], h4[id], h5[id], h6[id]').each(function() {
+        $this = $(this);
+        $this.append($('<a class="anchor d-print-none" aria-hidden="true"></a>').html('<i class="fas fa-anchor"></i>'));
+      });
+      $articleContent.on('click', '.anchor', function() {
+        $scroll.scrollToAnchor('#' + $(this).parent().attr('id'), 400);
+      });
+    });
+  });
+})();
+</script>
+</div><section class="page__comments d-print-none"><div id="disqus_thread"></div>
+  <script>
+  /**
+  *  RECOMMENDED CONFIGURATION VARIABLES: EDIT AND UNCOMMENT THE SECTION BELOW TO INSERT DYNAMIC VALUES FROM YOUR PLATFORM OR CMS.
+  *  LEARN WHY DEFINING THESE VARIABLES IS IMPORTANT: https://disqus.com/admin/universalcode/#configuration-variables*/
+  var disqus_config = function () {
+    this.page.url = 'https://mincong.io/en/use-component-in-vue-js/';
+    this.page.identifier = '/en/use-component-in-vue-js';
+  };
+  (function() { // DON'T EDIT BELOW THIS LINE
+    var d = document, s = d.createElement('script');
+    s.src = 'https://mincong-h.disqus.com/embed.js';
+    s.setAttribute('data-timestamp', +new Date());
+    (d.head || d.body).appendChild(s);
+  })();
+  </script>
+  <noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript></section></article><!-- start custom main bottom snippet -->
 
 <!-- end custom main bottom snippet -->
 </div>
@@ -1089,6 +1144,68 @@ window.Lazyload.js([SOURCES.jquery, PAHTS.search_js], function() {
 /*(function () {
 
 })();*/
+</script><script>
+  /* toc must before affix, since affix need to konw toc' height. */(function() {
+  var SOURCES = window.TEXT_VARIABLES.sources;
+  var TOC_SELECTOR = window.TEXT_VARIABLES.site.toc.selectors;
+  window.Lazyload.js(SOURCES.jquery, function() {
+    var $window = $(window);
+    var $articleContent = $('.js-article-content');
+    var $tocRoot = $('.js-toc-root'), $col2 = $('.js-col-aside');
+    var toc;
+    var tocDisabled = false;
+    var hasSidebar = $('.js-page-root').hasClass('layout--page--sidebar');
+    var hasToc = $articleContent.find(TOC_SELECTOR).length > 0;
+
+    function disabled() {
+      return $col2.css('display') === 'none' || !hasToc;
+    }
+
+    tocDisabled = disabled();
+
+    toc = $tocRoot.toc({
+      selectors: TOC_SELECTOR,
+      container: $articleContent,
+      scrollTarget: hasSidebar ? '.js-page-main' : null,
+      scroller: hasSidebar ? '.js-page-main' : null,
+      disabled: tocDisabled
+    });
+
+    $window.on('resize', window.throttle(function() {
+      tocDisabled = disabled();
+      toc && toc.setOptions({
+        disabled: tocDisabled
+      });
+    }, 100));
+
+  });
+})();
+(function() {
+  var SOURCES = window.TEXT_VARIABLES.sources;
+  window.Lazyload.js(SOURCES.jquery, function() {
+    var $window = $(window), $pageFooter = $('.js-page-footer');
+    var $pageAside = $('.js-page-aside');
+    var affix;
+    var tocDisabled = false;
+    var hasSidebar = $('.js-page-root').hasClass('layout--page--sidebar');
+
+    affix = $pageAside.affix({
+      offsetBottom: $pageFooter.outerHeight(),
+      scrollTarget: hasSidebar ? '.js-page-main' : null,
+      scroller: hasSidebar ? '.js-page-main' : null,
+      scroll: hasSidebar ? $('.js-page-main').children() : null,
+      disabled: tocDisabled
+    });
+
+    $window.on('resize', window.throttle(function() {
+      affix && affix.setOptions({
+        disabled: tocDisabled
+      });
+    }, 100));
+
+    window.pageAsideAffix = affix;
+  });
+})();
 </script><script src="https://media.ethicalads.io/media/client/ethicalads.min.js"></script>
 <script>
 ethicalads.wait.then((placements) => {
