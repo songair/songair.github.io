@@ -12,7 +12,8 @@ tags:                [javascript, vuejs, vuejs2]
 ads_tags:            []
 comments:            true
 excerpt:             >
-    TODO
+    Your vue file is getting big? This Q&A explains how to use component in
+    Vue.js by extracting logic from your existing page.
 
 image:               /assets/vuebigwhite.png
 cover:               /assets/vuebigwhite.png
@@ -34,7 +35,7 @@ like to split the file and move part of the structure (HTML) and the logic
 ## Answer
 
 You can do that by using components. You can extract part of the structure from
-the original vue file to a new file, and then import the component again into
+the original vue file to a new file and then import the component again into
 the original one. Let's say we have two files:
 
 * `my-page.vue` -- the main page that contains most of the logic and
@@ -47,8 +48,8 @@ logic in the `script` section. The logic usually contains the properties
 (`props`), which are the fields passed from the main page when creating the
 component; the `data` fields that are present during the lifecycle of the
 component; the methods that are used for operating the template, such as loading
-resources from the backend via RESTful APIs, methods for displaying or hidding
-certains blocks, etc.
+resources from the backend via RESTful APIs, methods for displaying or hiding
+certain blocks, etc.
 
 ```html
 <template>
@@ -114,10 +115,10 @@ export default {
 
 Using components has many benefits. Some of them are:
 
-* Having a clear input parameters for an element
+* Having clear input parameters for an element
 * Making logic easy to understand, i.e. avoid having huge files
-* Making test easy
-* Re-use the same componet in multiple pages
+* Making tests easy
+* Re-use the same component in multiple pages
 
 ## Going Further
 
