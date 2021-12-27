@@ -54,10 +54,31 @@ Now, let's get started!
 
 * Structure of the decisions
 * Processing mode (fetch-then-process)
+* When are the decisions made?
 
 ## Lifecycle
 
-* When are deciders created?
+_When are deciders created? I.e. where are deciders positioned in the lifecycle of
+an Elasticsearch cluster?_
+
+When starting a new node, the class `Bootstrap` is called. Before starting the
+node, it creates a new `Node` instance, which creates and addes a list of modules. One of these modules is
+called `ClusterModule` and it contains the deciders. So the whole logic happens
+at the early stage of the lifecycle, more precisely, the creation happens before the
+startup of a node.
+
+```yml
+- boostrap
+  - construct node
+    - create modules
+      - create master module
+        - create deciders
+        - create root decider (AllocationDeciders)
+        - create allocation service
+        - ...
+    - add modules
+  - start node
+```
 
 ## Testing
 
@@ -66,6 +87,11 @@ Now, let's get started!
 ## Going Further
 
 How to go further from here?
+
+TODO:
+
+* Who asks the node the make decisions? Does every node participate to the
+  decision or only one node handles everything for the cluster?
 
 ## Conclusion
 
