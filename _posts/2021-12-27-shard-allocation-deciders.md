@@ -48,7 +48,37 @@ Now, let's get started!
 
 ## Deciders Structure
 
-* What are those deciders?
+In Elasticsearch 7.16, there are 19 deciders for the shard allocation. You can
+find them as follows:
+
+```
+➜  elasticsearch git:(v7.16.2 u=) rg -l --sort-files "extends AllocationDecider" server/src/main | sed 's/.*\///g'
+AllocationDeciders.java
+AwarenessAllocationDecider.java
+ClusterRebalanceAllocationDecider.java
+ConcurrentRebalanceAllocationDecider.java
+DiskThresholdDecider.java
+EnableAllocationDecider.java
+FilterAllocationDecider.java
+MaxRetryAllocationDecider.java
+NodeReplacementAllocationDecider.java
+NodeShutdownAllocationDecider.java
+NodeVersionAllocationDecider.java
+RebalanceOnlyWhenActiveAllocationDecider.java
+ReplicaAfterPrimaryActiveAllocationDecider.java
+ResizeAllocationDecider.java
+RestoreInProgressAllocationDecider.java
+SameShardAllocationDecider.java
+ShardsLimitAllocationDecider.java
+SnapshotInProgressAllocationDecider.java
+ThrottlingAllocationDecider.java
+```
+
+Among these deciders, there is a root decider, the `AllocationDeciders`, which
+asks all other deciders to decide for the shard allocation. As you can see from
+the file name, they are for awareness key-value pairs (such as availability
+zone), cluster rebalancing, concurrent relabalancing, disk threshold, and much
+more.
 
 ## Making Decisions
 
