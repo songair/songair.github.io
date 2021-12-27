@@ -120,6 +120,8 @@ cluster rebalancing, concurrent relabalancing, disk threshold, and much more.
 
 ## Making Decisions
 
+### Multi-Decision
+
 Now let's take a look at the `AllocationDeciders` to see how it makes a
 decision. When starting the decision, it accepts information about the shard
 routing, node routing and the current allocation. Then, it either ignores the
@@ -161,7 +163,21 @@ result.
     }
 ```
 
-TODO structure of the decision.
+A multi-decision (`Decision.Multi`) is a decision container, it contains
+multiple decisions inside it:
+
+```java
+    public static class Multi extends Decision implements ToXContentFragment {
+
+        private final List<Decision> decisions = new ArrayList<>();
+
+        ...
+    }
+```
+
+Unlike single decision, it does not have label and explanation.
+
+### Single Decision
 
 ## Lifecycle
 
