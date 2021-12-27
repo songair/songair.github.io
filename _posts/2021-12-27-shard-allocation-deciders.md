@@ -123,17 +123,18 @@ cluster rebalancing, concurrent relabalancing, disk threshold, and much more.
 There are two types of decision in the decider system: single decision and
 multi-decision. Single decision represents a decision made on one given
 dimension, e.g. awareness or disk threshold. While multi-decision is a decision
-container which contains a list of child decisions.
+container which contains a list of child decisions. Let's take a closer look on
+both of them.
 
 ### Single Decision
 
-Now let's take a look at the single decision using the logic of a
-`DiskThresholdDecider`. Inside the disk-threshold decider for shard allocation
+`DiskThresholdDecider` is a good example for making a single decision. Inside
+the method for shard allocation
 (`canAllocate(...)`), first of all, it retrieves the settings from the class member
 `diskThresholdSettings` for the low and high thresholds, then it retrieves the disk
 usage from the given information (node, routing allocation, usages), and finally
-compare both of them, thresholds and current usage, to obtain the allocation
-decision. Depending on the situation, we will either get a YES or NO decision.
+compare both of them to obtain the decision.
+Depending on the situation, we will either get a YES or NO decision.
 
 ```java
     @Override
@@ -151,7 +152,7 @@ decision. Depending on the situation, we will either get a YES or NO decision.
 
         // checks for percentage comparisons
         if (freeDiskPercentage < diskThresholdSettings.getFreeDiskThresholdLow()) {
-           ....
+           ...
         }
 
         ...
@@ -166,7 +167,7 @@ the allocation is not allowed right now, but may be YES in the future.
 ### Multi-Decision
 
 Now let's take a look at the `AllocationDeciders` to see how it makes a
-decision. When starting the decision, it accepts information about the shard
+multi-decision. When starting the decision, it accepts information about the shard
 routing, node routing and the current allocation. Then, it either ignores the
 shard or delegate the decision making to its child deciders. All child
 deciders make decision in a synchronous way, probably because they don't require
