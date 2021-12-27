@@ -170,7 +170,6 @@ multiple decisions inside it:
     public static class Multi extends Decision implements ToXContentFragment {
 
         private final List<Decision> decisions = new ArrayList<>();
-
         ...
     }
 ```
