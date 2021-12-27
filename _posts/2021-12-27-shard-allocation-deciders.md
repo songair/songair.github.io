@@ -211,3 +211,6 @@ on [Twitter](https://twitter.com/mincong_h) or
 
 - ["Elasticsearch Shards"](https://opster.com/guides/elasticsearch/glossary/elasticsearch-shards/),
   Opster, 2021.
+- Emily Chang, ["How to resolve unassigned shards in
+  Elasticsearch"](https://www.datadoghq.com/blog/elasticsearch-unassigned-shards/),
+  _Datadog_, 2019.
