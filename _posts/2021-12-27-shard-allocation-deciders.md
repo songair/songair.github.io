@@ -34,6 +34,7 @@ Explain context here to attract people's attention... like:
 
 After reading this article, you will understand:
 
+* The responsibility of allocation service and allocation deciders.
 * The structure of different deciders
 * Some general concepts
 * Some specific concepts to dig deeper
@@ -43,8 +44,35 @@ Now, let's get started!
 
 ## Responsibility
 
-* What are they responsible for?
-* Which actions require decisions?
+Allocation deciders are part of the allocation service in Elasticsearch. This
+service manages the node allocation of a cluster. For this reason the
+`AllocationService` keeps `AllocationDeciders` to choose nodes for shard
+allocation. This class also manages new nodes joining the cluster
+and rerouting of shards. If none of the nodes accepts the allocation, the shard
+will remain unassigned. Having unassigned shard leads to under-replicated
+shards. It will probably result to yellow cluster and increase the risk of data loss.
+
+_Which actions require decisions?_
+
+We can find these information from the abstract class `AllocationDecider`.
+An allocation decider can make decision for many actions: allocation,
+rebalancing, keeping the shard in the current node (`canRemain`), and auto-expending the
+shards of a given index. Each method returns a decision so that the allocation service how to
+react. Each action respects the naming convention `can{Action}` or `should{Action}`.
+
+```
+➜  elasticsearch git:(v7.16.2 u=) ✗ grep "public Decision" server/src/main/java/org/elasticsearch/cluster/routing/allocation/decider/AllocationDecider.java | sort
+    public Decision canAllocate(IndexMetadata indexMetadata, RoutingNode node, RoutingAllocation allocation) {
+    public Decision canAllocate(ShardRouting shardRouting, RoutingAllocation allocation) {
+    public Decision canAllocate(ShardRouting shardRouting, RoutingNode node, RoutingAllocation allocation) {
+    public Decision canAllocateReplicaWhenThereIsRetentionLease(ShardRouting shardRouting, RoutingNode node, RoutingAllocation allocation) {
+    public Decision canForceAllocateDuringReplace(ShardRouting shardRouting, RoutingNode node, RoutingAllocation allocation) {
+    public Decision canForceAllocatePrimary(ShardRouting shardRouting, RoutingNode node, RoutingAllocation allocation) {
+    public Decision canRebalance(RoutingAllocation allocation) {
+    public Decision canRebalance(ShardRouting shardRouting, RoutingAllocation allocation) {
+    public Decision canRemain(ShardRouting shardRouting, RoutingNode node, RoutingAllocation allocation) {
+    public Decision shouldAutoExpandToNode(IndexMetadata indexMetadata, DiscoveryNode node, RoutingAllocation allocation) {
+```
 
 ## Deciders Structure
 
@@ -131,3 +159,6 @@ on [Twitter](https://twitter.com/mincong_h) or
 [GitHub](https://github.com/mincong-h/). Hope you enjoy this article, see you the next time!
 
 ## References
+
+- ["Elasticsearch Shards"](https://opster.com/guides/elasticsearch/glossary/elasticsearch-shards/),
+  Opster, 2021.
