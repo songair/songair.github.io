@@ -120,6 +120,49 @@ cluster rebalancing, concurrent relabalancing, disk threshold, and much more.
 
 ## Making Decisions
 
+There are two types of decision in the decider system: single decision and
+multi-decision. Single decision represents a decision made on one given
+dimension, e.g. awareness or disk threshold. While multi-decision is a decision
+container which contains a list of child decisions.
+
+### Single Decision
+
+Now let's take a look at the single decision using the logic of a
+`DiskThresholdDecider`. Inside the disk-threshold decider for shard allocation
+(`canAllocate(...)`), first of all, it retrieves the settings from the class member
+`diskThresholdSettings` for the low and high thresholds, then it retrieves the disk
+usage from the given information (node, routing allocation, usages), and finally
+compare both of them, thresholds and current usage, to obtain the allocation
+decision. Depending on the situation, we will either get a YES or NO decision.
+
+```java
+    @Override
+    public Decision canAllocate(ShardRouting shardRouting, RoutingNode node, RoutingAllocation allocation) {
+        ...
+
+        // retrieve settings
+        final double usedDiskThresholdLow = 100.0 - diskThresholdSettings.getFreeDiskThresholdLow();
+        final double usedDiskThresholdHigh = 100.0 - diskThresholdSettings.getFreeDiskThresholdHigh();
+
+        // checks for exact byte comparisons
+        if (freeBytes < diskThresholdSettings.getFreeBytesThresholdLow().getBytes()) {
+           ...
+        }
+
+        // checks for percentage comparisons
+        if (freeDiskPercentage < diskThresholdSettings.getFreeDiskThresholdLow()) {
+           ....
+        }
+
+        ...
+    }
+```
+
+Note that YES and NO are not the only types for the cluster. It also exists a
+THROTTLE type, which allows users to controle the shard allocation based on the number
+of actions performed concurrently. We can consider it as a "temporary NO", as
+the allocation is not allowed right now, but may be YES in the future.
+
 ### Multi-Decision
 
 Now let's take a look at the `AllocationDeciders` to see how it makes a
@@ -174,9 +217,10 @@ multiple decisions inside it:
     }
 ```
 
-Unlike single decision, it does not have label and explanation.
+Unlike single decision, it does not have label and explanation. More precisely,
+getting a label from a multi-decision returns `null` and getting an explanation
+from a multi-decision throws an unsupported operation exception.
 
-### Single Decision
 
 ## Lifecycle
 
@@ -208,7 +252,7 @@ There are three types of testing related to the deciders: 1) the tests for the
 single deciders which makes one decision at a time; 2) the tests for the root
 decider which gathers information from multiple single decisions and make a
 multi-decision; 3) other services that depend on deciders since deciders are
-part of the cluster module. We are going to discuss three of them in today's
+part of the cluster module. And ... we are going to discuss three of them in today's
 article :)
 
 TODOs
