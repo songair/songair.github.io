@@ -3,7 +3,7 @@ layout:              post
 type:                classic
 title:               The Decider System For Shard Allocation in Elasticsearch
 subtitle:            >
-    How does it works and what can we learn from it?
+    How does it work and what can we learn from it?
 
 lang:                en
 date:                2021-12-27 14:36:13 +0100
@@ -35,10 +35,11 @@ Explain context here to attract people's attention... like:
 After reading this article, you will understand:
 
 * The responsibility of allocation service and allocation deciders.
-* The structure of different deciders
-* Some general concepts
-* Some specific concepts to dig deeper
-* How to go further from this article
+* The structure of these 19 deciders.
+* How do they make decisions?
+* The deciders' position in the lifecycle of an ES node.
+* How to test them?
+* How to go further from this article?
 
 Now, let's get started!
 
