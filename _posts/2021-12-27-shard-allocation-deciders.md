@@ -27,10 +27,13 @@ wechat:              false
 
 ## Introduction
 
-Explain context here to attract people's attention... like:
-- topic: what you want to talk about?
-- audience: who are you targeting?
-- motiviation: why is it interesting for them? Or why is it important to understand this topic?
+Shard allocation plays an important role in the data distribution of an
+Elasticsearch cluster. Having all the shards allocated ensures the good health
+of you cluster and avoids potential data loss. That's why it's important to
+avoid unassigned shards and avoid yellow cluster. But as a software engineer or
+as a database administrator (DBA), do you know how the decision is made
+internally? How does Elasticsearch know which node should be used? In this
+article, we are going to study this part by exploring the decider system.
 
 After reading this article, you will understand:
 
@@ -41,12 +44,15 @@ After reading this article, you will understand:
 * How to test them?
 * How to go further from this article?
 
-Now, let's get started!
+And hopefully, this article helps you better understand the internal mechanism
+or inspire you to make your decision making system based on similar
+architecture. Note that this article is written with Elasticsearch 7.15.2
+(latest), which may be different from what you are using. Now, let's get started!
 
 ## Responsibility
 
 Allocation deciders are part of the allocation service in Elasticsearch. This
-service manages the node allocation of a cluster. For this reason the
+service manages the node allocation of a cluster. For this reason, the
 `AllocationService` keeps `AllocationDeciders` to choose nodes for shard
 allocation. This class also manages new nodes joining the cluster
 and rerouting of shards. If none of the nodes accepts the allocation, the shard
@@ -59,7 +65,8 @@ We can find these information from the abstract class `AllocationDecider`.
 An allocation decider can make decision for many actions: allocation,
 rebalancing, keeping the shard in the current node (`canRemain`), and auto-expending the
 shards of a given index. Each method returns a decision so that the allocation service how to
-react. Each action respects the naming convention `can{Action}` or `should{Action}`.
+react. Each action respects the naming convention `can{Action}` or
+`should{Action}`. Here is a more detailed version:
 
 ```
 ➜  elasticsearch git:(v7.16.2 u=) ✗ grep "public Decision" server/src/main/java/org/elasticsearch/cluster/routing/allocation/decider/AllocationDecider.java | sort
@@ -104,10 +111,12 @@ ThrottlingAllocationDecider.java
 ```
 
 Among these deciders, there is a root decider, the `AllocationDeciders`, which
-asks all other deciders to decide for the shard allocation. As you can see from
-the file name, they are for awareness key-value pairs (such as availability
-zone), cluster rebalancing, concurrent relabalancing, disk threshold, and much
-more.
+contains the references of all other deciders. When making a decision, it will
+ask those deciders to decide for the shard allocation, and then make a global
+decision based on the results. We will discuss more details in the following
+section. As for other deciders, you can see their purposes from
+their filenames, such as for awareness key-value pairs (e.g. availability zone),
+cluster rebalancing, concurrent relabalancing, disk threshold, and much more.
 
 ## Making Decisions
 
