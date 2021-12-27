@@ -204,7 +204,18 @@ startup of a node.
 
 ## Testing
 
-* How are they tested?
+There are three types of testing related to the deciders: 1) the tests for the
+single deciders which makes one decision at a time; 2) the tests for the root
+decider which gathers information from multiple single decisions and make a
+multi-decision; 3) other services that depend on deciders since deciders are
+part of the cluster module. We are going to discuss three of them in today's
+article :)
+
+TODOs
+
+* single
+* multi
+* dependent
 
 ## Going Further
 
