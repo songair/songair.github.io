@@ -120,9 +120,46 @@ cluster rebalancing, concurrent relabalancing, disk threshold, and much more.
 
 ## Making Decisions
 
-* Structure of the decisions
-* Processing mode (fetch-then-process)
-* When are the decisions made?
+Now let's take a look at the `AllocationDeciders` to see how it makes a
+decision. When starting the decision, it accepts information about the shard
+routing, node routing and the current allocation. Then, it either ignores the
+shard or delegate the decision making to its child deciders. All child
+deciders make decision in a synchronous way, probably because they don't require
+additional information (such as HTTP request) from an external service. Once the
+decision is made by the child decision, the result is processed with the fail-fast
+strategy. That is, whenever one child decision is negative (NO), we consider the
+whole decision as NO without asking the remaining deciders. It's a short
+circuit. We do that unless we are debugging the decision, in which case, we
+gather all the decisions, including the NO decisions, before returning the final
+result.
+
+```java
+    @Override
+    public Decision canAllocate(ShardRouting shardRouting, RoutingNode node, RoutingAllocation allocation) {
+        if (allocation.shouldIgnoreShardForNode(shardRouting.shardId(), node.nodeId())) {
+            return Decision.NO;
+        }
+        Decision.Multi ret = new Decision.Multi();
+        for (AllocationDecider allocationDecider : allocations) {
+            Decision decision = allocationDecider.canAllocate(shardRouting, node, allocation);
+            // short track if a NO is returned.
+            if (decision.type() == Decision.Type.NO) {
+                if (logger.isTraceEnabled()) {
+                    ...
+                }
+                // short circuit only if debugging is not enabled
+                if (allocation.debugDecision() == false) {
+                    return Decision.NO;
+                } else {
+                    ret.add(decision);
+                }
+            } else {
+                addDecision(ret, decision, allocation);
+            }
+        }
+        return ret;
+    }
+```
 
 ## Lifecycle
 
