@@ -161,6 +161,8 @@ result.
     }
 ```
 
+TODO structure of the decision.
+
 ## Lifecycle
 
 _When are deciders created? I.e. where are deciders positioned in the lifecycle of
