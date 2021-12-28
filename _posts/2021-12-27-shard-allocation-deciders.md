@@ -1,7 +1,7 @@
 ---
 layout:              post
 type:                classic
-title:               The Decider System For Shard Allocation in Elasticsearch
+title:               The Decision System For Shard Allocation in Elasticsearch
 subtitle:            >
     How does it work and what can we learn from it?
 
@@ -12,7 +12,10 @@ tags:                [java, elasticsearch, system-design]
 ads_tags:            [search]
 comments:            true
 excerpt:             >
-    TODO
+    Curious about how does a decision system work? This article explains
+    the deciders for shard allocation in Elasticsearch by going through
+    their responsibility, structure, decision making, lifecycle, testing,
+    and more.
 
 image:               /assets/bg-patrick-federi-LJEjI7LXABU-unsplash.jpg
 cover:               /assets/bg-patrick-federi-LJEjI7LXABU-unsplash.jpg
@@ -55,15 +58,15 @@ Allocation deciders are part of the allocation service in Elasticsearch. This
 service manages the shard allocation of a cluster. For this reason, the
 `AllocationService` contains an instance of `AllocationDeciders` to choose nodes for shard
 allocation. This class also manages new nodes joining the cluster
-and rerouting of shards. If none of the nodes accepts the allocation, the shard
+and the rerouting of shards. If none of the nodes accepts the allocation, the shard
 will remain unassigned. Having unassigned shard leads to under-replicated
-shards. It will probably result to yellow cluster and increase the risk of data loss.
+shards. It will probably result to a yellow cluster and increase the risk of data loss.
 
 _Which actions require decisions?_
 
-We can find these information from the abstract class `AllocationDecider`.
-An allocation decider can make decision for many actions: allocation,
-rebalancing, keeping the shard in the current node (`canRemain`), and auto-expending the
+We can find this information from the abstract class `AllocationDecider`.
+An allocation decider can decide for many actions: allocation,
+rebalancing, keeping the shard in the current node (`canRemain`), and auto-expanding the
 shards of a given index. Each method returns a decision so that the allocation service knows
 how to react. Each action respects the naming convention `can{Action}` or
 `should{Action}`. Here is a more detailed version:
@@ -116,14 +119,14 @@ ask those deciders to decide for the shard allocation, and then assemble them to
 make a global decision. We will discuss more details in the following
 section. As for other deciders, you can see their purposes from
 their filenames, such as for awareness key-value pairs (e.g. availability zone),
-cluster rebalancing, concurrent relabalancing, disk threshold, and much more.
+cluster rebalancing, concurrent rebalancing, disk threshold, and much more.
 
 ## Making Decisions
 
 There are two types of decision in the decider system: single decision and
 multi-decision. A single decision represents a decision made on one
 dimension, e.g. awareness or disk threshold. While a multi-decision represents a decision
-container which contains a list of child decisions. Let's take a closer look into
+container that contains a list of child decisions. Let's take a closer look at
 both of them.
 
 ### Single Decision
@@ -161,7 +164,7 @@ public Decision canAllocate(ShardRouting shardRouting, RoutingNode node, Routing
 ```
 
 Note that YES and NO are not the only types for the decision. It also exists a
-THROTTLE type, which allows users to controle the shard allocation based on the
+THROTTLE type, which allows users to control the shard allocation based on the
 concurrency. We can consider it as a "temporary NO", as
 the allocation is not allowed right now, but may be YES in the future.
 
@@ -169,18 +172,18 @@ the allocation is not allowed right now, but may be YES in the future.
 
 Now let's take a look at the `AllocationDeciders` to see how it makes a
 multi-decision. When starting the decision, it accepts information about the shard
-routing, node routing and the current allocation. Then, it either ignores the
-shard or delegate the decision making to its child deciders, and assemble them at the end.
+routing, node routing, and the current allocation. Then, it either ignores the
+shard or delegates the decision-making to its child deciders and assembles them at the end.
 All child
-deciders make a decision in a synchronous way, probably because they don't require
-additional information (such as HTTP request) from an external service. Once the
+deciders make a decision synchronously, probably because they don't require
+additional information (such as HTTP requests) from an external service. Once the
 decision is made by a child decider, the result is processed with the fail-fast
 strategy. That is, whenever one child decision is negative (NO), we consider the
 whole decision as NO without asking the remaining deciders. It's a short
 circuit. We do that unless we are in the debug mode, in which case, we
 gather all the decisions, including the NO decisions, before returning the final
 result. If my explanation is a bit confusing for you, here is the source code of
-`AllocationDeciders`, hopefully it makes things clearer.
+`AllocationDeciders`, hopefully, it makes things clearer.
 
 ```java
     @Override
@@ -222,10 +225,10 @@ multiple child decisions inside it:
     }
 ```
 
-Unlike single decisions, it does not have label and explanation. More precisely,
-getting a label from a multi-decision returns `null` and getting an explanation
+Unlike single decisions, it does not have a label and explanation. More precisely,
+getting a label from a multi-decision returns `null`, and getting an explanation
 throws an unsupported operation exception. In my opinion,
-the `Decision` base class is too vague and we shouldn't return null or raising an
+the `Decision` base class is too vague and we shouldn't return null or raise an
 exception. But that's a design choice and probably does not matter as this
 decider system is internal to Elasticsearch.
 
@@ -235,7 +238,7 @@ _When are deciders created? I.e. where are deciders positioned in the lifecycle 
 an Elasticsearch cluster?_
 
 When starting a new node, the class `Bootstrap` is called. Before starting the
-node, it creates a new `Node` instance, which creates and addes a list of modules.
+node, it creates a new `Node` instance, which creates and adds a list of modules.
 One of these modules is
 called `ClusterModule` and it contains the deciders. So the whole logic happens
 at the early stage of the lifecycle, more precisely, the creation happens before the
@@ -260,7 +263,7 @@ the node to take the new value into account?_
 I don't think so. I handled such
 cases many times in production and it never requires a restart. These settings are dynamic.
 When looking into Elasticsearch's source code, such as awareness allocation decider and
-disk threadhold decider, we can find out that the settings are passed
+disk threshold decider, we can find out that the settings are passed
 from the constructor of the deciders. Here are the code snippets:
 
 ```java
@@ -289,14 +292,14 @@ public DiskThresholdSettings(Settings settings, ClusterSettings clusterSettings)
 }
 ```
 
-where you can see that when those cluster settings are upated, the class `DiskThresholdSettings`
+where you can see that when those cluster settings are updated, the class `DiskThresholdSettings`
 sets the new value into its instance.
 
 ## Testing
 
 There are three types of testing related to the deciders: 1) the tests for the
-single deciders which makes one decision at a time; 2) the tests for the root
-decider which gathers information from multiple single decisions and make a
+single deciders which make one decision at a time; 2) the tests for the root
+decider which gathers information from multiple single decisions and makes a
 multi-decision; 3) other services that depend on deciders since deciders are
 part of the cluster module. And ... we are going to discuss three of them right now.
 
@@ -304,29 +307,29 @@ part of the cluster module. And ... we are going to discuss three of them right 
 decider as an example (`DiskThresholdDeciderTests`). As we saw in the previous sections "Responsibility" and
 "Making Decisions", the allocation is made using the index metadata, shard routing,
 routing allocation, etc. All these data are fetched eagerly and passed as input parameters.
-Therefore, it makes the test quite simple: we just need to provide these information to
-a decider without mocking anything as there are no external calls. More precisely, in a test-case, we:
+Therefore, it makes the test quite simple: we just need to provide this information to
+a decider without mocking anything as there are no external calls. More precisely, in a test case, we:
 
 * prepare settings that are relevant to this decider
 * create a decider instance using these settings
 * prepare a cluster state (including index metadata, shard routing, etc) which are
   necessary for making the decision
-* create an allocation service which encapsulates the decider under test
-* require re-routing the shards by calling the service, which asks the deciders to make
+* create an allocation service that encapsulates the decider under test
+* require re-routing the shards by calling the service, which asks the deciders to make the
   decision behind the screen
 * finally assert the result
 
 **Testing a multi-decision decider.** To understand this, let's take
 `AllocationDecidersTests` as an example. In this test suite, it tests the debug mode and
 the early termination. Because these expectations are not tight to any specific child
-deciders, the set up simply uses some mocked deciders instantiated as anonymous classes.
+deciders, the setup simply uses some mocked deciders instantiated as anonymous classes.
 
 ```java
 final AllocationDeciders allocationDeciders = new AllocationDeciders(Arrays.asList(
     new AllocationDecider() { ... }, new AllocationDecider() { ... }));
 ```
 
-**Testing a service that depends on the deciders.** In the case, the testing is more complex
+**Testing a service that depends on the deciders.** In this case, the testing is more complex
 to set up because we need to prepare the deciders. Depending on the needs of that service,
 it may plug some decider during the setup phase. The easiest setup is to prepare
 a no-operation decider system,
@@ -355,11 +358,11 @@ How to go further from here?
 ## Conclusion
 
 In this article, we saw the decider system for shard allocation. More precisely,
-we saw that allocation service is responsible for allocating shards and balancing shards;
+we saw that the allocation service is responsible for allocating shards and balancing shards;
 we saw that there are 19 deciders in Elasticsearch 7.16 and there are two types of decisions:
-single decision and multi-decision. When making decision, decider relies on information from the ES settings and from
+single decision and multi-decision. When making a decision, a decider relies on information from the ES settings and from
 cluster state (index metadata, node, routing allocation info).
-The deciders are created early in the lifecycle during node bootstrap. We also saw the
+The deciders are created early in the lifecycle during node bootstrap. We also saw
 how the testing works for testing a single-decision decider, a multi-decision decider, and
 other services that depend on deciders. Finally, I suggested some resources for you so that you can
 go further from this article. Interested to know more? You can subscribe to [the feed of my blog](/feed.xml), follow me
