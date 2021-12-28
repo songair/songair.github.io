@@ -359,6 +359,7 @@ on [Twitter](https://twitter.com/mincong_h) or
 
 ## References
 
+- ["Elasticsearch 7.16 source code (elastic/elasticsearch)](https://github.com/elastic/elasticsearch/), _GitHub_, 2021.
 - ["Elasticsearch Shards"](https://opster.com/guides/elasticsearch/glossary/elasticsearch-shards/),
   Opster, 2021.
 - Emily Chang, ["How to resolve unassigned shards in
