@@ -44,7 +44,7 @@ After reading this article, you will understand:
 * How to test them?
 * How to go further from this article?
 
-And hopefully, this article helps you better understand the internal mechanism
+And hopefully, this article will help you better understand the internal mechanism
 or inspire you to make your decision making system based on similar
 architecture. Note that this article is written with Elasticsearch 7.15.2
 (latest), which may be different from what you are using. Now, let's get started!
@@ -345,14 +345,24 @@ public class ClusterAllocationExplainActionTests extends ESTestCase {
 
 How to go further from here?
 
-TODO:
-
-* Who asks the node the make decisions? Does every node participate to the
-  decision or only one node handles everything for the cluster?
+* To better understand what do all the those deciders do, you can read another article
+  that I wrote last year: [18 Allocation Deciders in Elasticsearch 7.9](/2020/09/27/shard-allocation/)
+* To better understand disk watermarks in Elasticsearch, you can read another article
+  that I wrote early this year: [Disk Watermarks In Elasticsearch](/04/10/disk-watermarks-in-elasticsearch/)
+* To better understand how to resolve unassigned shards in Elasticsearch, I suggest you
+  to read Datadog's blog ["How to resolve unassigned shards in Elasticsearch"](https://www.datadoghq.com/blog/elasticsearch-unassigned-shards/), written by Emily Chang.
 
 ## Conclusion
 
-What did we talk in this article? Take notes from introduction again.
+In this article, we saw the decider system for shard allocation. More precisely,
+we saw that allocation service is responsible for allocating shards and balancing shards;
+we saw that there are 19 deciders in Elasticsearch 7.16 and there are two types of decisions:
+single decision and multi-decision. When making decision, decider rely on information from
+cluster state (index metadata, node, routing allocation info) and from the ES settings.
+The deciders are created early in the lifecycle during node bootstrap. We also see the
+how the testing works for testing a single-decision decider, a multi-decision decider, and
+other services that depend on deciders. Finally, I suggested some resources so that you can
+go further from this article.
 Interested to know more? You can subscribe to [the feed of my blog](/feed.xml), follow me
 on [Twitter](https://twitter.com/mincong_h) or
 [GitHub](https://github.com/mincong-h/). Hope you enjoy this article, see you the next time!
