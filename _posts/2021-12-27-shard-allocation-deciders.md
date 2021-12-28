@@ -362,8 +362,7 @@ cluster state (index metadata, node, routing allocation info) and from the ES se
 The deciders are created early in the lifecycle during node bootstrap. We also see the
 how the testing works for testing a single-decision decider, a multi-decision decider, and
 other services that depend on deciders. Finally, I suggested some resources so that you can
-go further from this article.
-Interested to know more? You can subscribe to [the feed of my blog](/feed.xml), follow me
+go further from this article. Interested to know more? You can subscribe to [the feed of my blog](/feed.xml), follow me
 on [Twitter](https://twitter.com/mincong_h) or
 [GitHub](https://github.com/mincong-h/). Hope you enjoy this article, see you the next time!
 
