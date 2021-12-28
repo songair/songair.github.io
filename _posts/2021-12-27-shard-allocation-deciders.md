@@ -8,7 +8,7 @@ subtitle:            >
 lang:                en
 date:                2021-12-27 14:36:13 +0100
 categories:          [elasticsearch]
-tags:                [java, elasticsearch]
+tags:                [java, elasticsearch, system-design]
 ads_tags:            [search]
 comments:            true
 excerpt:             >
@@ -299,9 +299,24 @@ multi-decision; 3) other services that depend on deciders since deciders are
 part of the cluster module. And ... we are going to discuss three of them in today's
 article :)
 
-TODOs
+**Testing a single-decision decider.** To understand this, let's take the disk threshold
+decider as an example (`DiskThresholdDeciderTests`). As we saw in the previous sections "Responsibility" and
+"Making Decisions", the allocation is made using the index metadata, shard routing,
+routing allocation, etc. All these data are fetched eagerly and passed as input parameters.
+Therefore, it makes the test quite simple: we just need to provide these information to
+a decider without mocking anything as there are no external calls. More precisely, in the tests, we
 
-* single
+* prepare settings
+* create a decider instance using those settings
+* prepare a cluster state (including index metadata, shard routing, etc) which are
+  necessary for making the decision
+* create an allocation service which encapsulates the decider under test
+* require re-routing the shards by calling the service, which asks the deciders to make
+  decision behind the screen
+* finally assert the result
+
+... and then iterate through other scenarios.
+
 * multi
 * dependent
 
