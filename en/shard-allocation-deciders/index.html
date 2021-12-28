@@ -10,42 +10,42 @@
 		
 	</script><meta charset="utf-8">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
-<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no"><title>Using Component in Vue.js - Mincong Huang</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no"><title>The Decision System For Shard Allocation in Elasticsearch - Mincong Huang</title>
 
-<meta name="description" content="Your vue file is getting big? This Q&amp;A explains how to use component in Vue.js by extracting logic from your existing page.">
+<meta name="description" content="Curious about how does a decision system work? This article explains the deciders for shard allocation in Elasticsearch by going through their responsibility...">
 
 <!-- Begin Jekyll SEO tag v2.7.1 -->
-<title>Using Component in Vue.js | Mincong Huang</title>
+<title>The Decision System For Shard Allocation in Elasticsearch | Mincong Huang</title>
 <meta name="generator" content="Jekyll v4.2.0" />
-<meta property="og:title" content="Using Component in Vue.js" />
+<meta property="og:title" content="The Decision System For Shard Allocation in Elasticsearch" />
 <meta name="author" content="Mincong Huang" />
 <meta property="og:locale" content="en" />
-<meta name="description" content="Your vue file is getting big? This Q&amp;A explains how to use component in Vue.js by extracting logic from your existing page." />
-<meta property="og:description" content="Your vue file is getting big? This Q&amp;A explains how to use component in Vue.js by extracting logic from your existing page." />
-<link rel="canonical" href="https://mincong.io/en/use-component-in-vue-js/" />
-<meta property="og:url" content="https://mincong.io/en/use-component-in-vue-js/" />
+<meta name="description" content="Curious about how does a decision system work? This article explains the deciders for shard allocation in Elasticsearch by going through their responsibility, structure, decision making, lifecycle, testing, and more." />
+<meta property="og:description" content="Curious about how does a decision system work? This article explains the deciders for shard allocation in Elasticsearch by going through their responsibility, structure, decision making, lifecycle, testing, and more." />
+<link rel="canonical" href="https://mincong.io/en/shard-allocation-deciders/" />
+<meta property="og:url" content="https://mincong.io/en/shard-allocation-deciders/" />
 <meta property="og:site_name" content="Mincong Huang" />
-<meta property="og:image" content="https://mincong.io/assets/vuebigwhite.png" />
+<meta property="og:image" content="https://mincong.io/assets/bg-patrick-federi-LJEjI7LXABU-unsplash.jpg" />
 <meta property="og:type" content="article" />
-<meta property="article:published_time" content="2021-12-24T08:05:27+01:00" />
+<meta property="article:published_time" content="2021-12-27T14:36:13+01:00" />
 <meta name="twitter:card" content="summary_large_image" />
-<meta property="twitter:image" content="https://mincong.io/assets/vuebigwhite.png" />
-<meta property="twitter:title" content="Using Component in Vue.js" />
+<meta property="twitter:image" content="https://mincong.io/assets/bg-patrick-federi-LJEjI7LXABU-unsplash.jpg" />
+<meta property="twitter:title" content="The Decision System For Shard Allocation in Elasticsearch" />
 <meta name="twitter:site" content="@mincong_h" />
 <meta name="twitter:creator" content="@mincong_h" />
 <script type="application/ld+json">
-{"image":"https://mincong.io/assets/vuebigwhite.png","headline":"Using Component in Vue.js","description":"Your vue file is getting big? This Q&amp;A explains how to use component in Vue.js by extracting logic from your existing page.","datePublished":"2021-12-24T08:05:27+01:00","dateModified":"2021-12-24T08:05:27+01:00","@type":"BlogPosting","mainEntityOfPage":{"@type":"WebPage","@id":"https://mincong.io/en/use-component-in-vue-js/"},"url":"https://mincong.io/en/use-component-in-vue-js/","author":{"@type":"Person","name":"Mincong Huang"},"@context":"https://schema.org"}</script>
+{"image":"https://mincong.io/assets/bg-patrick-federi-LJEjI7LXABU-unsplash.jpg","headline":"The Decision System For Shard Allocation in Elasticsearch","description":"Curious about how does a decision system work? This article explains the deciders for shard allocation in Elasticsearch by going through their responsibility, structure, decision making, lifecycle, testing, and more.","datePublished":"2021-12-27T14:36:13+01:00","dateModified":"2021-12-27T14:36:13+01:00","@type":"BlogPosting","mainEntityOfPage":{"@type":"WebPage","@id":"https://mincong.io/en/shard-allocation-deciders/"},"url":"https://mincong.io/en/shard-allocation-deciders/","author":{"@type":"Person","name":"Mincong Huang"},"@context":"https://schema.org"}</script>
 <!-- End Jekyll SEO tag -->
 
 
 <!-- Extra Open Graph :: Start -->
 
-<meta property="og:image:width" content="660"/>
-<meta property="og:image:height" content="1200"/>
+<meta property="og:image:width" content="1440"/>
+<meta property="og:image:height" content="1920"/>
 
 <!-- Extra Open Graph :: End -->
 
-<link rel="canonical" href="https://mincong.io/en/use-component-in-vue-js/"><link rel="alternate" type="application/rss+xml" title="Mincong Huang" href="/feed.xml"><!-- start favicons snippet, use https://realfavicongenerator.net/ --><link rel="apple-touch-icon" sizes="180x180" href="/assets/apple-touch-icon.png"><link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon-32x32.png"><link rel="icon" type="image/png" sizes="16x16" href="/assets/favicon-16x16.png"><link rel="manifest" href="/assets/site.webmanifest"><link rel="mask-icon" href="/assets/safari-pinned-tab.svg" color="#fc4d50"><link rel="shortcut icon" href="/assets/favicon.ico">
+<link rel="canonical" href="https://mincong.io/en/shard-allocation-deciders/"><link rel="alternate" type="application/rss+xml" title="Mincong Huang" href="/feed.xml"><!-- start favicons snippet, use https://realfavicongenerator.net/ --><link rel="apple-touch-icon" sizes="180x180" href="/assets/apple-touch-icon.png"><link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon-32x32.png"><link rel="icon" type="image/png" sizes="16x16" href="/assets/favicon-16x16.png"><link rel="manifest" href="/assets/site.webmanifest"><link rel="mask-icon" href="/assets/safari-pinned-tab.svg" color="#fc4d50"><link rel="shortcut icon" href="/assets/favicon.ico">
 
 <meta name="msapplication-TileColor" content="#ffc40d"><meta name="msapplication-config" content="/assets/browserconfig.xml">
 
@@ -338,27 +338,27 @@
         </ul>
       </nav></div>
   </header>
-</div><div class="page__content"><div class="article__header--overlay"><div class="hero hero--dark overlay" style="background-image:linear-gradient(135deg, rgba(0, 0, 0, .6), rgba(0, 0, 0, .4)),url(/assets/vuebigwhite.png);background-color:#203028;"><div class="hero__content"><div class ="main">
+</div><div class="page__content"><div class="article__header--overlay"><div class="hero hero--dark overlay" style="background-image:linear-gradient(135deg, rgba(0, 0, 0, .6), rgba(0, 0, 0, .4)),url(/assets/bg-patrick-federi-LJEjI7LXABU-unsplash.jpg);background-color:#203028;"><div class="hero__content"><div class ="main">
 
   
   <div class="article__info clearfix">
       <ul class="left-col menu">
         <li>
               <a class="button button--secondary button--pill button--sm"
-                href="/en/archive/?tag=javascript">javascript</a>
+                href="/en/archive/?tag=java">java</a>
             </li><li>
               <a class="button button--secondary button--pill button--sm"
-                href="/en/archive/?tag=vuejs">vuejs</a>
+                href="/en/archive/?tag=elasticsearch">elasticsearch</a>
             </li><li>
               <a class="button button--secondary button--pill button--sm"
-                href="/en/archive/?tag=vuejs2">vuejs2</a>
+                href="/en/archive/?tag=system-design">system-design</a>
             </li>
 
         <li class="separator">|</li>
           
             <li>
               <a class="button button--circle button--primary focus lang"
-                 href="/en/use-component-in-vue-js/"><span>EN</span></a>
+                 href="/en/shard-allocation-deciders/"><span>EN</span></a>
 
               
 
@@ -373,19 +373,19 @@
             </li>
           
         
-      </ul><ul class="right-col menu"><li><i class="far fa-calendar-alt"></i> <span>Dec 24, 2021</span>
-            </li></ul></div><div class="article__header"><header><h1>Using Component in Vue.js</h1></header></div><div class="article__header">
-                        <p class="overlay__excerpt">Avoid having thousands of lines of code in a single file.</p>
+      </ul><ul class="right-col menu"><li><i class="far fa-calendar-alt"></i> <span>Dec 27, 2021</span>
+            </li></ul></div><div class="article__header"><header><h1>The Decision System For Shard Allocation in Elasticsearch</h1></header></div><div class="article__header">
+                        <p class="overlay__excerpt">How does it work and what can we learn from it?</p>
                       </div><div class="article__info clearfix">
   <ul class="left-col menu">
     <li>
       <i class="fas fa-camera"></i>
       
       Photo by
-      <a href="https://www.filepicker.io/api/file/jpJaPUQmSWq1uFU1cpUs" target="_blank">Internet</a>
+      <a href="https://unsplash.com/@federi" target="_blank">Patrick Federi</a>
       
       on
-      <a href="https://duckduckgo.com" target="_blank">Unknown</a>
+      <a href="https://unsplash.com/license" target="_blank">Unplash </a>
     </li>
   </ul>
 </div>
@@ -399,118 +399,358 @@
               <div class="col-main cell cell--auto"><!-- start custom main top snippet -->
 
 <!-- end custom main top snippet -->
-<article><meta itemprop="headline" content="Using Component in Vue.js"><meta itemprop="author" content="Mincong Huang"/><meta itemprop="datePublished" content="2021-12-24T08:05:27+01:00">
-    <meta itemprop="keywords" content="javascript,vuejs,vuejs2"><div class="js-article-content"><div class="layout--article"><!-- start custom article top snippet -->
+<article><meta itemprop="headline" content="The Decision System For Shard Allocation in Elasticsearch"><meta itemprop="author" content="Mincong Huang"/><meta itemprop="datePublished" content="2021-12-27T14:36:13+01:00">
+    <meta itemprop="keywords" content="java,elasticsearch,system-design"><div class="js-article-content"><div class="layout--article"><!-- start custom article top snippet -->
 
 
 <!-- end custom article top snippet -->
-<div class="article__content" itemprop="articleBody"><h2 id="question">Question</h2>
+<div class="article__content" itemprop="articleBody"><h2 id="introduction">Introduction</h2>
 
-<p>My <code class="language-plaintext highlighter-rouge">*.vue</code> files are getting bigger and bigger. It’s hard to maintain. I would
-like to split the file and move part of the structure (HTML) and the logic
-(JS) to another location. Is it possible?</p>
+<p>Shard allocation plays an important role in the data distribution of an
+Elasticsearch cluster. Having all the shards allocated ensures the good health
+of your cluster and avoids potential data loss. That’s why it’s important to
+avoid unassigned shards and avoid yellow cluster. But as a software engineer or
+as a database administrator (DBA), do you know how the decision is made
+internally? How does Elasticsearch know which node should be used? In this
+article, we are going to study this part by exploring the decider system.</p>
 
-<h2 id="answer">Answer</h2>
-
-<p>You can do that by using components. You can extract part of the structure from
-the original vue file to a new file and then import the component again into
-the original one. Let’s say we have two files:</p>
-
-<ul>
-  <li><code class="language-plaintext highlighter-rouge">my-page.vue</code> – the main page that contains most of the logic and
-it’s getting big, probably 1000+ lines of code.</li>
-  <li><code class="language-plaintext highlighter-rouge">my-component.vue</code> – the new component that you are creating</li>
-</ul>
-
-<p>First of all, you need to declare the structure in the component file. The
-component should contain the HTML structure in the <code class="language-plaintext highlighter-rouge">template</code> section and the
-logic in the <code class="language-plaintext highlighter-rouge">script</code> section. The logic usually contains the properties
-(<code class="language-plaintext highlighter-rouge">props</code>), which are the fields passed from the main page when creating the
-component; the <code class="language-plaintext highlighter-rouge">data</code> fields that are present during the lifecycle of the
-component; the methods that are used for operating the template, such as loading
-resources from the backend via RESTful APIs, methods for displaying or hiding
-certain blocks, etc.</p>
-
-<div class="language-html highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nt">&lt;template&gt;</span>
-  <span class="c">&lt;!-- TODO Add content for your resource (component) here --&gt;</span>
-<span class="nt">&lt;/template&gt;</span>
-
-<span class="nt">&lt;script&gt;</span>
-<span class="k">export</span> <span class="k">default</span> <span class="p">{</span>
-  <span class="na">props</span><span class="p">:</span> <span class="p">{</span>
-    <span class="na">resourceId</span><span class="p">:</span> <span class="p">{</span>
-      <span class="na">type</span><span class="p">:</span> <span class="nb">String</span><span class="p">,</span>
-      <span class="na">required</span><span class="p">:</span> <span class="kc">true</span>
-    <span class="p">}</span>
-  <span class="p">},</span>
-  <span class="nx">data</span><span class="p">()</span> <span class="p">{</span>
-    <span class="k">return</span> <span class="p">{</span>
-      <span class="na">isLoading</span><span class="p">:</span> <span class="kc">true</span><span class="p">,</span>
-      <span class="na">resource</span><span class="p">:</span> <span class="kc">null</span>
-    <span class="p">}</span>
-  <span class="p">},</span>
-  <span class="na">methods</span><span class="p">:</span> <span class="p">{</span>
-    <span class="nx">loadResource</span><span class="p">()</span> <span class="p">{</span>
-       <span class="c1">// TODO Implement async HTTP call here</span>
-    <span class="p">}</span>
-  <span class="p">}</span>
-<span class="p">}</span>
-<span class="nt">&lt;/script&gt;</span>
-
-<span class="nt">&lt;style&gt;</span>
-<span class="o">//</span> <span class="nt">CSS</span> <span class="nt">goes</span> <span class="nt">here</span>
-<span class="nt">&lt;/style&gt;</span>
-</code></pre></div></div>
-
-<p>Then you need to import and use the new component in your main page.</p>
-
-<div class="language-html highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nt">&lt;template&gt;</span>
-  <span class="nt">&lt;div&gt;</span>
-    <span class="c">&lt;!--
-      Use the component here.
-
-      The property "resourceId" becomes kebab case: "resource-id"
-    --&gt;</span>
-    <span class="nt">&lt;my-component</span> <span class="na">resource-id=</span><span class="s">"foo"</span><span class="nt">&gt;</span>
-
-    <span class="c">&lt;!-- ... --&gt;</span>
-  <span class="nt">&lt;/div&gt;</span>
-<span class="nt">&lt;/template&gt;</span>
-<span class="nt">&lt;script&gt;</span>
-<span class="k">import</span> <span class="nx">MyComponent</span> <span class="k">from</span> <span class="dl">"</span><span class="s2">@/path/to/my-component.vue</span><span class="dl">"</span>
-
-<span class="k">export</span> <span class="k">default</span> <span class="p">{</span>
-  <span class="na">components</span><span class="p">:</span> <span class="p">{</span> <span class="nx">MyComponent</span> <span class="p">},</span>
-  <span class="na">props</span><span class="p">:</span> <span class="p">{</span> <span class="p">...</span> <span class="p">},</span>
-  <span class="na">methods</span><span class="p">:</span> <span class="p">{</span> <span class="p">...</span> <span class="p">},</span>
-<span class="p">}</span>
-<span class="nt">&lt;/script&gt;</span>
-
-<span class="nt">&lt;style&gt;</span>
-<span class="o">//</span> <span class="nt">CSS</span> <span class="nt">goes</span> <span class="nt">here</span>
-<span class="nt">&lt;/style&gt;</span>
-</code></pre></div></div>
-
-<p>Using components has many benefits. Some of them are:</p>
+<p>After reading this article, you will understand:</p>
 
 <ul>
-  <li>Having clear input parameters for an element</li>
-  <li>Making logic easy to understand, i.e. avoid having huge files</li>
-  <li>Making tests easy</li>
-  <li>Re-use the same component in multiple pages</li>
+  <li>The responsibility of allocation service and allocation deciders.</li>
+  <li>The structure of these 19 deciders.</li>
+  <li>How do they make decisions?</li>
+  <li>The deciders’ position in the lifecycle of an ES node.</li>
+  <li>How to test them?</li>
+  <li>How to go further from this article?</li>
 </ul>
+
+<p>And hopefully, this article will help you better understand the internal mechanism
+or inspire you to make your decision system based on a similar
+architecture. Note that this article is written with Elasticsearch 7.16.2
+(latest), which may be different from what you are using. Now, let’s get started!</p>
+
+<h2 id="responsibility">Responsibility</h2>
+
+<p>Allocation deciders are part of the allocation service in Elasticsearch. This
+service manages the shard allocation of a cluster. For this reason, the
+<code class="language-plaintext highlighter-rouge">AllocationService</code> contains an instance of <code class="language-plaintext highlighter-rouge">AllocationDeciders</code> to choose nodes for shard
+allocation. This class also manages new nodes joining the cluster
+and the rerouting of shards. If none of the nodes accepts the allocation, the shard
+will remain unassigned. Having unassigned shard leads to under-replicated
+shards. It will probably result to a yellow cluster and increase the risk of data loss.</p>
+
+<p><em>Which actions require decisions?</em></p>
+
+<p>We can find this information from the abstract class <code class="language-plaintext highlighter-rouge">AllocationDecider</code>.
+An allocation decider can decide for many actions: allocation,
+rebalancing, keeping the shard in the current node (<code class="language-plaintext highlighter-rouge">canRemain</code>), and auto-expanding the
+shards of a given index. Each method returns a decision so that the allocation service knows
+how to react. Each action respects the naming convention <code class="language-plaintext highlighter-rouge">can{Action}</code> or
+<code class="language-plaintext highlighter-rouge">should{Action}</code>. Here is a more detailed version:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>➜  elasticsearch git:(v7.16.2 u=) ✗ grep "public Decision" server/src/main/java/org/elasticsearch/cluster/routing/allocation/decider/AllocationDecider.java | sort
+    public Decision canAllocate(IndexMetadata indexMetadata, RoutingNode node, RoutingAllocation allocation) {
+    public Decision canAllocate(ShardRouting shardRouting, RoutingAllocation allocation) {
+    public Decision canAllocate(ShardRouting shardRouting, RoutingNode node, RoutingAllocation allocation) {
+    public Decision canAllocateReplicaWhenThereIsRetentionLease(ShardRouting shardRouting, RoutingNode node, RoutingAllocation allocation) {
+    public Decision canForceAllocateDuringReplace(ShardRouting shardRouting, RoutingNode node, RoutingAllocation allocation) {
+    public Decision canForceAllocatePrimary(ShardRouting shardRouting, RoutingNode node, RoutingAllocation allocation) {
+    public Decision canRebalance(RoutingAllocation allocation) {
+    public Decision canRebalance(ShardRouting shardRouting, RoutingAllocation allocation) {
+    public Decision canRemain(ShardRouting shardRouting, RoutingNode node, RoutingAllocation allocation) {
+    public Decision shouldAutoExpandToNode(IndexMetadata indexMetadata, DiscoveryNode node, RoutingAllocation allocation) {
+</code></pre></div></div>
+
+<h2 id="deciders-structure">Deciders Structure</h2>
+
+<p>In Elasticsearch 7.16, there are 19 deciders for the shard allocation. You can
+find them as follows:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>➜  elasticsearch git:(v7.16.2 u=) rg -l --sort-files "extends AllocationDecider" server/src/main | sed 's/.*\///g'
+AllocationDeciders.java
+AwarenessAllocationDecider.java
+ClusterRebalanceAllocationDecider.java
+ConcurrentRebalanceAllocationDecider.java
+DiskThresholdDecider.java
+EnableAllocationDecider.java
+FilterAllocationDecider.java
+MaxRetryAllocationDecider.java
+NodeReplacementAllocationDecider.java
+NodeShutdownAllocationDecider.java
+NodeVersionAllocationDecider.java
+RebalanceOnlyWhenActiveAllocationDecider.java
+ReplicaAfterPrimaryActiveAllocationDecider.java
+ResizeAllocationDecider.java
+RestoreInProgressAllocationDecider.java
+SameShardAllocationDecider.java
+ShardsLimitAllocationDecider.java
+SnapshotInProgressAllocationDecider.java
+ThrottlingAllocationDecider.java
+</code></pre></div></div>
+
+<p>Among these deciders, there is a root decider, the <code class="language-plaintext highlighter-rouge">AllocationDeciders</code>, which
+contains the references of all other deciders. When making a decision, it will
+ask those deciders to decide for the shard allocation, and then assemble them to
+make a global decision. We will discuss more details in the following
+section. As for other deciders, you can see their purposes from
+their filenames, such as for awareness key-value pairs (e.g. availability zone),
+cluster rebalancing, concurrent rebalancing, disk threshold, and much more.</p>
+
+<h2 id="making-decisions">Making Decisions</h2>
+
+<p>There are two types of decision in the decider system: single decision and
+multi-decision. A single decision represents a decision made on one
+dimension, e.g. awareness or disk threshold. While a multi-decision represents a decision
+container that contains a list of child decisions. Let’s take a closer look at
+both of them.</p>
+
+<h3 id="single-decision">Single Decision</h3>
+
+<p><code class="language-plaintext highlighter-rouge">DiskThresholdDecider</code> is a good example of making a single decision. Let’s check its method
+for shard allocation: <code class="language-plaintext highlighter-rouge">canAllocate(...)</code>. First of all, it retrieves the settings from the
+class member
+<code class="language-plaintext highlighter-rouge">diskThresholdSettings</code> for the low and high thresholds, then it retrieves the disk
+usage from the given information (node, routing allocation, usages), and finally
+compare both of them to make the decision.
+Depending on the situation, we will either get a YES or a NO decision. Here is the code
+snippet:</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nd">@Override</span>
+<span class="kd">public</span> <span class="nc">Decision</span> <span class="nf">canAllocate</span><span class="o">(</span><span class="nc">ShardRouting</span> <span class="n">shardRouting</span><span class="o">,</span> <span class="nc">RoutingNode</span> <span class="n">node</span><span class="o">,</span> <span class="nc">RoutingAllocation</span> <span class="n">allocation</span><span class="o">)</span> <span class="o">{</span>
+    <span class="o">...</span>
+
+    <span class="c1">// retrieve settings</span>
+    <span class="kd">final</span> <span class="kt">double</span> <span class="n">usedDiskThresholdLow</span> <span class="o">=</span> <span class="mf">100.0</span> <span class="o">-</span> <span class="n">diskThresholdSettings</span><span class="o">.</span><span class="na">getFreeDiskThresholdLow</span><span class="o">();</span>
+    <span class="kd">final</span> <span class="kt">double</span> <span class="n">usedDiskThresholdHigh</span> <span class="o">=</span> <span class="mf">100.0</span> <span class="o">-</span> <span class="n">diskThresholdSettings</span><span class="o">.</span><span class="na">getFreeDiskThresholdHigh</span><span class="o">();</span>
+
+    <span class="c1">// checks for exact byte comparisons</span>
+    <span class="k">if</span> <span class="o">(</span><span class="n">freeBytes</span> <span class="o">&lt;</span> <span class="n">diskThresholdSettings</span><span class="o">.</span><span class="na">getFreeBytesThresholdLow</span><span class="o">().</span><span class="na">getBytes</span><span class="o">())</span> <span class="o">{</span>
+        <span class="o">...</span>
+    <span class="o">}</span>
+
+    <span class="c1">// checks for percentage comparisons</span>
+    <span class="k">if</span> <span class="o">(</span><span class="n">freeDiskPercentage</span> <span class="o">&lt;</span> <span class="n">diskThresholdSettings</span><span class="o">.</span><span class="na">getFreeDiskThresholdLow</span><span class="o">())</span> <span class="o">{</span>
+        <span class="o">...</span>
+    <span class="o">}</span>
+
+    <span class="o">...</span>
+<span class="o">}</span>
+</code></pre></div></div>
+
+<p>Note that YES and NO are not the only types for the decision. It also exists a
+THROTTLE type, which allows users to control the shard allocation based on the
+concurrency. We can consider it as a “temporary NO”, as
+the allocation is not allowed right now, but may be YES in the future.</p>
+
+<h3 id="multi-decision">Multi-Decision</h3>
+
+<p>Now let’s take a look at the <code class="language-plaintext highlighter-rouge">AllocationDeciders</code> to see how it makes a
+multi-decision. When starting the decision, it accepts information about the shard
+routing, node routing, and the current allocation. Then, it either ignores the
+shard or delegates the decision-making to its child deciders and assembles them at the end.
+All child
+deciders make a decision synchronously, probably because they don’t require
+additional information (such as HTTP requests) from an external service. Once the
+decision is made by a child decider, the result is processed with the fail-fast
+strategy. That is, whenever one child decision is negative (NO), we consider the
+whole decision as NO without asking the remaining deciders. It’s a short
+circuit. We do that unless we are in the debug mode, in which case, we
+gather all the decisions, including the NO decisions, before returning the final
+result. If my explanation is a bit confusing for you, here is the source code of
+<code class="language-plaintext highlighter-rouge">AllocationDeciders</code>, hopefully, it makes things clearer.</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="nd">@Override</span>
+    <span class="kd">public</span> <span class="nc">Decision</span> <span class="nf">canAllocate</span><span class="o">(</span><span class="nc">ShardRouting</span> <span class="n">shardRouting</span><span class="o">,</span> <span class="nc">RoutingNode</span> <span class="n">node</span><span class="o">,</span> <span class="nc">RoutingAllocation</span> <span class="n">allocation</span><span class="o">)</span> <span class="o">{</span>
+        <span class="k">if</span> <span class="o">(</span><span class="n">allocation</span><span class="o">.</span><span class="na">shouldIgnoreShardForNode</span><span class="o">(</span><span class="n">shardRouting</span><span class="o">.</span><span class="na">shardId</span><span class="o">(),</span> <span class="n">node</span><span class="o">.</span><span class="na">nodeId</span><span class="o">()))</span> <span class="o">{</span>
+            <span class="k">return</span> <span class="nc">Decision</span><span class="o">.</span><span class="na">NO</span><span class="o">;</span>
+        <span class="o">}</span>
+        <span class="nc">Decision</span><span class="o">.</span><span class="na">Multi</span> <span class="n">ret</span> <span class="o">=</span> <span class="k">new</span> <span class="nc">Decision</span><span class="o">.</span><span class="na">Multi</span><span class="o">();</span>
+        <span class="k">for</span> <span class="o">(</span><span class="nc">AllocationDecider</span> <span class="n">allocationDecider</span> <span class="o">:</span> <span class="n">allocations</span><span class="o">)</span> <span class="o">{</span>
+            <span class="nc">Decision</span> <span class="n">decision</span> <span class="o">=</span> <span class="n">allocationDecider</span><span class="o">.</span><span class="na">canAllocate</span><span class="o">(</span><span class="n">shardRouting</span><span class="o">,</span> <span class="n">node</span><span class="o">,</span> <span class="n">allocation</span><span class="o">);</span>
+            <span class="c1">// short track if a NO is returned.</span>
+            <span class="k">if</span> <span class="o">(</span><span class="n">decision</span><span class="o">.</span><span class="na">type</span><span class="o">()</span> <span class="o">==</span> <span class="nc">Decision</span><span class="o">.</span><span class="na">Type</span><span class="o">.</span><span class="na">NO</span><span class="o">)</span> <span class="o">{</span>
+                <span class="k">if</span> <span class="o">(</span><span class="n">logger</span><span class="o">.</span><span class="na">isTraceEnabled</span><span class="o">())</span> <span class="o">{</span>
+                    <span class="o">...</span>
+                <span class="o">}</span>
+                <span class="c1">// short circuit only if debugging is not enabled</span>
+                <span class="k">if</span> <span class="o">(</span><span class="n">allocation</span><span class="o">.</span><span class="na">debugDecision</span><span class="o">()</span> <span class="o">==</span> <span class="kc">false</span><span class="o">)</span> <span class="o">{</span>
+                    <span class="k">return</span> <span class="nc">Decision</span><span class="o">.</span><span class="na">NO</span><span class="o">;</span>
+                <span class="o">}</span> <span class="k">else</span> <span class="o">{</span>
+                    <span class="n">ret</span><span class="o">.</span><span class="na">add</span><span class="o">(</span><span class="n">decision</span><span class="o">);</span>
+                <span class="o">}</span>
+            <span class="o">}</span> <span class="k">else</span> <span class="o">{</span>
+                <span class="n">addDecision</span><span class="o">(</span><span class="n">ret</span><span class="o">,</span> <span class="n">decision</span><span class="o">,</span> <span class="n">allocation</span><span class="o">);</span>
+            <span class="o">}</span>
+        <span class="o">}</span>
+        <span class="k">return</span> <span class="n">ret</span><span class="o">;</span>
+    <span class="o">}</span>
+</code></pre></div></div>
+
+<p>Now if we go further into the structure of the value class <code class="language-plaintext highlighter-rouge">Decision.Multi</code>,
+we can see that a multi-decision is a decision container, it contains
+multiple child decisions inside it:</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="kd">public</span> <span class="kd">static</span> <span class="kd">class</span> <span class="nc">Multi</span> <span class="kd">extends</span> <span class="nc">Decision</span> <span class="kd">implements</span> <span class="nc">ToXContentFragment</span> <span class="o">{</span>
+
+        <span class="kd">private</span> <span class="kd">final</span> <span class="nc">List</span><span class="o">&lt;</span><span class="nc">Decision</span><span class="o">&gt;</span> <span class="n">decisions</span> <span class="o">=</span> <span class="k">new</span> <span class="nc">ArrayList</span><span class="o">&lt;&gt;();</span>
+        <span class="o">...</span>
+    <span class="o">}</span>
+</code></pre></div></div>
+
+<p>Unlike single decisions, it does not have a label and explanation. More precisely,
+getting a label from a multi-decision returns <code class="language-plaintext highlighter-rouge">null</code>, and getting an explanation
+throws an unsupported operation exception. In my opinion,
+the <code class="language-plaintext highlighter-rouge">Decision</code> base class is too vague and we shouldn’t return null or raise an
+exception. But that’s a design choice and probably does not matter as this
+decider system is internal to Elasticsearch.</p>
+
+<h2 id="lifecycle">Lifecycle</h2>
+
+<p><em>When are deciders created? I.e. where are deciders positioned in the lifecycle of
+an Elasticsearch cluster?</em></p>
+
+<p>When starting a new node, the class <code class="language-plaintext highlighter-rouge">Bootstrap</code> is called. Before starting the
+node, it creates a new <code class="language-plaintext highlighter-rouge">Node</code> instance, which creates and adds a list of modules.
+One of these modules is
+called <code class="language-plaintext highlighter-rouge">ClusterModule</code> and it contains the deciders. So the whole logic happens
+at the early stage of the lifecycle, more precisely, the creation happens before the
+startup of a node.</p>
+
+<div class="language-yml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="pi">-</span> <span class="s">boostrap</span>
+  <span class="s">- construct node</span>
+    <span class="s">- create modules</span>
+      <span class="s">- create master module</span>
+        <span class="s">- create deciders</span>
+        <span class="s">- create root decider (AllocationDeciders)</span>
+        <span class="s">- create allocation service</span>
+        <span class="s">- ...</span>
+    <span class="s">- add modules</span>
+  <span class="s">- start node</span>
+</code></pre></div></div>
+
+<p>Now another question is: <em>when updating a setting of a cluster, do we need to restart
+the node to take the new value into account?</em></p>
+
+<p>I don’t think so. I handled such
+cases many times in production and it never requires a restart. These settings are dynamic.
+When looking into Elasticsearch’s source code, such as awareness allocation decider and
+disk threshold decider, we can find out that the settings are passed
+from the constructor of the deciders. Here are the code snippets:</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">public</span> <span class="nf">AwarenessAllocationDecider</span><span class="o">(</span><span class="nc">Settings</span> <span class="n">settings</span><span class="o">,</span> <span class="nc">ClusterSettings</span> <span class="n">clusterSettings</span><span class="o">)</span> <span class="o">{</span> <span class="o">...</span> <span class="o">}</span>
+</code></pre></div></div>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">public</span> <span class="nf">DiskThresholdDecider</span><span class="o">(</span><span class="nc">Settings</span> <span class="n">settings</span><span class="o">,</span> <span class="nc">ClusterSettings</span> <span class="n">clusterSettings</span><span class="o">)</span> <span class="o">{</span>
+    <span class="k">this</span><span class="o">.</span><span class="na">diskThresholdSettings</span> <span class="o">=</span> <span class="k">new</span> <span class="nc">DiskThresholdSettings</span><span class="o">(</span><span class="n">settings</span><span class="o">,</span> <span class="n">clusterSettings</span><span class="o">);</span>
+    <span class="k">assert</span> <span class="nc">Version</span><span class="o">.</span><span class="na">CURRENT</span><span class="o">.</span><span class="na">major</span> <span class="o">&lt;</span> <span class="mi">9</span> <span class="o">:</span> <span class="s">"remove enable_for_single_data_node in 9"</span><span class="o">;</span>
+    <span class="k">this</span><span class="o">.</span><span class="na">enableForSingleDataNode</span> <span class="o">=</span> <span class="no">ENABLE_FOR_SINGLE_DATA_NODE</span><span class="o">.</span><span class="na">get</span><span class="o">(</span><span class="n">settings</span><span class="o">);</span>
+<span class="o">}</span>
+</code></pre></div></div>
+
+<p>And the decider is subscribed to the settings update. In other words, when a setting is updated,
+the decider is notified and its setting is updated as well. Here is the code for subscribing to the settings update
+for disk thresholds (low watermark, high watermark, flood-stage) in class <code class="language-plaintext highlighter-rouge">DiskThresholdSettings</code>:</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">public</span> <span class="nf">DiskThresholdSettings</span><span class="o">(</span><span class="nc">Settings</span> <span class="n">settings</span><span class="o">,</span> <span class="nc">ClusterSettings</span> <span class="n">clusterSettings</span><span class="o">)</span> <span class="o">{</span>
+    <span class="o">...</span>
+    <span class="n">clusterSettings</span><span class="o">.</span><span class="na">addSettingsUpdateConsumer</span><span class="o">(</span><span class="no">CLUSTER_ROUTING_ALLOCATION_LOW_DISK_WATERMARK_SETTING</span><span class="o">,</span> <span class="k">this</span><span class="o">::</span><span class="n">setLowWatermark</span><span class="o">);</span>
+    <span class="n">clusterSettings</span><span class="o">.</span><span class="na">addSettingsUpdateConsumer</span><span class="o">(</span><span class="no">CLUSTER_ROUTING_ALLOCATION_HIGH_DISK_WATERMARK_SETTING</span><span class="o">,</span> <span class="k">this</span><span class="o">::</span><span class="n">setHighWatermark</span><span class="o">);</span>
+    <span class="n">clusterSettings</span><span class="o">.</span><span class="na">addSettingsUpdateConsumer</span><span class="o">(</span><span class="no">CLUSTER_ROUTING_ALLOCATION_DISK_FLOOD_STAGE_WATERMARK_SETTING</span><span class="o">,</span> <span class="k">this</span><span class="o">::</span><span class="n">setFloodStage</span><span class="o">);</span>
+    <span class="o">...</span>
+<span class="o">}</span>
+</code></pre></div></div>
+
+<p>where you can see that when those cluster settings are updated, the class <code class="language-plaintext highlighter-rouge">DiskThresholdSettings</code>
+sets the new value into its instance.</p>
+
+<h2 id="testing">Testing</h2>
+
+<p>There are three types of testing related to the deciders: 1) the tests for the
+single deciders which make one decision at a time; 2) the tests for the root
+decider which gathers information from multiple single decisions and makes a
+multi-decision; 3) other services that depend on deciders since deciders are
+part of the cluster module. And … we are going to discuss three of them right now.</p>
+
+<p><strong>Testing a single-decision decider.</strong> To understand this, let’s take the disk threshold
+decider as an example (<code class="language-plaintext highlighter-rouge">DiskThresholdDeciderTests</code>). As we saw in the previous sections “Responsibility” and
+“Making Decisions”, the allocation is made using the index metadata, shard routing,
+routing allocation, etc. All these data are fetched eagerly and passed as input parameters.
+Therefore, it makes the test quite simple: we just need to provide this information to
+a decider without mocking anything as there are no external calls. More precisely, in a test case, we:</p>
+
+<ul>
+  <li>prepare settings that are relevant to this decider</li>
+  <li>create a decider instance using these settings</li>
+  <li>prepare a cluster state (including index metadata, shard routing, etc) which are
+necessary for making the decision</li>
+  <li>create an allocation service that encapsulates the decider under test</li>
+  <li>require re-routing the shards by calling the service, which asks the deciders to make the
+decision behind the screen</li>
+  <li>finally assert the result</li>
+</ul>
+
+<p><strong>Testing a multi-decision decider.</strong> To understand this, let’s take
+<code class="language-plaintext highlighter-rouge">AllocationDecidersTests</code> as an example. In this test suite, it tests the debug mode and
+the early termination. Because these expectations are not tight to any specific child
+deciders, the setup simply uses some mocked deciders instantiated as anonymous classes.</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">final</span> <span class="nc">AllocationDeciders</span> <span class="n">allocationDeciders</span> <span class="o">=</span> <span class="k">new</span> <span class="nc">AllocationDeciders</span><span class="o">(</span><span class="nc">Arrays</span><span class="o">.</span><span class="na">asList</span><span class="o">(</span>
+    <span class="k">new</span> <span class="nf">AllocationDecider</span><span class="o">()</span> <span class="o">{</span> <span class="o">...</span> <span class="o">},</span> <span class="k">new</span> <span class="nc">AllocationDecider</span><span class="o">()</span> <span class="o">{</span> <span class="o">...</span> <span class="o">}));</span>
+</code></pre></div></div>
+
+<p><strong>Testing a service that depends on the deciders.</strong> In this case, the testing is more complex
+to set up because we need to prepare the deciders. Depending on the needs of that service,
+it may plug some decider during the setup phase. The easiest setup is to prepare
+a no-operation decider system,
+which requires an empty all-deciders decider.</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">public</span> <span class="kd">class</span> <span class="nc">ClusterAllocationExplainActionTests</span> <span class="kd">extends</span> <span class="nc">ESTestCase</span> <span class="o">{</span>
+
+    <span class="kd">private</span> <span class="kd">static</span> <span class="kd">final</span> <span class="nc">AllocationDeciders</span> <span class="no">NOOP_DECIDERS</span>
+        <span class="o">=</span> <span class="k">new</span> <span class="nc">AllocationDeciders</span><span class="o">(</span><span class="nc">Collections</span><span class="o">.</span><span class="na">emptyList</span><span class="o">());</span>
+    <span class="o">...</span>
+<span class="o">}</span>
+</code></pre></div></div>
 
 <h2 id="going-further">Going Further</h2>
 
 <p>How to go further from here?</p>
 
 <ul>
-  <li>Read the official <a href="https://vuejs.org/v2/style-guide/">Style Guide</a> provided by
-Vue.js to learn the best practices about this framework.</li>
+  <li>To better understand what do all those deciders do, you can read another article
+that I wrote last year: <a href="/2020/09/27/shard-allocation/">18 Allocation Deciders in Elasticsearch 7.9</a></li>
+  <li>To better understand the disk watermarks in Elasticsearch, you can read another article
+that I wrote early this year: <a href="/04/10/disk-watermarks-in-elasticsearch/">Disk Watermarks In Elasticsearch</a></li>
+  <li>To better understand how to resolve unassigned shards in Elasticsearch, I suggest you
+to read Datadog’s blog <a href="https://www.datadoghq.com/blog/elasticsearch-unassigned-shards/">“How to resolve unassigned shards in Elasticsearch”</a>, written by Emily Chang.</li>
 </ul>
 
-<p>Hope you enjoy this article, see you the next time!</p>
-</div><section class="article__sharing d-print-none"></section><div class="d-print-none"><footer class="article__footer"><meta itemprop="dateModified" content="2021-12-24T08:05:27+01:00"><!-- start custom article footer snippet -->
+<h2 id="conclusion">Conclusion</h2>
+
+<p>In this article, we saw the decider system for shard allocation. More precisely,
+we saw that the allocation service is responsible for allocating shards and balancing shards;
+we saw that there are 19 deciders in Elasticsearch 7.16 and there are two types of decisions:
+single decision and multi-decision. When making a decision, a decider relies on information from the ES settings and from
+cluster state (index metadata, node, routing allocation info).
+The deciders are created early in the lifecycle during node bootstrap. We also saw
+how the testing works for testing a single-decision decider, a multi-decision decider, and
+other services that depend on deciders. Finally, I suggested some resources for you so that you can
+go further from this article. Interested to know more? You can subscribe to <a href="/feed.xml">the feed of my blog</a>, follow me
+on <a href="https://twitter.com/mincong_h">Twitter</a> or
+<a href="https://github.com/mincong-h/">GitHub</a>. Hope you enjoy this article, see you the next time!</p>
+
+<h2 id="references">References</h2>
+
+<ul>
+  <li><a href="https://github.com/elastic/elasticsearch/">“Elasticsearch 7.16 source code (elastic/elasticsearch)</a>, <em>GitHub</em>, 2021.</li>
+  <li><a href="https://opster.com/guides/elasticsearch/glossary/elasticsearch-shards/">“Elasticsearch Shards”</a>,
+Opster, 2021.</li>
+  <li>Emily Chang, <a href="https://www.datadoghq.com/blog/elasticsearch-unassigned-shards/">“How to resolve unassigned shards in
+Elasticsearch”</a>,
+<em>Datadog</em>, 2019.</li>
+</ul>
+</div><section class="article__sharing d-print-none"></section><div class="d-print-none"><footer class="article__footer"><meta itemprop="dateModified" content="2021-12-27T14:36:13+01:00"><!-- start custom article footer snippet -->
 
 
   
@@ -521,7 +761,7 @@ Vue.js to learn the best practices about this framework.</li>
     
       <div id="ea-article"
            data-ea-publisher="mincongio"
-           data-ea-keywords="javascript|vuejs|vuejs2"
+           data-ea-keywords="java|elasticsearch|system-design|search"
            data-ea-type="image">
     
     </div>
@@ -538,7 +778,7 @@ Vue.js to learn the best practices about this framework.</li>
       </a>
     </p>
   </div></div></footer>
-<div class="article__section-navigator clearfix"><div class="previous"><span>PREVIOUS</span><a href="/en/change-log-level-at-runtime-in-logback/">Change Log Level At Runtime in Logback</a></div><div class="next"><span>NEXT</span><a href="/en/shard-allocation-deciders/">The Decision System For Shard Allocation in Elasticsearch</a></div></div></div>
+<div class="article__section-navigator clearfix"><div class="previous"><span>PREVIOUS</span><a href="/en/use-component-in-vue-js/">Using Component in Vue.js</a></div></div></div>
 
 </div>
 
@@ -573,8 +813,8 @@ Vue.js to learn the best practices about this framework.</li>
   *  RECOMMENDED CONFIGURATION VARIABLES: EDIT AND UNCOMMENT THE SECTION BELOW TO INSERT DYNAMIC VALUES FROM YOUR PLATFORM OR CMS.
   *  LEARN WHY DEFINING THESE VARIABLES IS IMPORTANT: https://disqus.com/admin/universalcode/#configuration-variables*/
   var disqus_config = function () {
-    this.page.url = 'https://mincong.io/en/use-component-in-vue-js/';
-    this.page.identifier = '/en/use-component-in-vue-js';
+    this.page.url = 'https://mincong.io/en/shard-allocation-deciders/';
+    this.page.identifier = '/en/shard-allocation-deciders';
   };
   (function() { // DON'T EDIT BELOW THIS LINE
     var d = document, s = d.createElement('script');

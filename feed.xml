@@ -1,5 +1,350 @@
-<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" xml:lang="en"><generator uri="https://jekyllrb.com/" version="4.2.0">Jekyll</generator><link href="https://mincong.io/feed.xml" rel="self" type="application/atom+xml" /><link href="https://mincong.io/" rel="alternate" type="text/html" hreflang="en" /><updated>2021-12-24T23:13:20+01:00</updated><id>https://mincong.io/feed.xml</id><title type="html">Mincong Huang</title><subtitle>Hi, welcome to my blog! I'm a software engineer at Datadog. I write blog posts in my free time. My blogs are bits and pieces of my tech journey. Most of them are related to Java. Hope you enjoy them! My opinions are my own, not Datadog's. This blog is powered by Jekyll, a simple, blog-aware, static sites solution.
-</subtitle><author><name>Mincong Huang</name><email>mincong.h@gmail.com</email></author><entry xml:lang="en"><title type="html">Using Component in Vue.js</title><link href="https://mincong.io/en/use-component-in-vue-js/" rel="alternate" type="text/html" title="Using Component in Vue.js" /><published>2021-12-24T08:05:27+01:00</published><updated>2021-12-24T08:05:27+01:00</updated><id>https://mincong.io/en/use-component-in-vue-js</id><content type="html" xml:base="https://mincong.io/en/use-component-in-vue-js/">&lt;h2 id=&quot;question&quot;&gt;Question&lt;/h2&gt;
+<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" xml:lang="en"><generator uri="https://jekyllrb.com/" version="4.2.0">Jekyll</generator><link href="https://mincong.io/feed.xml" rel="self" type="application/atom+xml" /><link href="https://mincong.io/" rel="alternate" type="text/html" hreflang="en" /><updated>2021-12-28T16:07:46+01:00</updated><id>https://mincong.io/feed.xml</id><title type="html">Mincong Huang</title><subtitle>Hi, welcome to my blog! I'm a software engineer at Datadog. I write blog posts in my free time. My blogs are bits and pieces of my tech journey. Most of them are related to Java. Hope you enjoy them! My opinions are my own, not Datadog's. This blog is powered by Jekyll, a simple, blog-aware, static sites solution.
+</subtitle><author><name>Mincong Huang</name><email>mincong.h@gmail.com</email></author><entry xml:lang="en"><title type="html">The Decision System For Shard Allocation in Elasticsearch</title><link href="https://mincong.io/en/shard-allocation-deciders/" rel="alternate" type="text/html" title="The Decision System For Shard Allocation in Elasticsearch" /><published>2021-12-27T14:36:13+01:00</published><updated>2021-12-27T14:36:13+01:00</updated><id>https://mincong.io/en/shard-allocation-deciders</id><content type="html" xml:base="https://mincong.io/en/shard-allocation-deciders/">&lt;h2 id=&quot;introduction&quot;&gt;Introduction&lt;/h2&gt;
+
+&lt;p&gt;Shard allocation plays an important role in the data distribution of an
+Elasticsearch cluster. Having all the shards allocated ensures the good health
+of your cluster and avoids potential data loss. That’s why it’s important to
+avoid unassigned shards and avoid yellow cluster. But as a software engineer or
+as a database administrator (DBA), do you know how the decision is made
+internally? How does Elasticsearch know which node should be used? In this
+article, we are going to study this part by exploring the decider system.&lt;/p&gt;
+
+&lt;p&gt;After reading this article, you will understand:&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;The responsibility of allocation service and allocation deciders.&lt;/li&gt;
+  &lt;li&gt;The structure of these 19 deciders.&lt;/li&gt;
+  &lt;li&gt;How do they make decisions?&lt;/li&gt;
+  &lt;li&gt;The deciders’ position in the lifecycle of an ES node.&lt;/li&gt;
+  &lt;li&gt;How to test them?&lt;/li&gt;
+  &lt;li&gt;How to go further from this article?&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;And hopefully, this article will help you better understand the internal mechanism
+or inspire you to make your decision system based on a similar
+architecture. Note that this article is written with Elasticsearch 7.16.2
+(latest), which may be different from what you are using. Now, let’s get started!&lt;/p&gt;
+
+&lt;h2 id=&quot;responsibility&quot;&gt;Responsibility&lt;/h2&gt;
+
+&lt;p&gt;Allocation deciders are part of the allocation service in Elasticsearch. This
+service manages the shard allocation of a cluster. For this reason, the
+&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;AllocationService&lt;/code&gt; contains an instance of &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;AllocationDeciders&lt;/code&gt; to choose nodes for shard
+allocation. This class also manages new nodes joining the cluster
+and the rerouting of shards. If none of the nodes accepts the allocation, the shard
+will remain unassigned. Having unassigned shard leads to under-replicated
+shards. It will probably result to a yellow cluster and increase the risk of data loss.&lt;/p&gt;
+
+&lt;p&gt;&lt;em&gt;Which actions require decisions?&lt;/em&gt;&lt;/p&gt;
+
+&lt;p&gt;We can find this information from the abstract class &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;AllocationDecider&lt;/code&gt;.
+An allocation decider can decide for many actions: allocation,
+rebalancing, keeping the shard in the current node (&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;canRemain&lt;/code&gt;), and auto-expanding the
+shards of a given index. Each method returns a decision so that the allocation service knows
+how to react. Each action respects the naming convention &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;can{Action}&lt;/code&gt; or
+&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;should{Action}&lt;/code&gt;. Here is a more detailed version:&lt;/p&gt;
+
+&lt;div class=&quot;language-plaintext highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;➜  elasticsearch git:(v7.16.2 u=) ✗ grep &quot;public Decision&quot; server/src/main/java/org/elasticsearch/cluster/routing/allocation/decider/AllocationDecider.java | sort
+    public Decision canAllocate(IndexMetadata indexMetadata, RoutingNode node, RoutingAllocation allocation) {
+    public Decision canAllocate(ShardRouting shardRouting, RoutingAllocation allocation) {
+    public Decision canAllocate(ShardRouting shardRouting, RoutingNode node, RoutingAllocation allocation) {
+    public Decision canAllocateReplicaWhenThereIsRetentionLease(ShardRouting shardRouting, RoutingNode node, RoutingAllocation allocation) {
+    public Decision canForceAllocateDuringReplace(ShardRouting shardRouting, RoutingNode node, RoutingAllocation allocation) {
+    public Decision canForceAllocatePrimary(ShardRouting shardRouting, RoutingNode node, RoutingAllocation allocation) {
+    public Decision canRebalance(RoutingAllocation allocation) {
+    public Decision canRebalance(ShardRouting shardRouting, RoutingAllocation allocation) {
+    public Decision canRemain(ShardRouting shardRouting, RoutingNode node, RoutingAllocation allocation) {
+    public Decision shouldAutoExpandToNode(IndexMetadata indexMetadata, DiscoveryNode node, RoutingAllocation allocation) {
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;h2 id=&quot;deciders-structure&quot;&gt;Deciders Structure&lt;/h2&gt;
+
+&lt;p&gt;In Elasticsearch 7.16, there are 19 deciders for the shard allocation. You can
+find them as follows:&lt;/p&gt;
+
+&lt;div class=&quot;language-plaintext highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;➜  elasticsearch git:(v7.16.2 u=) rg -l --sort-files &quot;extends AllocationDecider&quot; server/src/main | sed 's/.*\///g'
+AllocationDeciders.java
+AwarenessAllocationDecider.java
+ClusterRebalanceAllocationDecider.java
+ConcurrentRebalanceAllocationDecider.java
+DiskThresholdDecider.java
+EnableAllocationDecider.java
+FilterAllocationDecider.java
+MaxRetryAllocationDecider.java
+NodeReplacementAllocationDecider.java
+NodeShutdownAllocationDecider.java
+NodeVersionAllocationDecider.java
+RebalanceOnlyWhenActiveAllocationDecider.java
+ReplicaAfterPrimaryActiveAllocationDecider.java
+ResizeAllocationDecider.java
+RestoreInProgressAllocationDecider.java
+SameShardAllocationDecider.java
+ShardsLimitAllocationDecider.java
+SnapshotInProgressAllocationDecider.java
+ThrottlingAllocationDecider.java
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;Among these deciders, there is a root decider, the &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;AllocationDeciders&lt;/code&gt;, which
+contains the references of all other deciders. When making a decision, it will
+ask those deciders to decide for the shard allocation, and then assemble them to
+make a global decision. We will discuss more details in the following
+section. As for other deciders, you can see their purposes from
+their filenames, such as for awareness key-value pairs (e.g. availability zone),
+cluster rebalancing, concurrent rebalancing, disk threshold, and much more.&lt;/p&gt;
+
+&lt;h2 id=&quot;making-decisions&quot;&gt;Making Decisions&lt;/h2&gt;
+
+&lt;p&gt;There are two types of decision in the decider system: single decision and
+multi-decision. A single decision represents a decision made on one
+dimension, e.g. awareness or disk threshold. While a multi-decision represents a decision
+container that contains a list of child decisions. Let’s take a closer look at
+both of them.&lt;/p&gt;
+
+&lt;h3 id=&quot;single-decision&quot;&gt;Single Decision&lt;/h3&gt;
+
+&lt;p&gt;&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;DiskThresholdDecider&lt;/code&gt; is a good example of making a single decision. Let’s check its method
+for shard allocation: &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;canAllocate(...)&lt;/code&gt;. First of all, it retrieves the settings from the
+class member
+&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;diskThresholdSettings&lt;/code&gt; for the low and high thresholds, then it retrieves the disk
+usage from the given information (node, routing allocation, usages), and finally
+compare both of them to make the decision.
+Depending on the situation, we will either get a YES or a NO decision. Here is the code
+snippet:&lt;/p&gt;
+
+&lt;div class=&quot;language-java highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;nd&quot;&gt;@Override&lt;/span&gt;
+&lt;span class=&quot;kd&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;Decision&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;canAllocate&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nc&quot;&gt;ShardRouting&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;shardRouting&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;RoutingNode&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;node&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;RoutingAllocation&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;allocation&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;o&quot;&gt;...&lt;/span&gt;
+
+    &lt;span class=&quot;c1&quot;&gt;// retrieve settings&lt;/span&gt;
+    &lt;span class=&quot;kd&quot;&gt;final&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;double&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;usedDiskThresholdLow&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;mf&quot;&gt;100.0&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;-&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;diskThresholdSettings&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;getFreeDiskThresholdLow&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;();&lt;/span&gt;
+    &lt;span class=&quot;kd&quot;&gt;final&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;double&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;usedDiskThresholdHigh&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;mf&quot;&gt;100.0&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;-&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;diskThresholdSettings&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;getFreeDiskThresholdHigh&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;();&lt;/span&gt;
+
+    &lt;span class=&quot;c1&quot;&gt;// checks for exact byte comparisons&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;if&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;freeBytes&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;&amp;lt;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;diskThresholdSettings&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;getFreeBytesThresholdLow&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;().&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;getBytes&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;())&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;{&lt;/span&gt;
+        &lt;span class=&quot;o&quot;&gt;...&lt;/span&gt;
+    &lt;span class=&quot;o&quot;&gt;}&lt;/span&gt;
+
+    &lt;span class=&quot;c1&quot;&gt;// checks for percentage comparisons&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;if&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;freeDiskPercentage&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;&amp;lt;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;diskThresholdSettings&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;getFreeDiskThresholdLow&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;())&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;{&lt;/span&gt;
+        &lt;span class=&quot;o&quot;&gt;...&lt;/span&gt;
+    &lt;span class=&quot;o&quot;&gt;}&lt;/span&gt;
+
+    &lt;span class=&quot;o&quot;&gt;...&lt;/span&gt;
+&lt;span class=&quot;o&quot;&gt;}&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;Note that YES and NO are not the only types for the decision. It also exists a
+THROTTLE type, which allows users to control the shard allocation based on the
+concurrency. We can consider it as a “temporary NO”, as
+the allocation is not allowed right now, but may be YES in the future.&lt;/p&gt;
+
+&lt;h3 id=&quot;multi-decision&quot;&gt;Multi-Decision&lt;/h3&gt;
+
+&lt;p&gt;Now let’s take a look at the &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;AllocationDeciders&lt;/code&gt; to see how it makes a
+multi-decision. When starting the decision, it accepts information about the shard
+routing, node routing, and the current allocation. Then, it either ignores the
+shard or delegates the decision-making to its child deciders and assembles them at the end.
+All child
+deciders make a decision synchronously, probably because they don’t require
+additional information (such as HTTP requests) from an external service. Once the
+decision is made by a child decider, the result is processed with the fail-fast
+strategy. That is, whenever one child decision is negative (NO), we consider the
+whole decision as NO without asking the remaining deciders. It’s a short
+circuit. We do that unless we are in the debug mode, in which case, we
+gather all the decisions, including the NO decisions, before returning the final
+result. If my explanation is a bit confusing for you, here is the source code of
+&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;AllocationDeciders&lt;/code&gt;, hopefully, it makes things clearer.&lt;/p&gt;
+
+&lt;div class=&quot;language-java highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;    &lt;span class=&quot;nd&quot;&gt;@Override&lt;/span&gt;
+    &lt;span class=&quot;kd&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;Decision&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;canAllocate&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nc&quot;&gt;ShardRouting&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;shardRouting&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;RoutingNode&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;node&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;RoutingAllocation&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;allocation&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;{&lt;/span&gt;
+        &lt;span class=&quot;k&quot;&gt;if&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;allocation&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;shouldIgnoreShardForNode&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;shardRouting&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;shardId&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(),&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;node&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;nodeId&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;()))&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;{&lt;/span&gt;
+            &lt;span class=&quot;k&quot;&gt;return&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;Decision&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;NO&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;;&lt;/span&gt;
+        &lt;span class=&quot;o&quot;&gt;}&lt;/span&gt;
+        &lt;span class=&quot;nc&quot;&gt;Decision&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;Multi&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;ret&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;new&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;Decision&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;Multi&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;();&lt;/span&gt;
+        &lt;span class=&quot;k&quot;&gt;for&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nc&quot;&gt;AllocationDecider&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;allocationDecider&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;allocations&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;{&lt;/span&gt;
+            &lt;span class=&quot;nc&quot;&gt;Decision&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;decision&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;allocationDecider&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;canAllocate&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;shardRouting&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;node&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;allocation&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;);&lt;/span&gt;
+            &lt;span class=&quot;c1&quot;&gt;// short track if a NO is returned.&lt;/span&gt;
+            &lt;span class=&quot;k&quot;&gt;if&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;decision&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;type&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;()&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;==&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;Decision&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;Type&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;NO&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;{&lt;/span&gt;
+                &lt;span class=&quot;k&quot;&gt;if&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;logger&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;isTraceEnabled&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;())&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;{&lt;/span&gt;
+                    &lt;span class=&quot;o&quot;&gt;...&lt;/span&gt;
+                &lt;span class=&quot;o&quot;&gt;}&lt;/span&gt;
+                &lt;span class=&quot;c1&quot;&gt;// short circuit only if debugging is not enabled&lt;/span&gt;
+                &lt;span class=&quot;k&quot;&gt;if&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;allocation&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;debugDecision&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;()&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;==&lt;/span&gt; &lt;span class=&quot;kc&quot;&gt;false&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;{&lt;/span&gt;
+                    &lt;span class=&quot;k&quot;&gt;return&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;Decision&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;NO&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;;&lt;/span&gt;
+                &lt;span class=&quot;o&quot;&gt;}&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;else&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;{&lt;/span&gt;
+                    &lt;span class=&quot;n&quot;&gt;ret&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;add&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;decision&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;);&lt;/span&gt;
+                &lt;span class=&quot;o&quot;&gt;}&lt;/span&gt;
+            &lt;span class=&quot;o&quot;&gt;}&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;else&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;{&lt;/span&gt;
+                &lt;span class=&quot;n&quot;&gt;addDecision&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;ret&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;decision&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;allocation&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;);&lt;/span&gt;
+            &lt;span class=&quot;o&quot;&gt;}&lt;/span&gt;
+        &lt;span class=&quot;o&quot;&gt;}&lt;/span&gt;
+        &lt;span class=&quot;k&quot;&gt;return&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;ret&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;;&lt;/span&gt;
+    &lt;span class=&quot;o&quot;&gt;}&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;Now if we go further into the structure of the value class &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;Decision.Multi&lt;/code&gt;,
+we can see that a multi-decision is a decision container, it contains
+multiple child decisions inside it:&lt;/p&gt;
+
+&lt;div class=&quot;language-java highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;    &lt;span class=&quot;kd&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;kd&quot;&gt;static&lt;/span&gt; &lt;span class=&quot;kd&quot;&gt;class&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;Multi&lt;/span&gt; &lt;span class=&quot;kd&quot;&gt;extends&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;Decision&lt;/span&gt; &lt;span class=&quot;kd&quot;&gt;implements&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;ToXContentFragment&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;{&lt;/span&gt;
+
+        &lt;span class=&quot;kd&quot;&gt;private&lt;/span&gt; &lt;span class=&quot;kd&quot;&gt;final&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;List&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;nc&quot;&gt;Decision&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;&amp;gt;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;decisions&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;new&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;ArrayList&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;&amp;lt;&amp;gt;();&lt;/span&gt;
+        &lt;span class=&quot;o&quot;&gt;...&lt;/span&gt;
+    &lt;span class=&quot;o&quot;&gt;}&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;Unlike single decisions, it does not have a label and explanation. More precisely,
+getting a label from a multi-decision returns &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;null&lt;/code&gt;, and getting an explanation
+throws an unsupported operation exception. In my opinion,
+the &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;Decision&lt;/code&gt; base class is too vague and we shouldn’t return null or raise an
+exception. But that’s a design choice and probably does not matter as this
+decider system is internal to Elasticsearch.&lt;/p&gt;
+
+&lt;h2 id=&quot;lifecycle&quot;&gt;Lifecycle&lt;/h2&gt;
+
+&lt;p&gt;&lt;em&gt;When are deciders created? I.e. where are deciders positioned in the lifecycle of
+an Elasticsearch cluster?&lt;/em&gt;&lt;/p&gt;
+
+&lt;p&gt;When starting a new node, the class &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;Bootstrap&lt;/code&gt; is called. Before starting the
+node, it creates a new &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;Node&lt;/code&gt; instance, which creates and adds a list of modules.
+One of these modules is
+called &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;ClusterModule&lt;/code&gt; and it contains the deciders. So the whole logic happens
+at the early stage of the lifecycle, more precisely, the creation happens before the
+startup of a node.&lt;/p&gt;
+
+&lt;div class=&quot;language-yml highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;pi&quot;&gt;-&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;boostrap&lt;/span&gt;
+  &lt;span class=&quot;s&quot;&gt;- construct node&lt;/span&gt;
+    &lt;span class=&quot;s&quot;&gt;- create modules&lt;/span&gt;
+      &lt;span class=&quot;s&quot;&gt;- create master module&lt;/span&gt;
+        &lt;span class=&quot;s&quot;&gt;- create deciders&lt;/span&gt;
+        &lt;span class=&quot;s&quot;&gt;- create root decider (AllocationDeciders)&lt;/span&gt;
+        &lt;span class=&quot;s&quot;&gt;- create allocation service&lt;/span&gt;
+        &lt;span class=&quot;s&quot;&gt;- ...&lt;/span&gt;
+    &lt;span class=&quot;s&quot;&gt;- add modules&lt;/span&gt;
+  &lt;span class=&quot;s&quot;&gt;- start node&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;Now another question is: &lt;em&gt;when updating a setting of a cluster, do we need to restart
+the node to take the new value into account?&lt;/em&gt;&lt;/p&gt;
+
+&lt;p&gt;I don’t think so. I handled such
+cases many times in production and it never requires a restart. These settings are dynamic.
+When looking into Elasticsearch’s source code, such as awareness allocation decider and
+disk threshold decider, we can find out that the settings are passed
+from the constructor of the deciders. Here are the code snippets:&lt;/p&gt;
+
+&lt;div class=&quot;language-java highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;kd&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;AwarenessAllocationDecider&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nc&quot;&gt;Settings&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;settings&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;ClusterSettings&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;clusterSettings&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;{&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;...&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;}&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;div class=&quot;language-java highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;kd&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;DiskThresholdDecider&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nc&quot;&gt;Settings&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;settings&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;ClusterSettings&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;clusterSettings&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;this&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;diskThresholdSettings&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;new&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;DiskThresholdSettings&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;settings&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;clusterSettings&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;);&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;assert&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;Version&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;CURRENT&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;major&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;&amp;lt;&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;9&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&quot;remove enable_for_single_data_node in 9&quot;&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;;&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;this&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;enableForSingleDataNode&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;no&quot;&gt;ENABLE_FOR_SINGLE_DATA_NODE&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;get&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;settings&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;);&lt;/span&gt;
+&lt;span class=&quot;o&quot;&gt;}&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;And the decider is subscribed to the settings update. In other words, when a setting is updated,
+the decider is notified and its setting is updated as well. Here is the code for subscribing to the settings update
+for disk thresholds (low watermark, high watermark, flood-stage) in class &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;DiskThresholdSettings&lt;/code&gt;:&lt;/p&gt;
+
+&lt;div class=&quot;language-java highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;kd&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;DiskThresholdSettings&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nc&quot;&gt;Settings&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;settings&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;ClusterSettings&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;clusterSettings&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;o&quot;&gt;...&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;clusterSettings&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;addSettingsUpdateConsumer&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;no&quot;&gt;CLUSTER_ROUTING_ALLOCATION_LOW_DISK_WATERMARK_SETTING&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;this&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;::&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;setLowWatermark&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;);&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;clusterSettings&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;addSettingsUpdateConsumer&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;no&quot;&gt;CLUSTER_ROUTING_ALLOCATION_HIGH_DISK_WATERMARK_SETTING&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;this&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;::&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;setHighWatermark&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;);&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;clusterSettings&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;addSettingsUpdateConsumer&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;no&quot;&gt;CLUSTER_ROUTING_ALLOCATION_DISK_FLOOD_STAGE_WATERMARK_SETTING&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;this&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;::&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;setFloodStage&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;);&lt;/span&gt;
+    &lt;span class=&quot;o&quot;&gt;...&lt;/span&gt;
+&lt;span class=&quot;o&quot;&gt;}&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;where you can see that when those cluster settings are updated, the class &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;DiskThresholdSettings&lt;/code&gt;
+sets the new value into its instance.&lt;/p&gt;
+
+&lt;h2 id=&quot;testing&quot;&gt;Testing&lt;/h2&gt;
+
+&lt;p&gt;There are three types of testing related to the deciders: 1) the tests for the
+single deciders which make one decision at a time; 2) the tests for the root
+decider which gathers information from multiple single decisions and makes a
+multi-decision; 3) other services that depend on deciders since deciders are
+part of the cluster module. And … we are going to discuss three of them right now.&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;Testing a single-decision decider.&lt;/strong&gt; To understand this, let’s take the disk threshold
+decider as an example (&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;DiskThresholdDeciderTests&lt;/code&gt;). As we saw in the previous sections “Responsibility” and
+“Making Decisions”, the allocation is made using the index metadata, shard routing,
+routing allocation, etc. All these data are fetched eagerly and passed as input parameters.
+Therefore, it makes the test quite simple: we just need to provide this information to
+a decider without mocking anything as there are no external calls. More precisely, in a test case, we:&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;prepare settings that are relevant to this decider&lt;/li&gt;
+  &lt;li&gt;create a decider instance using these settings&lt;/li&gt;
+  &lt;li&gt;prepare a cluster state (including index metadata, shard routing, etc) which are
+necessary for making the decision&lt;/li&gt;
+  &lt;li&gt;create an allocation service that encapsulates the decider under test&lt;/li&gt;
+  &lt;li&gt;require re-routing the shards by calling the service, which asks the deciders to make the
+decision behind the screen&lt;/li&gt;
+  &lt;li&gt;finally assert the result&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;&lt;strong&gt;Testing a multi-decision decider.&lt;/strong&gt; To understand this, let’s take
+&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;AllocationDecidersTests&lt;/code&gt; as an example. In this test suite, it tests the debug mode and
+the early termination. Because these expectations are not tight to any specific child
+deciders, the setup simply uses some mocked deciders instantiated as anonymous classes.&lt;/p&gt;
+
+&lt;div class=&quot;language-java highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;kd&quot;&gt;final&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;AllocationDeciders&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;allocationDeciders&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;new&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;AllocationDeciders&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nc&quot;&gt;Arrays&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;asList&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;new&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;AllocationDecider&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;()&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;{&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;...&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;},&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;new&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;AllocationDecider&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;()&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;{&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;...&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;}));&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;&lt;strong&gt;Testing a service that depends on the deciders.&lt;/strong&gt; In this case, the testing is more complex
+to set up because we need to prepare the deciders. Depending on the needs of that service,
+it may plug some decider during the setup phase. The easiest setup is to prepare
+a no-operation decider system,
+which requires an empty all-deciders decider.&lt;/p&gt;
+
+&lt;div class=&quot;language-java highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;kd&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;kd&quot;&gt;class&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;ClusterAllocationExplainActionTests&lt;/span&gt; &lt;span class=&quot;kd&quot;&gt;extends&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;ESTestCase&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;{&lt;/span&gt;
+
+    &lt;span class=&quot;kd&quot;&gt;private&lt;/span&gt; &lt;span class=&quot;kd&quot;&gt;static&lt;/span&gt; &lt;span class=&quot;kd&quot;&gt;final&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;AllocationDeciders&lt;/span&gt; &lt;span class=&quot;no&quot;&gt;NOOP_DECIDERS&lt;/span&gt;
+        &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;new&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;AllocationDeciders&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nc&quot;&gt;Collections&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;emptyList&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;());&lt;/span&gt;
+    &lt;span class=&quot;o&quot;&gt;...&lt;/span&gt;
+&lt;span class=&quot;o&quot;&gt;}&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;h2 id=&quot;going-further&quot;&gt;Going Further&lt;/h2&gt;
+
+&lt;p&gt;How to go further from here?&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;To better understand what do all those deciders do, you can read another article
+that I wrote last year: &lt;a href=&quot;/2020/09/27/shard-allocation/&quot;&gt;18 Allocation Deciders in Elasticsearch 7.9&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;To better understand the disk watermarks in Elasticsearch, you can read another article
+that I wrote early this year: &lt;a href=&quot;/04/10/disk-watermarks-in-elasticsearch/&quot;&gt;Disk Watermarks In Elasticsearch&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;To better understand how to resolve unassigned shards in Elasticsearch, I suggest you
+to read Datadog’s blog &lt;a href=&quot;https://www.datadoghq.com/blog/elasticsearch-unassigned-shards/&quot;&gt;“How to resolve unassigned shards in Elasticsearch”&lt;/a&gt;, written by Emily Chang.&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h2 id=&quot;conclusion&quot;&gt;Conclusion&lt;/h2&gt;
+
+&lt;p&gt;In this article, we saw the decider system for shard allocation. More precisely,
+we saw that the allocation service is responsible for allocating shards and balancing shards;
+we saw that there are 19 deciders in Elasticsearch 7.16 and there are two types of decisions:
+single decision and multi-decision. When making a decision, a decider relies on information from the ES settings and from
+cluster state (index metadata, node, routing allocation info).
+The deciders are created early in the lifecycle during node bootstrap. We also saw
+how the testing works for testing a single-decision decider, a multi-decision decider, and
+other services that depend on deciders. Finally, I suggested some resources for you so that you can
+go further from this article. Interested to know more? You can subscribe to &lt;a href=&quot;/feed.xml&quot;&gt;the feed of my blog&lt;/a&gt;, follow me
+on &lt;a href=&quot;https://twitter.com/mincong_h&quot;&gt;Twitter&lt;/a&gt; or
+&lt;a href=&quot;https://github.com/mincong-h/&quot;&gt;GitHub&lt;/a&gt;. Hope you enjoy this article, see you the next time!&lt;/p&gt;
+
+&lt;h2 id=&quot;references&quot;&gt;References&lt;/h2&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;&lt;a href=&quot;https://github.com/elastic/elasticsearch/&quot;&gt;“Elasticsearch 7.16 source code (elastic/elasticsearch)&lt;/a&gt;, &lt;em&gt;GitHub&lt;/em&gt;, 2021.&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://opster.com/guides/elasticsearch/glossary/elasticsearch-shards/&quot;&gt;“Elasticsearch Shards”&lt;/a&gt;,
+Opster, 2021.&lt;/li&gt;
+  &lt;li&gt;Emily Chang, &lt;a href=&quot;https://www.datadoghq.com/blog/elasticsearch-unassigned-shards/&quot;&gt;“How to resolve unassigned shards in
+Elasticsearch”&lt;/a&gt;,
+&lt;em&gt;Datadog&lt;/em&gt;, 2019.&lt;/li&gt;
+&lt;/ul&gt;</content><author><name>Mincong Huang</name><email>mincong.h@gmail.com</email></author><category term="elasticsearch" /><category term="java" /><category term="elasticsearch" /><category term="system-design" /><summary type="html">Curious about how does a decision system work? This article explains the deciders for shard allocation in Elasticsearch by going through their responsibility, structure, decision making, lifecycle, testing, and more.</summary><media:thumbnail xmlns:media="http://search.yahoo.com/mrss/" url="https://mincong.io/assets/bg-patrick-federi-LJEjI7LXABU-unsplash.jpg" /><media:content medium="image" url="https://mincong.io/assets/bg-patrick-federi-LJEjI7LXABU-unsplash.jpg" xmlns:media="http://search.yahoo.com/mrss/" /></entry><entry xml:lang="en"><title type="html">Using Component in Vue.js</title><link href="https://mincong.io/en/use-component-in-vue-js/" rel="alternate" type="text/html" title="Using Component in Vue.js" /><published>2021-12-24T08:05:27+01:00</published><updated>2021-12-24T08:05:27+01:00</updated><id>https://mincong.io/en/use-component-in-vue-js</id><content type="html" xml:base="https://mincong.io/en/use-component-in-vue-js/">&lt;h2 id=&quot;question&quot;&gt;Question&lt;/h2&gt;
 
 &lt;p&gt;My &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;*.vue&lt;/code&gt; files are getting bigger and bigger. It’s hard to maintain. I would
 like to split the file and move part of the structure (HTML) and the logic
@@ -2226,297 +2571,4 @@ yellow open   my_index Uz7B9HV2SJ6peiLiUMJhyg   1   1          1            0   
 
 &lt;h2 id=&quot;conclusion&quot;&gt;Conclusion&lt;/h2&gt;
 
-&lt;p&gt;In this article, we walked into Elasticsearch’s snapshot repository and saw its internal structure. We also learn more about &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;index-N&lt;/code&gt;, &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;index.latest&lt;/code&gt;, and some other files related to snapshots. I hope that by knowing these files, it will give you a have a better understanding of Elasticsearch’s “snapshot and restore” feature, and also give you more ideas for troubleshooting when there is an issue on production. Finally, we briefly saw some resources to expand out. You can subscribe to the &lt;a href=&quot;/feed.xml&quot;&gt;feed of my blog&lt;/a&gt;, follow me on &lt;a href=&quot;https://twitter.com/mincong_h&quot;&gt;Twitter&lt;/a&gt; or &lt;a href=&quot;https://github.com/mincong-h/&quot;&gt;GitHub&lt;/a&gt;. Hope you enjoy this article, see you the next time!&lt;/p&gt;</content><author><name>Mincong Huang</name><email>mincong.h@gmail.com</email></author><category term="elasticsearch" /><category term="elasticsearch" /><category term="java" /><summary type="html">This article takes you to the Elasticsearch snapshot repository to explore its internal structure and understand the contents and uses of different files.</summary><media:thumbnail xmlns:media="http://search.yahoo.com/mrss/" url="https://mincong.io/assets/bg-dmitrij-paskevic-YjVa-F9P9kk-unsplash.jpg" /><media:content medium="image" url="https://mincong.io/assets/bg-dmitrij-paskevic-YjVa-F9P9kk-unsplash.jpg" xmlns:media="http://search.yahoo.com/mrss/" /></entry><entry xml:lang="en"><title type="html">Elasticsearch Settings</title><link href="https://mincong.io/en/elasticsearch-settings/" rel="alternate" type="text/html" title="Elasticsearch Settings" /><published>2021-08-21T18:07:13+02:00</published><updated>2021-08-21T18:07:13+02:00</updated><id>https://mincong.io/en/elasticsearch-settings</id><content type="html" xml:base="https://mincong.io/en/elasticsearch-settings/">&lt;p class=&quot;info&quot;&gt;This article is translated with Google Translate and reviewed by Mincong.&lt;/p&gt;
-
-&lt;h2 id=&quot;introduction&quot;&gt;Introduction&lt;/h2&gt;
-
-&lt;p&gt;If you are using an Elasticsearch cluster, you will probably need to configure it. No matter what your use-case is, no matter which position you hold in the company, as long as you use Elasticsearch, you always need to have a certain understanding of its configuration, and adjust them to better meet your needs. But on the other hand, there are so many settings of Elasticsearch that it is a little bit difficult to start. So I want to write this article to discuss with you how to understand the different types of settings of Elasticsearch. After reading this article, you will understand:&lt;/p&gt;
-
-&lt;ul&gt;
-  &lt;li&gt;The scope of settings (cluster, index, node, snapshot repository, etc.)&lt;/li&gt;
-  &lt;li&gt;Cluster settings&lt;/li&gt;
-  &lt;li&gt;Index settings&lt;/li&gt;
-  &lt;li&gt;Node settings&lt;/li&gt;
-  &lt;li&gt;curl usage examples&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;p&gt;This article is based on Elasticsearch 7, the specific content may be slightly different from the version you are using. Now, let’s get started!&lt;/p&gt;
-
-&lt;h2 id=&quot;scope-of-settings&quot;&gt;Scope Of Settings&lt;/h2&gt;
-
-&lt;p&gt;Different settings in Elasticsearch can be applied to different scopes.&lt;/p&gt;
-
-&lt;table&gt;
-  &lt;thead&gt;
-    &lt;tr&gt;
-      &lt;th style=&quot;text-align: left&quot;&gt;Scope&lt;/th&gt;
-      &lt;th style=&quot;text-align: left&quot;&gt;API&lt;/th&gt;
-      &lt;th&gt;Description&lt;/th&gt;
-    &lt;/tr&gt;
-  &lt;/thead&gt;
-  &lt;tbody&gt;
-    &lt;tr&gt;
-      &lt;td style=&quot;text-align: left&quot;&gt;Cluster&lt;/td&gt;
-      &lt;td style=&quot;text-align: left&quot;&gt;&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;/_cluster/settings&lt;/code&gt;&lt;/td&gt;
-      &lt;td&gt;These settings will be applied to all nodes in the entire cluster, for example, (&lt;a href=&quot;https://www.elastic.co /guide/en/elasticsearch/reference/7.x/modules-cluster.html&quot; title=&quot;cluster-level shard allocation and routing&quot;&gt;cluster-level shard allocation and routing settings&lt;/a&gt;) are cluster-level settings.&lt;/td&gt;
-    &lt;/tr&gt;
-    &lt;tr&gt;
-      &lt;td style=&quot;text-align: left&quot;&gt;Index / Data stream / Alias ​​&lt;/td&gt;
-      &lt;td style=&quot;text-align: left&quot;&gt;&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;/{target}/_settings&lt;/code&gt;&lt;/td&gt;
-      &lt;td&gt;These settings will be applied to the selected target. The target can be one or more indexes, data streams. Multiple targets need to be separated by commas.&lt;/td&gt;
-    &lt;/tr&gt;
-    &lt;tr&gt;
-      &lt;td style=&quot;text-align: left&quot;&gt;Node&lt;/td&gt;
-      &lt;td style=&quot;text-align: left&quot;&gt;-&lt;/td&gt;
-      &lt;td&gt;The node settings mainly refer to the configuration of the role of the node: master / data / ingest / ml / … This can be achieved by modifying the configuration file &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;elasticsearch.yml&lt;/code&gt;.&lt;/td&gt;
-    &lt;/tr&gt;
-    &lt;tr&gt;
-      &lt;td style=&quot;text-align: left&quot;&gt;Snapshot repository (plugin required)&lt;/td&gt;
-      &lt;td style=&quot;text-align: left&quot;&gt;&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;/_snapshot/{repository}&lt;/code&gt;&lt;/td&gt;
-      &lt;td&gt;Plugins also have their own settings. For example, the snapshot repository plugin provides settings for each snapshot repository, such as the location of the repository, the speed of snapshot creation, and the speed of snapshot restore.&lt;/td&gt;
-    &lt;/tr&gt;
-  &lt;/tbody&gt;
-&lt;/table&gt;
-
-&lt;h2 id=&quot;cluster-settings&quot;&gt;Cluster Settings&lt;/h2&gt;
-
-&lt;p&gt;&lt;a href=&quot;https://www.elastic.co/guide/en/elasticsearch/reference/7.x/cluster-update-settings.html&quot;&gt;https://www.elastic.co/guide/en/elasticsearch/reference/7.x/cluster-update-settings.html&lt;/a&gt;&lt;/p&gt;
-
-&lt;div class=&quot;language-plaintext highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;GET /_cluster/settings
-PUT /_cluster/settings
-&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
-
-&lt;p&gt;The cluster settings can be:&lt;/p&gt;
-
-&lt;ol&gt;
-  &lt;li&gt;Persistent, which is still valid after the entire cluster restarts&lt;/li&gt;
-  &lt;li&gt;Transient, that is, invalid after the entire cluster restarts&lt;/li&gt;
-&lt;/ol&gt;
-
-&lt;p&gt;Examples of persistent settings (JSON starts with “persistent”):&lt;/p&gt;
-
-&lt;div class=&quot;language-json highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;
-  &lt;/span&gt;&lt;span class=&quot;nl&quot;&gt;&quot;persistent&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;
-    &lt;/span&gt;&lt;span class=&quot;nl&quot;&gt;&quot;indices&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;
-      &lt;/span&gt;&lt;span class=&quot;nl&quot;&gt;&quot;recovery&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;
-        &lt;/span&gt;&lt;span class=&quot;nl&quot;&gt;&quot;max_bytes_per_sec&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;20mb&quot;&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;
-      &lt;/span&gt;&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;
-    &lt;/span&gt;&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;
-  &lt;/span&gt;&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;
-&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;
-&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
-
-&lt;p&gt;Example of transient setting (JSON starts with “transient”):&lt;/p&gt;
-
-&lt;div class=&quot;language-json highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;
-  &lt;/span&gt;&lt;span class=&quot;nl&quot;&gt;&quot;transient&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;
-    &lt;/span&gt;&lt;span class=&quot;nl&quot;&gt;&quot;indices&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;
-      &lt;/span&gt;&lt;span class=&quot;nl&quot;&gt;&quot;recovery&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;
-        &lt;/span&gt;&lt;span class=&quot;nl&quot;&gt;&quot;max_bytes_per_sec&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;20mb&quot;&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;
-      &lt;/span&gt;&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;
-    &lt;/span&gt;&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;
-  &lt;/span&gt;&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;
-&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;
-&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
-
-&lt;p&gt;Precedence of cluster settings:&lt;/p&gt;
-
-&lt;ol&gt;
-  &lt;li&gt;transient cluster settings&lt;/li&gt;
-  &lt;li&gt;Persistent cluster settings&lt;/li&gt;
-  &lt;li&gt;Settings in the configuration file &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;elasticsearch.yml&lt;/code&gt;&lt;/li&gt;
-  &lt;li&gt;Default settings&lt;/li&gt;
-&lt;/ol&gt;
-
-&lt;p&gt;According to the official documentation &lt;a href=&quot;https://www.elastic.co/guide/en/elasticsearch/reference/7.x/cluster-update-settings.html&quot; title=&quot;Cluster update settings API&quot;&gt;Cluster update settings API&lt;/a&gt;, the cluster-wide settings are recommended to be set through the &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;settings&lt;/code&gt; API. Only use the file &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;elasticsearch.yml&lt;/code&gt; to handle local configuration. In this way, you can ensure that the configuration of all nodes in the cluster is the same. Otherwise, you may accidentally set different configurations on different nodes, and such differences are very difficult to detect.&lt;/p&gt;
-
-&lt;p&gt;There are two types of cluster settings: static and dynamic:&lt;/p&gt;
-
-&lt;table&gt;
-  &lt;thead&gt;
-    &lt;tr&gt;
-      &lt;th style=&quot;text-align: left&quot;&gt;Type&lt;/th&gt;
-      &lt;th style=&quot;text-align: left&quot;&gt;Description&lt;/th&gt;
-    &lt;/tr&gt;
-  &lt;/thead&gt;
-  &lt;tbody&gt;
-    &lt;tr&gt;
-      &lt;td style=&quot;text-align: left&quot;&gt;Static&lt;/td&gt;
-      &lt;td style=&quot;text-align: left&quot;&gt;These settings are only applied on nodes that have not been started or have been shut down, and are configured by &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;elasticsearch.yml&lt;/code&gt;. Each node must be set individually.&lt;/td&gt;
-    &lt;/tr&gt;
-    &lt;tr&gt;
-      &lt;td style=&quot;text-align: left&quot;&gt;Dynamic&lt;/td&gt;
-      &lt;td style=&quot;text-align: left&quot;&gt;These settings can be modified in a running cluster through the cluster update settings API.&lt;/td&gt;
-    &lt;/tr&gt;
-  &lt;/tbody&gt;
-&lt;/table&gt;
-
-&lt;p&gt;Examples of static and dynamic settings:&lt;/p&gt;
-
-&lt;p&gt;&lt;img src=&quot;/assets/20210821-type-of-settings.png&quot; alt=&quot;Static and dynamic type example&quot; /&gt;&lt;/p&gt;
-
-&lt;p&gt;Elasticsearch has many cluster-wide settings: security settings, shard allocation and routing settings, index lifecycle management (ILM) settings, logging settings, network settings, etc. We are not going into details here, but you can check the official documentation &lt;a href=&quot;https://www.elastic.co/guide/en/elasticsearch/reference/7.x/settings.html&quot; title=&quot;Configuring Elasticsearch&quot;&gt;Configuring Elasticsearch&lt;/a&gt; and its related subpages for more information.&lt;/p&gt;
-
-&lt;h2 id=&quot;index-settings&quot;&gt;Index Settings&lt;/h2&gt;
-
-&lt;p&gt;&lt;a href=&quot;https://www.elastic.co/guide/en/elasticsearch/reference/7.x/indices-update-settings.html&quot;&gt;https://www.elastic.co/guide/en/elasticsearch/reference/7.x/indices-update-settings.html&lt;/a&gt;&lt;/p&gt;
-
-&lt;div class=&quot;language-plaintext highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;GET /{target}/_settings
-PUT /{target}/_settings
-&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
-
-&lt;p&gt;These settings will be applied to the selected target. The target can be one or more indexes, data streams, alias. Multiple targets need to be separated by commas &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;,&lt;/code&gt;.&lt;/p&gt;
-
-&lt;p&gt;Index settings are divided into two types – static and dynamic:&lt;/p&gt;
-
-&lt;table&gt;
-  &lt;thead&gt;
-    &lt;tr&gt;
-      &lt;th style=&quot;text-align: left&quot;&gt;Type&lt;/th&gt;
-      &lt;th style=&quot;text-align: left&quot;&gt;Description&lt;/th&gt;
-    &lt;/tr&gt;
-  &lt;/thead&gt;
-  &lt;tbody&gt;
-    &lt;tr&gt;
-      &lt;td style=&quot;text-align: left&quot;&gt;Static&lt;/td&gt;
-      &lt;td style=&quot;text-align: left&quot;&gt;These settings can only be modified when the index is created or after the index is closed.&lt;/td&gt;
-    &lt;/tr&gt;
-    &lt;tr&gt;
-      &lt;td style=&quot;text-align: left&quot;&gt;Dynamic&lt;/td&gt;
-      &lt;td style=&quot;text-align: left&quot;&gt;These settings can be modified via the update-index-settings API in a live index.&lt;/td&gt;
-    &lt;/tr&gt;
-  &lt;/tbody&gt;
-&lt;/table&gt;
-
-&lt;p&gt;Elasticsearch has many index-wide settings: number of shards, compression method, startup check, refresh, etc. We are not going into details here, but you can check the official document &lt;a href=&quot;https://www.elastic.co/guide/en/elasticsearch/reference/7.x/index-modules.html&quot; title=&quot;Index modules&quot;&gt;Index modules&lt;/a&gt; for more details.&lt;/p&gt;
-
-&lt;h2 id=&quot;node-settings&quot;&gt;Node Settings&lt;/h2&gt;
-
-&lt;p&gt;&lt;a href=&quot;https://www.elastic.co/guide/en/elasticsearch/reference/7.x/modules-node.html&quot;&gt;https://www.elastic.co/guide/en/elasticsearch/reference/7.x/modules-node.html&lt;/a&gt;&lt;/p&gt;
-
-&lt;p&gt;The node settings mainly refer to the configuration of node’s role: master / data / ingest / ml / … This can be achieved by modifying the configuration file &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;elasticsearch.yml&lt;/code&gt;. The most important roles should be: master-eligible node (participating in the master election, which is vital to maintaining the existence of the cluster), data node (storing data), coordinating-only node (tasks coordination, similar to load balancing). See the official document above for details.&lt;/p&gt;
-
-&lt;p&gt;For example, in the configuration file &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;elasticsearch.yml&lt;/code&gt;, you can set a node as a data node:&lt;/p&gt;
-
-&lt;div class=&quot;language-yml highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;s&quot;&gt;node.data&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;no&quot;&gt;true&lt;/span&gt;
-&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
-
-&lt;h2 id=&quot;curl-cheatsheet&quot;&gt;curl cheatsheet&lt;/h2&gt;
-
-&lt;p&gt;In the above article, we looked at different types of settings. But in actual work, it is not enough to just understand their types. You may need to query, update, or delete some settings to meet your actual needs. Next, let’s take a look at how to use curl to operate dynamic cluster and index settings.&lt;/p&gt;
-
-&lt;p&gt;Examples of cluster-level settings:&lt;/p&gt;
-
-&lt;div class=&quot;language-sh highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;c&quot;&gt;# list cluster-wide settings (explicitly defined)&lt;/span&gt;
-curl &lt;span class=&quot;s2&quot;&gt;&quot;localhost:9200/_cluster/settings&quot;&lt;/span&gt;
-
-&lt;span class=&quot;c&quot;&gt;# list cluster-wide settings (explicitly defined) in flat format&lt;/span&gt;
-curl &lt;span class=&quot;s2&quot;&gt;&quot;localhost:9200/_cluster/settings?flat_settings&quot;&lt;/span&gt;
-
-&lt;span class=&quot;c&quot;&gt;# list cluster-wide settings (including defaults)&lt;/span&gt;
-curl &lt;span class=&quot;s2&quot;&gt;&quot;localhost:9200/_cluster/settings?include_defaults&quot;&lt;/span&gt;
-
-&lt;span class=&quot;c&quot;&gt;# list cluster-wide settings (including defaults) in flat format&lt;/span&gt;
-curl &lt;span class=&quot;s2&quot;&gt;&quot;localhost:9200/_cluster/settings?include_defaults&amp;amp;flat_settings&quot;&lt;/span&gt;
-
-&lt;span class=&quot;c&quot;&gt;# update a cluster-wide setting&lt;/span&gt;
-curl &lt;span class=&quot;nt&quot;&gt;-X&lt;/span&gt; PUT &lt;span class=&quot;s2&quot;&gt;&quot;localhost:9200/_cluster/settings&quot;&lt;/span&gt; &lt;span class=&quot;nt&quot;&gt;-H&lt;/span&gt; &lt;span class=&quot;s1&quot;&gt;'Content-Type: application/json'&lt;/span&gt; &lt;span class=&quot;nt&quot;&gt;-d&lt;/span&gt;&lt;span class=&quot;s1&quot;&gt;'
-{
-  &quot;persistent.indices.recovery.max_bytes_per_sec&quot;: &quot;50mb&quot;
-}
-'&lt;/span&gt;
-
-&lt;span class=&quot;c&quot;&gt;# reset a cluster-wide setting to the default value&lt;/span&gt;
-curl &lt;span class=&quot;nt&quot;&gt;-X&lt;/span&gt; PUT &lt;span class=&quot;s2&quot;&gt;&quot;localhost:9200/_cluster/settings&quot;&lt;/span&gt; &lt;span class=&quot;nt&quot;&gt;-H&lt;/span&gt; &lt;span class=&quot;s1&quot;&gt;'Content-Type: application/json'&lt;/span&gt; &lt;span class=&quot;nt&quot;&gt;-d&lt;/span&gt;&lt;span class=&quot;s1&quot;&gt;'
-{
-  &quot;persistent.indices.recovery.max_bytes_per_sec&quot;: null
-}
-'&lt;/span&gt;
-&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
-
-&lt;p&gt;Example of index level setting:&lt;/p&gt;
-
-&lt;div class=&quot;language-sh highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;c&quot;&gt;# list index-wide settings (explicitly defined)&lt;/span&gt;
-curl &lt;span class=&quot;s2&quot;&gt;&quot;localhost:9200/index1/_settings&quot;&lt;/span&gt;
-
-&lt;span class=&quot;c&quot;&gt;# list index-wide settings (explicitly defined) for index1 and index2&lt;/span&gt;
-curl &lt;span class=&quot;s2&quot;&gt;&quot;localhost:9200/index1,index2/_settings&quot;&lt;/span&gt;
-
-&lt;span class=&quot;c&quot;&gt;# list index-wide settings (explicitly defined) for indices starting with &quot;index&quot;&lt;/span&gt;
-curl &lt;span class=&quot;s2&quot;&gt;&quot;localhost:9200/index*/_settings&quot;&lt;/span&gt;
-
-&lt;span class=&quot;c&quot;&gt;# list index-wide settings (explicitly defined) for all indices&lt;/span&gt;
-curl &lt;span class=&quot;s2&quot;&gt;&quot;localhost:9200/_all/_settings&quot;&lt;/span&gt;
-
-&lt;span class=&quot;c&quot;&gt;# list index-wide settings (explicitly defined) in flat format&lt;/span&gt;
-curl &lt;span class=&quot;s2&quot;&gt;&quot;localhost:9200/index1/_settings?flat_settings&quot;&lt;/span&gt;
-
-&lt;span class=&quot;c&quot;&gt;# list index-wide settings (including defaults)&lt;/span&gt;
-curl &lt;span class=&quot;s2&quot;&gt;&quot;localhost:9200/index1/_settings?include_defaults&quot;&lt;/span&gt;
-
-&lt;span class=&quot;c&quot;&gt;# list index-wide settings (including defaults) in flat format&lt;/span&gt;
-curl &lt;span class=&quot;s2&quot;&gt;&quot;localhost:9200/index1/_settings?include_defaults&amp;amp;flat_settings&quot;&lt;/span&gt;
-
-&lt;span class=&quot;c&quot;&gt;# update an index-wide setting for index1&lt;/span&gt;
-curl &lt;span class=&quot;nt&quot;&gt;-X&lt;/span&gt; PUT &lt;span class=&quot;s2&quot;&gt;&quot;localhost:9200/index1/_settings&quot;&lt;/span&gt; &lt;span class=&quot;nt&quot;&gt;-H&lt;/span&gt; &lt;span class=&quot;s1&quot;&gt;'Content-Type: application/json'&lt;/span&gt; &lt;span class=&quot;nt&quot;&gt;-d&lt;/span&gt;&lt;span class=&quot;s1&quot;&gt;'
-{
-  &quot;index&quot;: {
-    &quot;number_of_replicas&quot;: 2
-  }
-}
-'&lt;/span&gt;
-
-&lt;span class=&quot;c&quot;&gt;# reset an index-wide setting to the default value&lt;/span&gt;
-curl &lt;span class=&quot;nt&quot;&gt;-X&lt;/span&gt; PUT &lt;span class=&quot;s2&quot;&gt;&quot;localhost:9200/index1/_settings&quot;&lt;/span&gt; &lt;span class=&quot;nt&quot;&gt;-H&lt;/span&gt; &lt;span class=&quot;s1&quot;&gt;'Content-Type: application/json'&lt;/span&gt; &lt;span class=&quot;nt&quot;&gt;-d&lt;/span&gt;&lt;span class=&quot;s1&quot;&gt;'
-{
-  &quot;index&quot;: {
-    &quot;refresh_interval&quot;: null
-  }
-}
-'&lt;/span&gt;
-&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
-
-&lt;p&gt;For static index settings, you need to close the index first, modify the settings, and then start:&lt;/p&gt;
-
-&lt;div class=&quot;language-sh highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;curl &lt;span class=&quot;nt&quot;&gt;-X&lt;/span&gt; POST &lt;span class=&quot;s2&quot;&gt;&quot;localhost:9200/index1/_close?wait_for_active_shards=0&quot;&lt;/span&gt;
-
-curl &lt;span class=&quot;nt&quot;&gt;-X&lt;/span&gt; PUT &lt;span class=&quot;s2&quot;&gt;&quot;localhost:9200/index1/_settings&quot;&lt;/span&gt; &lt;span class=&quot;nt&quot;&gt;-H&lt;/span&gt; &lt;span class=&quot;s1&quot;&gt;'Content-Type: application/json'&lt;/span&gt; &lt;span class=&quot;nt&quot;&gt;-d&lt;/span&gt;&lt;span class=&quot;s1&quot;&gt;'
-{
-  &quot;analysis&quot;: {
-    &quot;analyzer&quot;: {
-      &quot;content&quot;: {
-        &quot;type&quot;: &quot;custom&quot;,
-        &quot;tokenizer&quot;: &quot;whitespace&quot;
-      }
-    }
-  }
-}
-'&lt;/span&gt;
-
-curl &lt;span class=&quot;nt&quot;&gt;-X&lt;/span&gt; POST &lt;span class=&quot;s2&quot;&gt;&quot;localhost:9200/index1/_open&quot;&lt;/span&gt;
-&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
-
-&lt;h2 id=&quot;going-further&quot;&gt;Going further&lt;/h2&gt;
-
-&lt;p&gt;How to go further from this article?&lt;/p&gt;
-
-&lt;ul&gt;
-  &lt;li&gt;If you want to know more about cluster settings, please check the official document &lt;a href=&quot;https://www.elastic.co/guide/en/elasticsearch/reference/7.x/settings.html&quot; title=&quot;Configuring Elasticsearch&quot;&gt;Configuring Elasticsearch&lt;/a&gt; and its related subpages.&lt;/li&gt;
-  &lt;li&gt;If you want to know more about node settings, please check the official document &lt;a href=&quot;https://www.elastic.co/guide/en/elasticsearch/reference/7.x/modules-node .html&quot; title=&quot;Configuring Elasticsearch&amp;gt; Node&quot;&gt;Configuring Elasticsearch&amp;gt; Node&lt;/a&gt;.&lt;/li&gt;
-  &lt;li&gt;If you want to know more about index settings, please check the official document &lt;a href=&quot;https://www.elastic.co/guide/en/elasticsearch/reference/7.x/index-modules.html&quot; title=&quot;Index modules&quot;&gt;Index modules&lt;/a&gt;.&lt;/li&gt;
-  &lt;li&gt;When using &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;curl&lt;/code&gt; to query or modify the settings of Elasticsearch, it is recommended to use it with the command &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;jq&lt;/code&gt;. It can help you quickly modify the JSON content and get the results you need.&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;h2 id=&quot;conclusion&quot;&gt;Conclusion&lt;/h2&gt;
-
-&lt;p&gt;In this article, we saw cluster settings, node settings, and index settings in Elasticsearch. We discussed the precedence of the settings. We see that the settings are divided into two types: static and dynamic. Static settings need to be modified in a static state, and dynamic settings can be modified directly through the API in the running state. We saw how to identify static and dynamic settings in the official documentation. We also listed some commonly used commands through &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;curl&lt;/code&gt;. Finally, I also shared some resources so that you can go further from here. I hope this article can bring you some thoughts and give you a better understanding of Elasticsearch. You can subscribe to the &lt;a href=&quot;/feed.xml&quot;&gt;feed of my blog&lt;/a&gt;, follow me on &lt;a href=&quot;https://twitter.com/mincong_h&quot;&gt;Twitter&lt;/a&gt; or &lt;a href=&quot;https://github.com/mincong-h/&quot;&gt;GitHub&lt;/a&gt;. Hope you enjoy this article, see you the next time!&lt;/p&gt;
-
-&lt;h2 id=&quot;references&quot;&gt;References&lt;/h2&gt;
-
-&lt;ul&gt;
-  &lt;li&gt;Opster Team, “Elasticsearch Settings”, &lt;em&gt;Opster&lt;/em&gt;, 2021. &lt;a href=&quot;https://opster.com/elasticsearch-glossary/elasticsearch-settings/&quot;&gt;https://opster.com/elasticsearch-glossary/elasticsearch-settings/&lt;/a&gt;&lt;/li&gt;
-  &lt;li&gt;Elasticsearch, “Index modules”, &lt;em&gt;Elastic&lt;/em&gt;, 2021. &lt;a href=&quot;https://www.elastic.co/guide/en/elasticsearch/reference/7.x/index-modules.html&quot;&gt;https://www.elastic.co/guide/en/elasticsearch/reference/7.x/index-modules.html&lt;/a&gt;&lt;/li&gt;
-  &lt;li&gt;Elasticsearch, “Node”, &lt;em&gt;Elastic&lt;/em&gt;, 2021. &lt;a href=&quot;https://www.elastic.co/guide/en/elasticsearch/reference/7.x/modules-node.html&quot;&gt;https://www.elastic.co/guide/en/elasticsearch/reference/7.x/modules-node.html&lt;/a&gt;&lt;/li&gt;
-  &lt;li&gt;Elasticsearch, “Configuring Elasticsearch”, &lt;em&gt;Elastic&lt;/em&gt;, 2021. &lt;a href=&quot;https://www.elastic.co/guide/en/elasticsearch/reference/7.x/settings.html&quot;&gt;https://www.elastic.co/guide/en/elasticsearch/reference/7.x/settings.html&lt;/a&gt;&lt;/li&gt;
-  &lt;li&gt;Vincent Duan, “The difference between Elasticsearch Transient and Persistent”, &lt;em&gt;CSDN&lt;/em&gt;, 2020. &lt;a href=&quot;https://blog.csdn.net/vincent_duan/article/details/103927725&quot;&gt;https://blog.csdn.net/vincent_duan/article/details/103927725&lt;/a&gt;&lt;/li&gt;
-&lt;/ul&gt;</content><author><name>Mincong Huang</name><email>mincong.h@gmail.com</email></author><category term="elasticsearch" /><category term="elasticsearch" /><summary type="html">This article describes the different types of settings of Elasticsearch: cluster settings, index settings, node settings, the difference between static and dynamic settings, and some commonly used curl commands.</summary><media:thumbnail xmlns:media="http://search.yahoo.com/mrss/" url="https://mincong.io/assets/bg-anthony-roberts-82wJ10pX1Fw-unsplash.jpg" /><media:content medium="image" url="https://mincong.io/assets/bg-anthony-roberts-82wJ10pX1Fw-unsplash.jpg" xmlns:media="http://search.yahoo.com/mrss/" /></entry></feed>
+&lt;p&gt;In this article, we walked into Elasticsearch’s snapshot repository and saw its internal structure. We also learn more about &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;index-N&lt;/code&gt;, &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;index.latest&lt;/code&gt;, and some other files related to snapshots. I hope that by knowing these files, it will give you a have a better understanding of Elasticsearch’s “snapshot and restore” feature, and also give you more ideas for troubleshooting when there is an issue on production. Finally, we briefly saw some resources to expand out. You can subscribe to the &lt;a href=&quot;/feed.xml&quot;&gt;feed of my blog&lt;/a&gt;, follow me on &lt;a href=&quot;https://twitter.com/mincong_h&quot;&gt;Twitter&lt;/a&gt; or &lt;a href=&quot;https://github.com/mincong-h/&quot;&gt;GitHub&lt;/a&gt;. Hope you enjoy this article, see you the next time!&lt;/p&gt;</content><author><name>Mincong Huang</name><email>mincong.h@gmail.com</email></author><category term="elasticsearch" /><category term="elasticsearch" /><category term="java" /><summary type="html">This article takes you to the Elasticsearch snapshot repository to explore its internal structure and understand the contents and uses of different files.</summary><media:thumbnail xmlns:media="http://search.yahoo.com/mrss/" url="https://mincong.io/assets/bg-dmitrij-paskevic-YjVa-F9P9kk-unsplash.jpg" /><media:content medium="image" url="https://mincong.io/assets/bg-dmitrij-paskevic-YjVa-F9P9kk-unsplash.jpg" xmlns:media="http://search.yahoo.com/mrss/" /></entry></feed>
