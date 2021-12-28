@@ -306,8 +306,8 @@ routing allocation, etc. All these data are fetched eagerly and passed as input 
 Therefore, it makes the test quite simple: we just need to provide these information to
 a decider without mocking anything as there are no external calls. More precisely, in the tests, we
 
-* prepare settings
-* create a decider instance using those settings
+* prepare settings that are relevant to this decider
+* create a decider instance using these settings
 * prepare a cluster state (including index metadata, shard routing, etc) which are
   necessary for making the decision
 * create an allocation service which encapsulates the decider under test
@@ -317,8 +317,29 @@ a decider without mocking anything as there are no external calls. More precisel
 
 ... and then iterate through other scenarios.
 
-* multi
-* dependent
+**Testing a multi-decision decider.** To understand this, let's take
+`AllocationDecidersTests` as example. In this test suite, it tests the debug mode and
+the early termination. Because these expectations are not tight to any specific child
+deciders, the set up simply uses some mocked deciders instantiated as anonymous classes.
+
+```java
+final AllocationDeciders allocationDeciders = new AllocationDeciders(Arrays.asList(
+    new AllocationDecider() { ... }, new AllocationDecider() { ... }));
+```
+
+**Testing a service that depends on the deciders.** In the case, the testing is more complex
+to set up because we need to prepare the deciders. Depending on the needs of that service,
+it may plug some decider during the setup phase. The easiest setup is a no-operation setup,
+which requires an empty all-deciders decider.
+
+```java
+public class ClusterAllocationExplainActionTests extends ESTestCase {
+
+    private static final AllocationDeciders NOOP_DECIDERS
+        = new AllocationDeciders(Collections.emptyList());
+    ...
+}
+```
 
 ## Going Further
 
