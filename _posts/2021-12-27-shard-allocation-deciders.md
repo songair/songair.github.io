@@ -121,14 +121,14 @@ cluster rebalancing, concurrent relabalancing, disk threshold, and much more.
 ## Making Decisions
 
 There are two types of decision in the decider system: single decision and
-multi-decision. Single decision represents a decision made on one given
-dimension, e.g. awareness or disk threshold. While multi-decision is a decision
-container which contains a list of child decisions. Let's take a closer look on
+multi-decision. A single decision represents a decision made on one given
+dimension, e.g. awareness or disk threshold. While a multi-decision represents a decision
+container which contains a list of child decisions. Let's take a closer look into
 both of them.
 
 ### Single Decision
 
-`DiskThresholdDecider` is a good example for making a single decision. Inside
+`DiskThresholdDecider` is a good example of making a single decision. Inside
 the method for shard allocation
 (`canAllocate(...)`), first of all, it retrieves the settings from the class member
 `diskThresholdSettings` for the low and high thresholds, then it retrieves the disk
@@ -177,7 +177,8 @@ strategy. That is, whenever one child decision is negative (NO), we consider the
 whole decision as NO without asking the remaining deciders. It's a short
 circuit. We do that unless we are debugging the decision, in which case, we
 gather all the decisions, including the NO decisions, before returning the final
-result.
+result. If my explanation is a bit confusing for you, here is the source code of
+`AllocationDeciders`, hopefully it makes things clearer.
 
 ```java
     @Override
@@ -207,8 +208,9 @@ result.
     }
 ```
 
-A multi-decision (`Decision.Multi`) is a decision container, it contains
-multiple decisions inside it:
+Now if we go further into the structure of the value class `Decision.Multi`,
+you can see that a multi-decision is a decision container, it contains
+multiple child decisions inside it:
 
 ```java
     public static class Multi extends Decision implements ToXContentFragment {
@@ -218,10 +220,12 @@ multiple decisions inside it:
     }
 ```
 
-Unlike single decision, it does not have label and explanation. More precisely,
+Unlike single decisions, it does not have label and explanation. More precisely,
 getting a label from a multi-decision returns `null` and getting an explanation
-from a multi-decision throws an unsupported operation exception.
-
+from a multi-decision throws an unsupported operation exception. In my opinion,
+the `Decision` base class is too vague and we shouldn't return null or raising an
+exception. But that's a design choice and probably does not matter as this system
+is internal to Elasticsearch.
 
 ## Lifecycle
 
@@ -229,7 +233,8 @@ _When are deciders created? I.e. where are deciders positioned in the lifecycle 
 an Elasticsearch cluster?_
 
 When starting a new node, the class `Bootstrap` is called. Before starting the
-node, it creates a new `Node` instance, which creates and addes a list of modules. One of these modules is
+node, it creates a new `Node` instance, which creates and addes a list of modules.
+One of these modules is
 called `ClusterModule` and it contains the deciders. So the whole logic happens
 at the early stage of the lifecycle, more precisely, the creation happens before the
 startup of a node.
@@ -246,6 +251,44 @@ startup of a node.
     - add modules
   - start node
 ```
+
+Now another question is: _when we update a setting of a cluster, do we need to restart
+the node to take the new value into account?_
+
+I don't think so because I handled such
+cases many times in production and it never requires a restart. These settings are dynamic.
+When looking into Elasticsearch's source code, such as awareness allocation decider and
+disk threadhold decider, we can find out that the settings are passed
+from the constructor of the deciders.
+
+```java
+public AwarenessAllocationDecider(Settings settings, ClusterSettings clusterSettings) { ... }
+```
+
+```java
+public DiskThresholdDecider(Settings settings, ClusterSettings clusterSettings) {
+    this.diskThresholdSettings = new DiskThresholdSettings(settings, clusterSettings);
+    assert Version.CURRENT.major < 9 : "remove enable_for_single_data_node in 9";
+    this.enableForSingleDataNode = ENABLE_FOR_SINGLE_DATA_NODE.get(settings);
+}
+```
+
+And the decider is subscribed to the settings update. In other words, when a setting is updated,
+the setting used by the decider is updated as well. Here is the code for subscribing the settings
+for disk thresholds (low watermark, high watermark, flood-stage) in class `DiskThresholdSettings`:
+
+```java
+public DiskThresholdSettings(Settings settings, ClusterSettings clusterSettings) {
+    ...
+    clusterSettings.addSettingsUpdateConsumer(CLUSTER_ROUTING_ALLOCATION_LOW_DISK_WATERMARK_SETTING, this::setLowWatermark);
+    clusterSettings.addSettingsUpdateConsumer(CLUSTER_ROUTING_ALLOCATION_HIGH_DISK_WATERMARK_SETTING, this::setHighWatermark);
+    clusterSettings.addSettingsUpdateConsumer(CLUSTER_ROUTING_ALLOCATION_DISK_FLOOD_STAGE_WATERMARK_SETTING, this::setFloodStage);
+    ...
+}
+```
+
+where you can see that when those cluster settings are upated, the class `DiskThresholdSettings`
+sets the new value into it's instance.
 
 ## Testing
 
