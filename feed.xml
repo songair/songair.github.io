@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" xml:lang="en"><generator uri="https://jekyllrb.com/" version="4.2.0">Jekyll</generator><link href="https://mincong.io/feed.xml" rel="self" type="application/atom+xml" /><link href="https://mincong.io/" rel="alternate" type="text/html" hreflang="en" /><updated>2022-01-02T10:05:31+01:00</updated><id>https://mincong.io/feed.xml</id><title type="html">Mincong Huang</title><subtitle>Hi, welcome to my blog! I'm a software engineer at Datadog. I write blog posts in my free time. My blogs are bits and pieces of my tech journey. Most of them are related to Java. Hope you enjoy them! My opinions are my own, not Datadog's. This blog is powered by Jekyll, a simple, blog-aware, static sites solution.
+<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" xml:lang="en"><generator uri="https://jekyllrb.com/" version="4.2.0">Jekyll</generator><link href="https://mincong.io/feed.xml" rel="self" type="application/atom+xml" /><link href="https://mincong.io/" rel="alternate" type="text/html" hreflang="en" /><updated>2022-01-02T14:01:06+01:00</updated><id>https://mincong.io/feed.xml</id><title type="html">Mincong Huang</title><subtitle>Hi, welcome to my blog! I'm a software engineer at Datadog. I write blog posts in my free time. My blogs are bits and pieces of my tech journey. Most of them are related to Java. Hope you enjoy them! My opinions are my own, not Datadog's. This blog is powered by Jekyll, a simple, blog-aware, static sites solution.
 </subtitle><author><name>Mincong Huang</name><email>mincong.h@gmail.com</email></author><entry xml:lang="en"><title type="html">Highlight 2021</title><link href="https://mincong.io/en/highlight-2021/" rel="alternate" type="text/html" title="Highlight 2021" /><published>2021-12-30T14:12:23+01:00</published><updated>2021-12-30T14:12:23+01:00</updated><id>https://mincong.io/en/highlight-2021</id><content type="html" xml:base="https://mincong.io/en/highlight-2021/">&lt;h2 id=&quot;introduction&quot;&gt;Introduction&lt;/h2&gt;
 
 &lt;p&gt;Writing an article for an annual review becomes a tradition for me. After
@@ -27,25 +27,21 @@ team on October. Here are some of my contributions related to these teams.&lt;/p
 &lt;p&gt;Why “Event Platform Automation”? Since the platform grew fast, having manual operations became
 more and more painful. Operating a large-scale system without dedicated
 operations engineers and site-reliability engineers (SRE) became very challenging.
-I had the privilege to be part of this team since October 2021! The goals are to improve
+I had the privilege to be part of this team since October 2021. The goals are to improve
 the system operability at different levels (workflow automation, configuration
 simplification, automatic checks, admin UI), pushing the
-reliability to the next level (availability-zone failures, node-lifecycle
-automation), and improve the deployment process for our microservices. Ok,
-enough introduction, let’s go to the contributions now :)&lt;/p&gt;
+reliability to the next level, and improve the deployment process for our microservices.&lt;/p&gt;
 
 &lt;p&gt;&lt;strong&gt;Indexold.&lt;/strong&gt; Indexold is a custom solution for data lifecycle management. It is
 a state machine that manages the lifecycle of the data once they are stored in
 our system. Similar to Elasticsearch’s &lt;a href=&quot;https://www.elastic.co/guide/en/elasticsearch/reference/7.16/overview-index-lifecycle-management.html&quot;&gt;Index Lifecycle Management
 (ILM)&lt;/a&gt;,
-it allows moving data from computation-intensive machines to storage-friendly
-machines. It allows storing historical data in a cost-efficient way, making
+it allows moving data from one machine to another.
+It allows storing historical data in a cost-efficient way, making
 operations easy, having control about the data placement, and being resilient to node
-failures. The development of this project last over 3 quarters and we have about
-3 engineers working on it full time. I mainly participated to: storage
-optimization (data compression), re-snapshotting, data deletion, rollout to
-production (AWS, GCP, Azure), and maintenance. The solution is based on Akka,
-MongoDB, and Elasticsearch.&lt;/p&gt;
+failures. I mainly participated to: storage
+optimization (data compression), snapshotting, data deletion, rollout to
+production (AWS, GCP, Azure), and maintenance.&lt;/p&gt;
 
 &lt;p&gt;&lt;strong&gt;Automation.&lt;/strong&gt; At Datadog, we use &lt;a href=&quot;https://temporal.io/&quot;&gt;Temporal&lt;/a&gt; as a workflow
 engine for our automation. I made several workflows, such as one for
